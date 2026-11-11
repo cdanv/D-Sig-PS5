@@ -70,7 +70,7 @@ e seguir com o que está dentro — não inventar um jeito de atender.
 |---|---|
 | **Alvo 1 — passagem pura** | **feito.** `src/passagem.c`, 4 verificações, 4 sabotagens |
 | **Alvo 2 — o primeiro MOD de verdade** | **feito na bancada.** Troca de botão e acorde. `src/passagem.c`, `ferramentas/testa_mod.c`, 9 sabotagens |
-| Alvo 3 — o vigia residente + a ponte | desenhado, não escrito. Precisa de console |
+| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. Fase 3a (perfil e buffer duplo) é a próxima, sem console. Fases 3b a 3d precisam de console |
 | Alvo 4 — ícone na tela inicial | caminho conhecido e barato (ver `docs/ESTUDO.md`) |
 
 ```
@@ -80,6 +80,7 @@ src/passagem.c                o roteador. Copia, e aplica MOD de botão quando c
 ferramentas/testa_passagem.c  a bancada do Alvo 1 (passagem)
 ferramentas/testa_mod.c       a bancada do Alvo 2 (o primeiro MOD)
 docs/ESTUDO.md                o que aprendemos lendo PoorDS4, etaHEN, ProsperoMgr, pldmgr
+docs/ARQUITETURA.md           decisões de desenho do Alvo 3: processos, perfil, privilégio, celular
 ```
 
 ```bash
