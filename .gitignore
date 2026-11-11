@@ -1,0 +1,4 @@
+# A bancada e o payload sao gerados: o que se compila nao se versiona.
+build/
+*.o
+*.elf
