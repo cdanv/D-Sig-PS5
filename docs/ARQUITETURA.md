@@ -1,8 +1,8 @@
 # Arquitetura do D-Sig-PS5
 
 Este documento fixa as decisões de desenho antes do Alvo 3. Cada decisão tem um
-estado: **decidido** (vale para o código), **proposto** (recomendação minha, ainda não
-aceita) ou **a medir** (depende de execução no console, e nada aqui foi executado lá).
+estado: **decidido** (vale para o código), **proposto** (recomendação, ainda não
+aceita), ou **a medir** (depende de execução no console, e nada aqui foi executado lá).
 
 ---
 
@@ -12,20 +12,19 @@ aceita) ou **a medir** (depende de execução no console, e nada aqui foi execut
 |---|---|---|
 | Escopo | Turbo, macro, sequência, acorde e domínios são o núcleo. Jogo local entra como acessibilidade. Vantagem online fica fora (`CLAUDE.md`, seção 2) | decidido |
 | Perfil por jogo | Um perfil por título. O título em execução escolhe o perfil ativo | decidido |
-| Identificar o jogo | Pelo identificador de título do processo do jogo | a medir |
+| Quem identifica o jogo | O **daemon**. O gancho recebe o perfil pronto e não faz chamada de sistema | decidido |
+| Como o jogo é identificado | Pelo identificador de título do processo | a medir |
+| Quantidade de slots | Sem limite de produto. O usuário cria os que julgar necessários | decidido |
 | Salvamento | Arquivo por título, com slots, em caminho próprio. Não usa o savedata oficial | decidido |
 | Gravação | Atômica (temporário e depois renomeia). Nunca dentro do quadro | decidido |
+| Como o perfil chega ao gancho | O daemon **escreve na memória do processo do jogo**, no mesmo mecanismo que instala o gancho. Não há memória compartilhada nova | decidido, a medir |
 | Privilégio | Começa sem escalonar. Herda o acesso que o carregador entrega. Eleva só o próprio processo, e só se a rede falhar | proposto |
-| Ícone | Abre a configuração. Não inicia o D-Sig sozinho | proposto |
+| Ícone | **Não inicia** o D-Sig. Abre a página de configuração quando o residente já está de pé | decidido |
 | Início do residente | O autoloader do PS5 Payload Manager ou do ProsperoMgr sobe o D-Sig, a pedido do usuário ou no boot | proposto |
+| Segunda subida | **Não sobe.** Pede ao residente que recarregue o perfil pela porta local, e termina. Sem matar processo e sem elevação | decidido |
 | Celular | PWA na rede local, conectando por IP do console, com código de pareamento mostrado na TV | proposto |
 | Interface do celular | Escrita do zero, licença GPL-3.0. Não reaproveita código do Cronus | decidido |
-
-**Sobre o ícone.** Ele abre uma página em `127.0.0.1` de uma porta. Essa página só existe
-se alguém a estiver servindo. Por isso o ícone não resolve sozinho o início a frio do
-D-Sig. A solução proposta é o autoloader subir o residente, e o ícone abrir a
-configuração. Se o residente estiver desligado, o ícone precisa de outro caminho.
-**A medir:** o que acontece quando o ícone aponta para uma porta sem servidor.
+| Modelo de MOD | Vários sinais simultâneos em ALFA, GAMA e DELTA, com turbo e combo. Ver seção 9 | proposto |
 
 ---
 
@@ -37,24 +36,28 @@ seção 6. Por isso o sistema tem duas partes:
 
 | parte | onde roda | o que faz | regra |
 |---|---|---|---|
-| **Gancho** | dentro do processo do jogo | recebe o pacote, aplica a tabela ativa, devolve | sem alocação, sem bloqueio, sem arquivo, sem chamada de sistema |
-| **Daemon** | processo próprio | interface, perfis, salvamento, rede com o celular, troca de perfil | pode alocar, abrir arquivo e rede |
+| **Gancho** | dentro do processo do jogo | recebe o pacote, aplica o perfil ativo, devolve | sem alocação, sem bloqueio, sem arquivo, sem chamada de sistema |
+| **Daemon** | processo próprio | identifica o jogo, carrega perfis, interface, salvamento, rede com o celular | pode alocar, abrir arquivo e rede |
 
 Nenhum dos dois fala com o outro por arquivo ou socket no caminho do quadro.
 
-### Como o perfil chega ao gancho
+### Entrega do perfil ao gancho
 
-**Proposto:** buffer duplo com contador de versão.
+**Decidido:** buffer duplo com contador de versão, escrito pelo daemon dentro da
+memória do jogo.
 
-- O daemon escreve a tabela nova no buffer inativo, e só depois publica o número da versão.
-- O gancho lê a versão. Se ela mudou desde o último quadro, copia a tabela e atualiza a referência.
-- Nenhuma trava. A escrita é sempre no buffer que o gancho não está lendo.
-- Tamanho fixo: o teto de `DSIG_MAX_MODS`, já pré-alocado.
+1. O daemon escreve o perfil novo no buffer **inativo**.
+2. Só depois publica o número da versão nova, em uma escrita só.
+3. O gancho lê a versão, copia o buffer ativo, e lê a versão de novo. Se mudou durante
+   a cópia, descarta a cópia e usa o perfil anterior nesse quadro. Isso impede ler um
+   perfil pela metade.
+4. A tentativa de releitura é limitada a uma por quadro. Sem laço de espera.
 
-**A medir:** que a leitura da versão e a cópia não custam o quadro. E que a memória
-compartilhada entre os dois processos é possível no contexto de payload. Se não for, o
-perfil é copiado para o gancho no momento da instalação, e a troca de perfil reinstala
-o gancho. Isso é mais simples e menos desejável, mas está registrado como alternativa.
+**Alternativa, se a escrita pelo daemon falhar no console:** reinstalar o gancho a cada
+troca de perfil. Mais simples, mas com uma janela de troca mais longa.
+
+**A medir:** que a escrita pelo daemon é possível e que a cópia pelo gancho cabe no
+quadro. Nenhum dos dois foi executado.
 
 ---
 
@@ -63,7 +66,8 @@ o gancho. Isso é mais simples e menos desejável, mas está registrado como alt
 ```
 controle ──► libScePad ──► [gancho no jogo] ──► jogo
                               ▲
-                              │ tabela ativa (buffer duplo, versão)
+                              │ perfil ativo (buffer duplo, versão),
+                              │ escrito pelo daemon na memória do jogo
                               │
                           [daemon] ◄── perfis e slots (arquivo, gravação atômica)
                               ▲
@@ -71,27 +75,28 @@ controle ──► libScePad ──► [gancho no jogo] ──► jogo
                               │
                           [celular: PWA]
 
-ícone ──► página em 127.0.0.1 servida pelo daemon
+ícone ──► página em 127.0.0.1 servida pelo daemon (só com o residente de pé)
 autoloader (PS5 Payload Manager / ProsperoMgr) ──► sobe o daemon
+segunda subida ──► pede recarga ao residente pela porta local, e termina
 ```
 
 ---
 
 ## 4. Perfil
 
-Um perfil é o conteúdo que o daemon publica para o gancho e que o celular edita.
+Um perfil é o conteúdo que o daemon publica para o gancho e que o celular edita. Os
+campos seguem o modelo da seção 9.
 
 | campo | conteúdo |
 |---|---|
 | `titulo` | identificador do jogo ao qual o perfil pertence |
 | `versao` | número de formato, para leitura futura |
-| `slots` | um ou mais slots por título, cada um com nome e tabela de MODs |
-| `mods` | lista de `DsigMod` (origem e destino), com o teto `DSIG_MAX_MODS` |
+| `slots` | lista de slots por título, cada um com nome e um conjunto de MODs |
+| `mods` | lista de MODs no formato da seção 9, até o teto da seção 9 |
 | `soma` | verificação de integridade do conteúdo |
 
-**Proposto:** formato binário de tamanho fixo, com versão e soma. Motivo: o gancho não
-pode interpretar texto, e um formato fixo é o que a bancada consegue testar exaustivamente.
-Se o celular precisar de texto, a conversão acontece no daemon, nunca no gancho.
+**Decidido:** formato binário de tamanho fixo, com versão e soma. O gancho não interpreta
+texto. A conversão para texto, se o celular precisar, acontece no daemon.
 
 **Carga inválida:** como no `dsig_carregar`, nada é trocado se o perfil não validar.
 
@@ -102,21 +107,20 @@ Se o celular precisar de texto, a conversão acontece no daemon, nunca no gancho
 **Proposto, em ordem:**
 
 1. Começar sem escalonar. O carregador entrega acesso ao payload antes do `main()`
-   (`ESTUDO.md`, seção 4). O gancho e a leitura de arquivos não precisam de elevação.
+   (`ESTUDO.md`, seção 4). O gancho, a leitura de arquivos e a escrita na memória do
+   jogo pelo mesmo mecanismo do gancho não precisam de elevação adicional.
 2. Medir se o servidor de rede abre no processo do daemon, sem elevação.
 3. Só se a rede falhar: elevar **o próprio processo**, e só o que for necessário. Nunca
    o processo do jogo.
-4. Ordem, se a elevação for necessária: elevar antes de abrir a rede, e antes de
-   qualquer tentativa de encerrar uma instância anterior. O `ESTUDO.md` registra que a
-   ordem inversa falha com EPERM e deixa os serviços presos ao contexto antigo.
-5. Não encerrar instância anterior por PID. Usar arquivo de bloqueio. Assim a elevação
-   para isso não é necessária.
+4. Ordem, se a elevação for necessária: elevar antes de abrir a rede.
+5. Não encerrar instância anterior por PID. A segunda subida pede recarga (seção 6), e
+   assim não é preciso matar nada.
 
-**A medir:** tudo acima. Nenhum desses passos foi executado no console.
+**A medir:** tudo acima.
 
 ---
 
-## 6. Celular
+## 6. Celular, e segunda subida
 
 **Decidido:** PWA escrita do zero, GPL-3.0, servida pelo daemon.
 
@@ -125,11 +129,14 @@ Se o celular precisar de texto, a conversão acontece no daemon, nunca no gancho
 - O console publica uma porta na rede local. O celular conecta pelo IP do console.
 - A conexão exige o código de pareamento, mostrado na TV, uma vez por celular.
 - A porta só aceita conexão da rede local. Nada sai para a internet.
-- A interface edita perfis e slots. Também troca de perfil ao vivo, para uso durante o
-  jogo.
+- A interface edita perfis e slots, e troca de perfil ao vivo.
 
-**A medir:** se a porta abre sem elevação (seção 5), e se a troca de perfil pelo celular
-chega ao gancho dentro de poucos quadros.
+**Decidido, segunda subida:** se o D-Sig for carregado de novo com o residente já de
+pé, a segunda instância não sobe. Ela manda à porta local um pedido de recarga e
+termina. O residente relê o perfil do slot ativo e reescreve o buffer.
+
+**A medir:** se a porta abre sem elevação, e se a troca de perfil pelo celular chega ao
+gancho dentro de poucos quadros.
 
 ---
 
@@ -137,26 +144,77 @@ chega ao gancho dentro de poucos quadros.
 
 | fase | o que entrega | onde se verifica |
 |---|---|---|
-| **3a** | Formato de perfil, serialização, validação, buffer duplo com versão | bancada no Linux, com sabotagens |
-| **3b** | Daemon: carga de perfis, slots, gravação atômica, pareamento e troca de perfil. Sem gancho | bancada e console (rede, arquivos, autoloader) |
-| **3c** | Gancho: instalação na PLT, leitura da tabela ativa, encadeamento com o PoorDS4 | console. A bancada só cobre a lógica |
+| **3a** | Modelo de MOD da seção 9, formato de perfil, serialização, validação, buffer duplo com versão. Teste do buffer com threads no Linux | bancada no Linux, com sabotagens |
+| **3b** | Daemon: identificação do jogo, carga de perfis, slots, gravação atômica, pareamento, troca de perfil, segunda subida. Sem gancho | bancada e console (rede, arquivos, autoloader) |
+| **3c** | Gancho: instalação na PLT, escrita e leitura do perfil ativo, encadeamento com o PoorDS4 | console. A bancada só cobre a lógica |
 | **3d** | Ícone e página de configuração embutida | console |
 
-A fase 3a não exige console. Por isso é a próxima a ser escrita, depois que você
-aprovar este documento.
+A fase 3a não exige console, e é a próxima a ser escrita.
 
 ---
 
-## 8. Perguntas em aberto
+## 8. Decisões tomadas sobre as perguntas em aberto
 
-1. **Identificador do jogo.** Qual API do sistema devolve o identificador do título em
-   execução, e funciona de dentro do gancho ou só do daemon?
-2. **Memória compartilhada.** O buffer duplo exige memória compartilhada entre o daemon e
-   o processo do jogo. Isso é possível no contexto de payload? Se não for, a alternativa
-   da seção 2 vale.
-3. **Início a frio pelo ícone.** O ícone precisa funcionar com o D-Sig desligado, ou basta
-   ele abrir a configuração quando o residente já está de pé?
-4. **Duas instâncias.** Um segundo carregamento do D-Sig deve substituir o primeiro, ou
-   recusar a subida?
-5. **Número de slots por título.** Quantos slots o usuário precisa? O Cronus tinha cinco
-   scripts, e o D-Sig um perfil por jogo. Isso ainda não foi definido.
+| pergunta | decisão | motivo |
+|---|---|---|
+| Identificador do jogo | O daemon identifica. O gancho não | O gancho não faz chamada de sistema. A forma exata de obter o identificador ainda é a medir |
+| Memória para o perfil | Daemon escreve na memória do jogo, com buffer duplo | Usa o mesmo mecanismo que instala o gancho (`ESTUDO.md`, seção 2). Evita memória compartilhada não verificada |
+| Ícone com o D-Sig desligado | Não inicia. Só abre a configuração | Sem residente de pé não há página para servir. O início a frio é do autoloader |
+| Segunda subida | Pede recarga e termina | Não mata processo e não precisa de elevação |
+| Quantidade de slots | Em aberto, escolhido pelo usuário | Não há teto de produto. O limite real está no perfil ativo, não no número de slots |
+
+---
+
+## 9. Modelo de MOD (proposto)
+
+Cada MOD tem cinco partes. A diferença em relação ao Cronus é que cada parte aceita
+**vários itens ao mesmo tempo**, e DELTA aceita turbo e combo, não só botão.
+
+| parte | o que define | novo nesta versão |
+|---|---|---|
+| **ALFA** (fontes) | quais entradas o MOD observa | Vários sinais simultâneos. Botões, analógicos e gatilhos na mesma lista |
+| **BETA** (condição) | a partir de quando um sinal conta como acionado | Limiar por analógico e por gatilho |
+| **GAMA** (gatilho) | o que liga e desliga o MOD | Vários gatilhos: segurar, duplo toque, sequência |
+| **DELTA** (saídas) | o que o MOD entrega | Vários destinos. Cada destino pode ser botão fixo, **turbo** (repete com período), ou **combo** (sequência de botões com tempos) |
+| **ZETA** (relações) | como o MOD se relaciona com outros | Exclusão e bloqueio, como no Cronus, mais **alternativas novas a definir** |
+
+### Regras que permanecem
+
+- **A leitura é sempre na entrada.** Um MOD não enxerga a saída de outro. Por isso a
+  ordem da tabela não muda o resultado (já verificado na bancada do Alvo 2).
+- **Conflito tem regra fixa:** quando um sinal é solto e outro é apertado no mesmo
+  botão, o aperto vence.
+- **Carga valida tudo antes de trocar.** Nada muda se o perfil não validar.
+
+### Estado que vive entre quadros
+
+Turbo e combo precisam guardar posição e tempo entre quadros. Esse estado:
+
+- fica em uma tabela de tamanho fixo, pré-alocada na carga do perfil;
+- é zerado a cada troca de perfil;
+- não é gravado em arquivo.
+
+### Tempo
+
+- O tempo de um sinal (segurar, duplo toque, duração de combo) usa o **carimbo de 64
+  bits** do pacote, em microssegundos.
+- A saída só muda a cada quadro do jogo. Então a precisão efetiva de uma sequência é de
+  um quadro. Isso é consequência do gancho e precisa ser medido no console antes de ser
+  prometido a alguém.
+
+### Custo por quadro
+
+O custo de um quadro cresce com o número de MODs e de itens por MOD. Por isso:
+
+- o teto de MODs é `DSIG_MAX_MODS`, já definido;
+- o teto de itens por MOD em cada parte ainda não foi fixado. Será fixado **depois de
+  medir** o custo, contando operações por quadro na bancada. Não será um número escolhido
+  no escuro.
+
+### Perguntas em aberto deste modelo
+
+1. **Alternativas novas de ZETA.** Você mencionou que existem. Quais são?
+2. **Condições combinadas em ALFA.** Quando vários botões estão em ALFA, a regra é "todos"
+   (como no acorde do Alvo 2) ou "qualquer um"? Pode ser as duas, por MOD?
+3. **Turbo e combo em um mesmo destino.** Um destino de DELTA pode ter turbo e combo
+   juntos, ou um por destino?
