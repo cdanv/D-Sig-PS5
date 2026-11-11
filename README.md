@@ -46,7 +46,7 @@ a segunda. A legalidade de destravar um console varia por país; informe-se sobr
 
 ## Estado
 
-| | |
+| peça | estado |
 |---|---|
 | **Roteador** | passagem pura — recebe o pacote e devolve intacto |
 | **Bancada** | 4 verificações, rodando no Linux sem PS5 |
