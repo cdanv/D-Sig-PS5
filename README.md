@@ -48,10 +48,10 @@ a segunda. A legalidade de destravar um console varia por país; informe-se sobr
 
 | peça | estado |
 |---|---|
-| **Roteador** | passagem pura — recebe o pacote e devolve intacto |
-| **Bancada** | 4 verificações, rodando no Linux sem PS5 |
+| **Roteador** | passagem, mais o primeiro MOD de botão (troca e acorde) |
+| **Bancadas** | 4 verificações da passagem e 9 do MOD, rodando no Linux sem PS5 |
 | **Ponte com a `libScePad`** | não existe ainda |
-| **Configuração** | não existe ainda |
+| **Configuração** | não existe ainda. Hoje a tabela de MODs é carregada pelo código |
 
 ```
 $ make bancada
@@ -59,9 +59,25 @@ $ make bancada
   [ok ] a saida e identica a entrada   200000 pacotes aleatorios, byte a byte
   [ok ] a entrada nao foi tocada   o roteador so le
   [ok ] a ponte foi mesmo chamada   200000 quadros, 200000 passagens
-  [ok ] ponteiro invalido e recusado, nao derruba
+  [ok ] ponteiro invalido e recusado, nao derruba   tres chamadas invalidas, tres recusas
   => bancada aberta: 4 verificacoes passaram
+  [ok ] o botao sai do lugar certo   200000 pacotes, campo buttons contra a formula da bancada
+  [ok ] so o campo buttons muda   resto da struct, enchimento incluido, igual a entrada
+  [ok ] a entrada nao foi tocada   o roteador so le
+  [ok ] o MOD disparou as vezes certas   contagem da bancada contra contagem do roteador
+  [ok ] acorde dispara so com os dois botoes   5 vetores escritos a mao
+  [ok ] a ordem da tabela nao muda a saida   200000 pacotes, tabela em ordem normal e invertida
+  [ok ] conflito: o aperto vence o solto   L1 sozinho -> CROSS; L1+CROSS -> CROSS+CIRCLE
+  [ok ] carga invalida e recusada, tabela anterior preservada   origem vazia, mais que o teto, nulo com n>0
+  [ok ] sem MOD carregado, a passagem e integral   20000 pacotes
+  => bancada do MOD aberta: todas as verificacoes passaram
 ```
+
+**O que o Alvo 2 prova, e o que não prova.** Prova que, na bancada, a troca de botão
+sai como especificado, que nenhum outro campo muda, que a ordem da tabela não importa e
+que as verificações reprovam quando o código é sabotado (9 sabotagens, todas reprovaram
+pelo motivo certo). **Não prova nada no console**: o MOD ainda não passa pela
+`libScePad`, e a bancada não mede tempo nem custo dentro do jogo.
 
 **Por que o primeiro alvo é o que não faz nada.** O payload roda *dentro do processo do
 jogo*. Um defeito aqui não faz o controle agir estranho como no Cronus — faz o jogo
@@ -79,8 +95,11 @@ make payload     # reservado para o console. Hoje só avisa que a ponte não exi
 |---|---|
 | `src/pad.h` | o `ScePadData` — a estrutura que o PS5 entrega ao jogo |
 | `src/dsig.h` | a interface do roteador. Estreita de propósito |
-| `src/passagem.c` | o roteador. Hoje só copia |
-| `ferramentas/testa_passagem.c` | a bancada |
+| `src/passagem.c` | o roteador. Copia, e aplica MOD de botão quando carregado |
+| `ferramentas/testa_passagem.c` | a bancada do Alvo 1 (passagem) |
+| `ferramentas/testa_mod.c` | a bancada do Alvo 2 (o primeiro MOD) |
+| `CLAUDE.md` | o contexto do projeto: escopo, regras, estado |
+| `docs/ESTUDO.md` | o que aprendemos lendo os payloads existentes |
 
 **A regra de arquitetura: um fonte, dois alvos.** O `src/*.c` não tem nada de PS5
 dentro dele — nem cabeçalho de SDK, nem chamada de sistema. Por isso o gcc do Linux o
@@ -100,6 +119,21 @@ As três regras que o projeto segue, trazidas inteiras do D-Sig:
 3. **A entrada é só leitura.** O roteador recebe `const`, e a bancada confere que ele
    não escreveu mesmo. No Cronus, confundir "o que entrou" com "o que vai sair" foi a
    origem de defeitos que não davam sinal.
+4. **Nenhum deslocamento dependente de firmware.** O D-Sig toca só a ABI pública da
+   `libScePad` e resolve endereços em tempo de execução. É o que permite um binário só
+   para os dois consoles de destino — PS5 FAT em 11.20 e PS5 Pro em 13.40. Recurso que
+   exija uma tabela por firmware fica de fora ou se resolve por outro caminho.
+
+## Controles
+
+DualSense e DualShock 4, por Bluetooth e por cabo — mas o D-Sig não implementa nenhum
+dos dois. Ele intercepta `scePadReadState`, que fica depois de tudo: qualquer controle
+que o sistema já entenda chega ali pronto.
+
+O DS4 não é reconhecido pelo PS5 em jogos de PS5; quem resolve isso é o
+[PoorDS4](https://github.com/ItsBlurf/PoorDS4). O D-Sig roteia o que ele entrega. Os dois
+se compõem — e disputam o mesmo ponto de gancho, o que é um requisito de desenho
+registrado em `CLAUDE.md`.
 
 ## Licença
 

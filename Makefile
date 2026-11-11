@@ -14,17 +14,21 @@ BANCADA_CC     ?= gcc
 BANCADA_CFLAGS := -std=c99 -Wall -Wextra -Werror -O2 \
                   -Werror=implicit-function-declaration
 FONTES         := src/passagem.c
-TESTES         := ferramentas/testa_passagem.c
 SAIDA          := build
 
 .PHONY: all bancada payload limpa
 all: bancada
 
-bancada: $(SAIDA)/testa_passagem
+# Cada bancada e um binario proprio. Uma reprovacao para o make na hora.
+bancada: $(SAIDA)/testa_passagem $(SAIDA)/testa_mod
 	@$(SAIDA)/testa_passagem
+	@$(SAIDA)/testa_mod
 
-$(SAIDA)/testa_passagem: $(TESTES) $(FONTES) src/dsig.h src/pad.h | $(SAIDA)
-	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ $(TESTES) $(FONTES)
+$(SAIDA)/testa_passagem: ferramentas/testa_passagem.c $(FONTES) src/dsig.h src/pad.h | $(SAIDA)
+	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_passagem.c $(FONTES)
+
+$(SAIDA)/testa_mod: ferramentas/testa_mod.c $(FONTES) src/dsig.h src/pad.h | $(SAIDA)
+	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_mod.c $(FONTES)
 
 $(SAIDA):
 	@mkdir -p $(SAIDA)
