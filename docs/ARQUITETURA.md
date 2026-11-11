@@ -223,7 +223,7 @@ O custo de um quadro cresce com o número de MODs e de itens por MOD. Por isso:
 
 ---
 
-## 10. Modelo de MOD — vigente
+## 10. Modelo de MOD — base, revisada pela seção 11
 
 Este modelo vem das decisões do autor. Substitui a seção 9. Onde o autor não definiu,
 o item aparece na lista de pendências, sem palpite.
@@ -289,3 +289,84 @@ como o acorde já verificado na bancada do Alvo 2: todas as fontes ATIVAS juntas
 6. **Repositório do Cronus.** A troca de PASSIVO precisa ser feita lá. O `CLAUDE.md` diz
    que nada daqui volta ao repositório do Cronus, e esta sessão não tem acesso de escrita
    a ele. Quem faz essa alteração, e em qual branch?
+
+---
+
+## 11. Revisão do autor: gatilhos, tempo e vocabulário
+
+Esta seção substitui o que a seção 10 dizia sobre GAMA, tempo e PASSIVO. O restante da
+seção 10 continua valendo. A referência é o D-Sig do Cronus **1.0.17**, o arquivo enviado
+pelo autor. Não verifiquei se essa versão está no GitHub.
+
+### Vocabulário
+
+| antes | agora | estado |
+|---|---|---|
+| PASSIVO | **OCULTO** | confirmado pelo autor |
+| ATIVO / OCULTO em ALFA | mantido | confirmado pelo autor |
+
+A troca de PASSIVO também precisa ser feita no Cronus, onde o termo aparece em
+`LEIAME.md` e no código. Ver pendência 7.
+
+### GAMA: lista de gatilhos, não cinco fixos
+
+Hoje o Cronus tem cinco gatilhos fixos no menu. Aqui, **cada GAMA é uma lista de gatilhos**.
+Um mesmo GAMA pode ter dois ou mais gatilhos, do mesmo tipo ou de tipos diferentes.
+
+| tipo | o que faz | variantes |
+|---|---|---|
+| **2CLK** | duplo toque dentro de uma janela | FINALIZAR / ALTERNAR |
+| **TOGGLE** | cada acionamento liga ou desliga o MOD | FINALIZAR / ALTERNAR |
+| **HOLD_AT** | segurar o botão **até** um tempo | FINALIZAR / ALTERNAR |
+| **HOLD_AP** | segurar o botão **após** um tempo | FINALIZAR / ALTERNAR |
+| **AFTER** | disparar um tempo depois de um evento | FINALIZAR / ALTERNAR |
+| **BLOK** | bloqueia o MOD por um botão | a confirmar |
+
+**Leitura do que o Cronus já faz (a confirmar com o autor):**
+
+- HOLD com modo ATÉ e modo APÓS existe no Cronus (`MODO: ATE / APOS`). HOLD_AT e HOLD_AP
+  seguem esse modo, separados em dois tipos.
+- O modo **FINALIZA** dos gatilhos existe no Cronus e só desliga. Leio FINALIZAR como esse
+  modo, e ALTERNAR como o liga e desliga normal.
+
+### Tempo: uma tabela única
+
+O Cronus já segue a regra de que todo tempo é um `define` na seção 2, com o nome do que
+mede. Aqui a mesma regra vira **uma tabela de tempos no perfil**, usada por todo item que
+tem ajuste de tempo.
+
+| item que usa tempo | parte | referência no Cronus |
+|---|---|---|
+| janela do 2CLK | GAMA | `TIME_SHORT_PRESS` = 250 ms |
+| tempo do HOLD_AT | GAMA | `TIME_HOLD` = 500 ms (confirmar se é o mesmo uso) |
+| tempo do HOLD_AP | GAMA | a definir |
+| tempo do AFTER | GAMA | a definir |
+| delay | ALFA | `SHIFT_DELAY` (valor a confirmar) |
+| duração, período de turbo e intervalo de combo | DELTA | tabelas `TLAT` e `TPASSO` |
+
+**Proposta de leitura, a confirmar:** a tabela é um **catálogo**. Cada entrada tem nome,
+unidade e valor. Cada MOD aponta para uma entrada. Assim, mudar uma entrada muda todos os
+itens que a usam. A alternativa é um valor fixo por item, sem compartilhamento.
+
+**Unidade proposta:** milissegundos, inteiro. A precisão efetiva segue a seção 10, "Tempo":
+um quadro.
+
+### Consequências no desenho
+
+- O perfil ganha a tabela de tempos. O gancho lê a entrada pelo índice, em tempo constante.
+- Um MOD passa a ter listas: fontes em ALFA, gatilhos em GAMA e respostas em DELTA. O teto
+  de cada lista continua **a medir**.
+- O modelo do Alvo 2 (`DsigMod`) continua sendo um caso particular, sem GAMA em lista,
+  sem tempo e sem OCULTO.
+
+### Pendências desta revisão
+
+1. **FINALIZAR e ALTERNAR** valem para os seis tipos, inclusive BLOK?
+2. **BLOK.** O que exatamente ele faz? Liga e desliga o MOD, ou só bloqueia enquanto
+   estiver pressionado?
+3. **Tabela de tempos.** Catálogo com referência por MOD, ou valor fixo por item?
+4. **Valor de referência do HOLD_AT** é o mesmo `TIME_HOLD` de 500 ms?
+5. **Teto de gatilhos por GAMA.** A definir depois de medir o custo por quadro.
+6. **Turbo e combo no mesmo destino** (pendência 5 da seção 10): continua em aberto.
+7. **Cronus.** PASSIVO → OCULTO precisa ser feito no repositório do Cronus. Você faz, ou me
+   dá acesso de escrita e confirma a branch?
