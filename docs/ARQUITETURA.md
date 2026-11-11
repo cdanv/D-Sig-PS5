@@ -165,7 +165,9 @@ A fase 3a não exige console, e é a próxima a ser escrita.
 
 ---
 
-## 9. Modelo de MOD (proposto)
+## 9. Modelo de MOD — versão anterior, substituída pela seção 10
+
+*Esta seção fica como registro. O modelo vigente é o da seção 10.*
 
 Cada MOD tem cinco partes. A diferença em relação ao Cronus é que cada parte aceita
 **vários itens ao mesmo tempo**, e DELTA aceita turbo e combo, não só botão.
@@ -218,3 +220,72 @@ O custo de um quadro cresce com o número de MODs e de itens por MOD. Por isso:
    (como no acorde do Alvo 2) ou "qualquer um"? Pode ser as duas, por MOD?
 3. **Turbo e combo em um mesmo destino.** Um destino de DELTA pode ter turbo e combo
    juntos, ou um por destino?
+
+---
+
+## 10. Modelo de MOD — vigente
+
+Este modelo vem das decisões do autor. Substitui a seção 9. Onde o autor não definiu,
+o item aparece na lista de pendências, sem palpite.
+
+### Vocabulário
+
+- **PASSIVO sai do vocabulário.** Não há substituto definido ainda (pendência 2).
+- **ATIVO** e **OCULTO** passam a ser os estados de cada fonte em ALFA.
+- O Cronus usa o termo PASSIVO. A troca também precisa acontecer lá (pendência 6).
+
+### ALFA — fontes e montagem da sequência
+
+| item | regra |
+|---|---|
+| fontes | todas as entradas do controle, ao mesmo tempo: botões, eixos e gatilhos |
+| estado de cada fonte | **ATIVO** ou **OCULTO** (significado a confirmar, pendência 1) |
+| acionamento | **sequencial** ou **simultâneo**, escolhido por ALFA |
+| delay | continua em ALFA |
+| BETA (eixos e gatilhos) | limiar continua, agora com **INV** (inverter) |
+
+ALFA é onde a sequência é montada. Quando o acionamento é simultâneo, o MOD se comporta
+como o acorde já verificado na bancada do Alvo 2: todas as fontes ATIVAS juntas.
+
+### GAMA — gatilho
+
+- As **5 situações** do GAMA aceitam qualquer botão, eixo ou gatilho.
+- Lista exata das 5 situações: a confirmar, pendência 3.
+
+### DELTA — saída
+
+- Cada resposta aceita qualquer botão, eixo ou gatilho.
+- Cada resposta também pode ser uma **sequência**.
+
+### ZETA — relações
+
+- As alternativas são as mesmas do Cronus.
+- No **EXCL**, o autor escolhe o momento da exclusão:
+  - no instante em que o DELTA **sobe**; ou
+  - junto com a **finalização** do DELTA.
+- Isso responde à pergunta 1 da seção 9: as alternativas novas de ZETA são o momento
+  do EXCL.
+
+### Consequências no desenho
+
+- O `DsigMod` atual (origem e destino com máscara) é um subconjunto do modelo vigente.
+  A bancada do Alvo 2 continua válida para o caso simples, mas o formato do perfil
+  muda na fase 3a.
+- Sequência e delay precisam de estado entre quadros, na tabela pré-alocada da seção 9.
+- O teto de itens por MOD continua **a medir**, e agora cresce com as cinco partes.
+- Fontes ATIVAS e OCULTAS e a ordem sequencial precisam de regra de precedência escrita
+  antes da implementação.
+
+### Pendências
+
+1. **ATIVO e OCULTO.** Proposta de leitura, para o autor confirmar: uma fonte **ATIVO**
+   participa do MOD. Uma fonte **OCULTO** é retirada da saída que o jogo recebe enquanto
+   o MOD está ativo. Está certo?
+2. **Substituto de PASSIVO.** Qual termo entra no lugar?
+3. **As 5 situações do GAMA.** Liste quais são.
+4. **Combinação em ALFA.** O modo sequencial e o simultâneo cobrem a regra "todos". Falta
+   definir a regra "qualquer um", ou ela não existe?
+5. **Turbo e combo no mesmo destino** (pergunta 3 da seção 9): continua em aberto.
+6. **Repositório do Cronus.** A troca de PASSIVO precisa ser feita lá. O `CLAUDE.md` diz
+   que nada daqui volta ao repositório do Cronus, e esta sessão não tem acesso de escrita
+   a ele. Quem faz essa alteração, e em qual branch?
