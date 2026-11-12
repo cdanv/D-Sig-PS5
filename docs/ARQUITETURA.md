@@ -981,3 +981,43 @@ STATIC para eixo.
   DELAY, e do que FINALIZA faz quando a fonte é a própria aba. Pendente de decisão.
 - **Gatilho que reinicia a sequência.** A GAMA saiu, então não há mais um gatilho externo.
   Pendente: qual aba reinicia a SEQUÊNCIA, se alguma.
+
+---
+
+## 19. ALFA v4 implementada na bancada
+
+### 19.1 O que foi feito
+
+| peça | arquivo | bancada | sabotagens |
+|---|---|---|---|
+| ALFA v4: seis abas, 5 entradas por aba, teto de 30 | `src/alfa.c`, `src/alfa.h` | `ferramentas/testa_alfa.c` | 7, todas pelo motivo certo |
+
+A v4 **substitui** a v3 (QUALQUER, SIMULTÂNEO e SEQUÊNCIA como modos de MOD). Os modos
+viraram abas, e o E ou OU é escolhido por aba, como manda a seção 18.8.
+
+### 19.2 Como cada aba se comporta
+
+- **LIVRE:** OU ou E. Em E, todas as entradas precisam cair na janela de 50 ms.
+- **SEQUÊNCIA:** ordem obrigatória. Espera por passo, do catálogo. Pulso ao concluir.
+  Espera estourada e passo errado reiniciam.
+- **2CLK:** OU por botão. Pulso no segundo clique, dentro de 300 ms (fixo). Cada botão tem
+  o seu pendente: o exemplo de L1 e R1 da seção 18.6 está na bancada, com instantes exatos.
+- **HOLD_AP:** pulso uma vez por pressão, quando a pressão passa do tempo do catálogo.
+- **HOLD_AT:** pulso na soltura, só se a pressão não passou do tempo (toque curto).
+- **BLOCK:** nível. Suspende enquanto a entrada (OU) ou todas (E) estiverem apertadas.
+- **OCULTO:** suprime os botões da aba, o tempo todo.
+
+### 19.3 Decisões que não eram do autor, marcadas para confirmação
+
+1. **HOLD_AP e HOLD_AT, em E:** a janela de 50 ms vale para o conjunto de pulsos, do mesmo
+   jeito que vale para o LIVRE.
+2. **BLOCK em E:** o bloqueio vale enquanto todas as entradas estiverem apertadas, dentro da
+   janela.
+3. **Repetir uma fonte** é recusado em SEQUÊNCIA e em E, mas aceito em OU.
+
+### 19.4 Ainda fora desta fatia
+
+- **ALTERNA, FINALIZA e DELAY** nas abas (seção 18.9).
+- **Gatilho que reinicia a SEQUÊNCIA** (seção 18.9).
+- **Teto de 5 por aba e de 30 no total** são constantes provisórias. O custo por quadro no
+  PS5 não foi medido.

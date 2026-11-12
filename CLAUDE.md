@@ -70,7 +70,7 @@ e seguir com o que está dentro — não inventar um jeito de atender.
 |---|---|
 | **Alvo 1 — passagem pura** | **feito.** `src/passagem.c`, 4 verificações, 4 sabotagens |
 | **Alvo 2 — o primeiro MOD de verdade** | **feito na bancada.** Troca de botão e acorde. `src/passagem.c`, `ferramentas/testa_mod.c`, 9 sabotagens |
-| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a em andamento:** tabela de tempo, buffer duplo e ALFA do modelo v3 feitos na bancada. Falta GAMA, DELTA, ZETA e o formato binário do perfil. Fases 3b a 3d precisam de console |
+| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a em andamento:** tabela de tempo, buffer duplo e ALFA v4 (seis abas) feitos na bancada. Falta ALTERNA/FINALIZA/DELAY nas abas, DELTA, ZETA e o formato binário do perfil. Fases 3b a 3d precisam de console |
 | Alvo 4 — ícone na tela inicial | caminho conhecido e barato (ver `docs/ESTUDO.md`) |
 
 ```
@@ -81,8 +81,8 @@ ferramentas/testa_passagem.c  a bancada do Alvo 1 (passagem)
 ferramentas/testa_mod.c       a bancada do Alvo 2 (o primeiro MOD)
 src/tempo.c, src/tempo.h      a tabela única de tempo: 67 valores, por índice (fase 3a)
 src/perfil.c, src/perfil.h    o buffer duplo com versão, com escritor e leitor (fase 3a)
-src/alfa.c, src/alfa.h        a ALFA do modelo v3: fonte, BETA, QUALQUER, SIMULTÂNEO, SEQUÊNCIA (fase 3a)
-ferramentas/testa_alfa.c      a bancada da ALFA, com 21 verificações
+src/alfa.c, src/alfa.h        a ALFA v4: seis abas (LIVRE, SEQUÊNCIA, 2CLK, HOLD_AT, HOLD_AP, BLOCK) (fase 3a)
+ferramentas/testa_alfa.c      a bancada da ALFA v4, com 24 verificações
 ferramentas/testa_tempo.c     a bancada da tabela de tempo
 ferramentas/testa_perfil.c    a bancada do buffer duplo, com duas threads
 docs/ESTUDO.md                o que aprendemos lendo PoorDS4, etaHEN, ProsperoMgr, pldmgr
