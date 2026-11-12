@@ -1432,3 +1432,26 @@ no console enquanto se aperta cada um, e isso depende do Alvo 3.
 **Conferência com o Zen Studio:** não foi feita. O Zen Studio é um programa de Windows ligado ao
 Cronus físico, e o monitor dele mostra o mapeamento do Cronus, não o `ScePadData` do PS5. Ver um
 valor ali não confirmaria o bit do PS5.
+
+### 24.2 Testes no Zen Studio (monitor do PS5 no Cronus)
+
+Feitos pelo autor, com o Cronus conectado ao DualSense. Lidos na tela de entrada do PS5.
+
+| teste | resultado |
+|---|---|
+| PS e SHARE apertados | vão direto para **100** (não para 1). Botões são 0 ou 100, como no manual |
+| Dedo arrastado e solto no touchpad | FINGER1X/Y acompanham a posição e **ficam no último valor** depois de soltar. Confirma o "trava no último toque" |
+| FINGER1 com dedo sobre o pad | vai para **100**; sem dedo, volta para **0**. Confirma FINGER1 e FINGER2 como "há dedo sobre o pad" |
+
+**Ressalva importante:** o que o monitor mostra é a leitura do Cronus, com as entradas que o
+Zen Studio rotula para o PS5. Ele confirma a existência e o comportamento no Cronus. Não confirma
+que o `ScePadData` do PS5 traz esses bits, nem os valores exatos de PS e SHARE nesse campo. Isso
+continua dependendo do console (Alvo 3).
+
+**Correção de uma leitura minha:** eu tinha escrito "1" para os botões digitais. Pelo teste, o
+valor é 100, como no manual do Cronus (botão é 0 ou 100). A rede e a ALFA tratam botão como bit,
+então o modelo não muda.
+
+**Lista final de fontes que o monitor mostra para o PS5** (além das já conferidas): acelerômetro
+ACCX, ACCY, ACCZ e giroscópio GYROX, GYROY, GYROZ. Eles não estão na sua lista. Decidir se entram
+no modelo é sua escolha.
