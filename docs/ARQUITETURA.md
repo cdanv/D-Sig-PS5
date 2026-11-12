@@ -590,3 +590,65 @@ OU, e eixo usa intensidade máxima (ver `REFERENCIA_CRONUS.md`, seção 3.3).
   só pausa (seção 14.2).
 
 Com A e B respondidas, a fase 3a fica sem bloqueio de modelo.
+
+---
+
+## 15. Decisões do autor: COMBO, TURBO simplificado e EXCL com memória
+
+Fecha a pendência A e a pendência B da seção 14.
+
+### 15.1 Tipos de DELTA (substitui a seção 14.3)
+
+| tipo | o que é | origem |
+|---|---|---|
+| DIRECT | acompanha a fonte | manual, seção 14 |
+| STATIC | trava o destino | manual, seção 14 |
+| **TURBO** | repete uma sequência curta, com menos passos que hoje | manual, seção 14, **simplificado** |
+| **COMBO** | sequência de até **10** passos. É o TURBO atual, renomeado e ampliado | manual, seção 14, **renomeado** |
+
+- **COMBO:** até 10 passos, cada um com destino e tempo. Vem do TURBO atual, que tem até 4.
+- **TURBO:** continua repetindo, mas com menos passos que o COMBO. O número exato é a
+  pendência 1 abaixo.
+
+**Vocabulário.** Neste documento, "passo" é cada etapa de uma sequência. O manual usa
+"sequência" para uma volta completa do conjunto de passos, e o COMBO não tem essa leitura.
+Por isso, de agora em diante, o número máximo de passos do COMBO é **10 passos**, e não
+"10 sequências".
+
+### 15.2 TURBO desligado e finalizadores (confirmado)
+
+- **BLOQ** suspende e pausa: a máquina congela e retoma (seção 14.2).
+- **Finalizadores** encerram: gatilho em FINALIZA, e a relação EXCL.
+
+### 15.3 EXCL com memória (muda o manual)
+
+O manual diz que EXCL é disparo único e que voltar é um começo novo. O autor acrescenta
+uma regra de rearme:
+
+- **Quando o EXCL dispara**, o MOD fica finalizado.
+- **Ele só volta** quando um **novo acionamento** de subida acontece em um MOD ligado por
+  ASSOC: na fonte, no gatilho, ou na resposta. Isso é o **rearme**.
+
+Isso é uma mudança de modelo, e não só de nome: o EXCL passa a ter um estado que sobrevive
+entre quadros, e que é desfeito por um evento de outro MOD.
+
+### 15.4 Os dois momentos do EXCL: nomes propostos
+
+Você pediu nomes para as duas opções:
+
+| opção | significado | nome sugerido |
+|---|---|---|
+| o EXCL dispara quando a resposta **sobe** | o alvo começa | **SUBIDA** |
+| o EXCL dispara quando a resposta **finaliza** | o alvo termina | **FIM** |
+
+**Por que esses nomes.** Usam o mesmo vocabulário de "subir" e "finalizar" da seção 13.3.
+"FINALIZA" não serve, porque já é o nome do modo de gatilho (só desliga). Usar a mesma
+palavra nos dois casos confundiria o usuário e o código. "FIM" é curto e cabe na tela
+do OLED.
+
+### 15.5 Pendências que restam
+
+1. **Passos do TURBO simplificado.** Quantos passos? O autor disse "menos", sem número.
+2. **Confirmar os nomes SUBIDA e FIM** para as opções do EXCL, ou escolher outros.
+3. **Confirmar o rearme:** um novo acionamento de subida em qualquer MOD ligado por ASSOC
+   rearma o EXCL (fonte, gatilho ou resposta). Confirmar se "resposta" conta.
