@@ -383,3 +383,53 @@ um quadro.
 6. **Turbo e combo no mesmo destino** (pendência 5 da seção 10): continua em aberto.
 7. **Cronus.** PASSIVO → OCULTO precisa ser feito no repositório do Cronus. Você faz, ou me
    dá acesso de escrita e confirma a branch?
+
+---
+
+## 12. Decisões do autor: estado de cada item e sequência em ALFA
+
+Esta seção responde as pendências 1 a 3 da seção 11 e fixa o que é sequência em ALFA.
+Onde o autor não definiu, o item aparece como pergunta, sem palpite.
+
+### Estados e gatilhos (confirmados)
+
+| item | decisão |
+|---|---|
+| PASSIVO | é **OCULTO**. O mesmo comportamento: a fonte e os gatilhos são suprimidos do jogo |
+| BLOK | **não** ganha FINALIZAR nem ALTERNAR. Continua suspendendo enquanto segurado. A mudança é só poder escolher vários botões, eixos ou gatilhos |
+
+### ALFA: sequência
+
+A sequência é definida pela opção **Sequencial: SIM / NÃO**, por MOD.
+
+**Sequencial = NÃO.** As fontes valem juntas, como o acorde do Alvo 2.
+
+**Sequencial = SIM.**
+
+| item | regra |
+|---|---|
+| ordem | a ordem em que o usuário coloca as fontes é a ordem de acionamento |
+| resposta | DELTA só responde **depois que a sequência termina** |
+| espera entre passos | cada passo pode ter um tempo de espera até o próximo. O valor vem da tabela única de tempo |
+| ATIVO / OCULTO | vale para **a sequência inteira**, não por passo |
+| DELAY | conta a partir do **fim da sequência**, e não do início |
+
+**Relação com o DELAY do Cronus.** No Cronus, o DELAY atrasa o início da resposta, e
+fica amarrado à RESPOSTA. Aqui ele continua em ALFA, como o autor pediu, e passa a contar
+do fim da sequência. Para MOD sem sequência, o comportamento é o do Cronus.
+
+**Relação com a seção 9 (estado entre quadros).** A sequência é um índice de passo e um
+tempo de espera, guardados na tabela pré-alocada. Não tem relógio próprio. Isso segue a
+lição do combo do Cronus, seção 3.1 de `REFERENCIA_CRONUS.md`.
+
+### Perguntas em aberto sobre sequência
+
+1. **Espera entre passos é máxima?** Se o usuário demora mais que o tempo de espera, a
+   sequência reinicia, ou fica esperando?
+2. **Passo errado.** Se o usuário pressiona uma fonte fora de ordem, a sequência reinicia,
+   ignora o botão, ou volta um passo?
+3. **Gatilho durante a sequência.** Se o gatilho for acionado de novo com a sequência em
+   andamento, a sequência reinicia, ou o acionamento é ignorado? O Cronus ignora em
+   silêncio um combo que já está rodando, e o manual aponta isso como bug (seção 29).
+4. **Sequência com OCULTO.** Enquanto a sequência roda, os botões dos passos somem do jogo?
+   Ou só depois que ela termina?
