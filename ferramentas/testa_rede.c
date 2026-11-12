@@ -463,7 +463,58 @@ static void testes_eixos_sinal(void) {
           "manual, 10.1 e 6.1");
 }
 
+/* ------------------------------------------------ orfao e sinal (achado 2) */
+/* Fonte de eixo com LX = -80 (sinal -1, intensidade 80); orfao no RY (13). Medido no simulador
+ * do Cronus (achado 2): DIRECT orfao preserva o sinal e a intensidade; STATIC orfao vale 100, +. */
+static void orfao_no_ry(RedeCfg *r, uint8_t tipo) {
+    memset(r, 0, sizeof *r);
+    r->n = 2;
+    todos_d1(r);
+    mod_eixo(&r->mod[0], EIX_LX, D_LX);
+    mod_orfao(&r->mod[1], tipo, 0);
+    r->mod[1].delta.dest[0] = 13;                      /* RY */
+    r->z[1].assoc = BIT(0);
+}
+static void testes_orfao_sinal(void) {
+    RedeCfg r; RedeEstado e; RedeSaida s; Entrada in; int ok = 1; uint64_t f;
+    orfao_no_ry(&r, DELTA_DIRECT);
+    rede_iniciar(&e); e.dom.atual = 1;
+    for (f = 0; f <= 3; f++) {
+        memset(&in, 0, sizeof in); in.eixo[EIX_LX] = -80; in.t_us = f * 10000u;
+        rede_avaliar(&r, &e, &in, &s);
+    }
+    if (s.mod[1].intensidade != 80 || s.mod[1].sinal != -1 || s.eixo[3] != -80) ok = 0;
+    passo("orfao DIRECT: preserva o sinal e a intensidade do alvo (RY = -80)", ok,
+          "fonte LX -80 -> orfao RY -80");
+
+    ok = 1;
+    orfao_no_ry(&r, DELTA_STATIC);
+    rede_iniciar(&e); e.dom.atual = 1;
+    for (f = 0; f <= 3; f++) {
+        memset(&in, 0, sizeof in); in.eixo[EIX_LX] = -80; in.t_us = f * 10000u;
+        rede_avaliar(&r, &e, &in, &s);
+    }
+    if (s.mod[1].intensidade != 100 || s.mod[1].sinal != 1 || s.eixo[3] != 100) ok = 0;
+    passo("orfao STATIC: escreve 100 fixo, +, sem herdar a intensidade (RY = 100)", ok,
+          "fonte LX -80 -> orfao STATIC RY 100");
+
+    /* TURBO em eixo: escreve 100, +, sem herdar (achado 2) */
+    ok = 1;
+    orfao_no_ry(&r, DELTA_TURBO);
+    r.mod[1].delta.tempo[0] = idx_ms(100);
+    r.mod[1].delta.ciclos = DELTA_CICLOS_ATIVO;
+    rede_iniciar(&e); e.dom.atual = 1;
+    for (f = 0; f <= 3; f++) {
+        memset(&in, 0, sizeof in); in.eixo[EIX_LX] = -80; in.t_us = f * 10000u;
+        rede_avaliar(&r, &e, &in, &s);
+    }
+    if (s.mod[1].intensidade != 100 || s.mod[1].sinal != 1 || s.eixo[3] != 100) ok = 0;
+    passo("orfao TURBO em eixo: escreve 100, +, sem herdar (RY = 100)", ok,
+          "fonte LX -80 -> orfao TURBO RY 100 na fase ligada");
+}
+
 int main(void) {
+    testes_orfao_sinal();
     testes_eixos_sinal();
     testes_toque_rede();
     testes_eixos();

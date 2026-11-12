@@ -32,6 +32,7 @@ typedef struct {
     uint8_t intensidade;           /* 0..100: com que intensidade o MOD responde neste quadro */
     int8_t sinal;                  /* -1 ou +1: o lado com que o MOD responde (0 se nao responde) */
     uint8_t fonte_intens;          /* 0..100: a intensidade da propria fonte (0 se e orfao) */
+    int8_t fonte_lado;             /* -1 ou +1: o lado da propria fonte (0 se e orfao) */
 } ModSaida;
 
 /* 0 se o MOD e valido, -1 se nao */
@@ -48,7 +49,8 @@ int modelo_validar_adotado(const ModCfg *m);
  * da ASSOC; `intens_alvo` e a intensidade herdada da cadeia (0 = sem fonte, autoencerra). Para um MOD
  * com gatilho que liga, os dois nao mudam nada e podem ser 0. */
 void modelo_avaliar_adotado(const ModCfg *m, ModEstado *e, const Entrada *in, uint8_t adota,
-                            uint8_t intens_alvo, uint8_t congela, uint8_t encerra, ModSaida *out);
+                            uint8_t intens_alvo, int8_t lado_alvo, uint8_t congela, uint8_t encerra,
+                            ModSaida *out);
 
 /* MOD travado por dominio: nao detecta nem responde, mas as abas OCULTO continuam
  * suprimindo os seus botoes (manual, secao 25.1). */

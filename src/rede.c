@@ -32,16 +32,22 @@ static uint32_t botoes_dos_destinos(uint32_t destinos) {
 
 /* A intensidade que um orfao herda: a do primeiro alvo da ASSOC que tem fonte na zona, subindo a
  * cadeia ate REDE_PROF_MAX niveis. Usa o quadro anterior (defasagem de um quadro, como na ZETA). */
-static uint8_t herda(const RedeCfg *r, const RedeEstado *e, unsigned i, uint8_t *prof_out) {
+static uint8_t herda(const RedeCfg *r, const RedeEstado *e, unsigned i, uint8_t *prof_out,
+                     int8_t *lado_out) {
     unsigned j;
     for (j = 0; j < r->n; j++) {
         unsigned d;
         if (!((r->z[i].assoc >> j) & 1u)) continue;
         if (e->vale[j] == 0) continue;
         d = (unsigned)e->prof[j] + 1u;
-        if (d <= REDE_PROF_MAX) { *prof_out = (uint8_t)d; return e->vale[j]; }
+        if (d <= REDE_PROF_MAX) {
+            *prof_out = (uint8_t)d;
+            *lado_out = e->lado[j];
+            return e->vale[j];
+        }
     }
     *prof_out = 0;
+    *lado_out = 0;
     return 0;
 }
 
@@ -94,10 +100,12 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
     uint32_t resp_agora = 0;
     uint32_t resp = e->resp, sobe = e->sobe, cai = e->cai;
     uint8_t vale_n[REDE_MAX], prof_n[REDE_MAX];
+    int8_t lado_n[REDE_MAX];
 
     memset(out, 0, sizeof *out);
     memset(vale_n, 0, sizeof vale_n);
     memset(prof_n, 0, sizeof prof_n);
+    memset(lado_n, 0, sizeof lado_n);
 
     /* dominio: a troca reinicia o estado de todos os MODs e os trava ate a fonte repousar */
     dominio_avaliar(&e->dom, in, &dso);
@@ -147,16 +155,19 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
              * do alvo nao o desliga: ele so fica silenciado pela ASSOC, com o estado preservado. */
             uint8_t adota = (z->assoc & sobe) ? 1 : 0;
             uint8_t prof_h = 0;
-            uint8_t herd = herda(r, e, i, &prof_h);
+            int8_t lado_h = 0;
+            uint8_t herd = herda(r, e, i, &prof_h, &lado_h);
             /* sem fonte na cadeia, o valor e zero, e o orfao se encerra (manual, 7.6) */
-            modelo_avaliar_adotado(&r->mod[i], &e->mod[i], in, adota, herd, congela,
+            modelo_avaliar_adotado(&r->mod[i], &e->mod[i], in, adota, herd, lado_h, congela,
                                    (uint8_t)(encerra || herd == 0), &out->mod[i]);
             vale_n[i] = herd;
             prof_n[i] = prof_h;
+            lado_n[i] = lado_h;
         } else {
             modelo_avaliar_ext(&r->mod[i], &e->mod[i], in, congela, encerra, &out->mod[i]);
             vale_n[i] = out->mod[i].fonte_intens;
             prof_n[i] = 0;
+            lado_n[i] = out->mod[i].fonte_lado;
         }
         if (e->mod[i].delta.ligado && !encerra) resp_agora |= 1u << i;
     }
@@ -169,6 +180,7 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
     /* a intensidade oferecida no proximo quadro (cadeia dos orfaos) */
     memcpy(e->vale, vale_n, sizeof vale_n);
     memcpy(e->prof, prof_n, sizeof prof_n);
+    memcpy(e->lado, lado_n, sizeof lado_n);
 
     /* eixos (manual, 26.1): o de maior intensidade vence; sem escrita, o eixo passa cru, e um
      * MOD que suprime o eixo o zera, a menos que outro MOD o escreva (destino vence supressao) */

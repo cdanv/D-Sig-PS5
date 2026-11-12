@@ -1714,3 +1714,65 @@ são 14 a 17 (2.2); a intensidade do órfão vem do alvo (ZETA 7.4).
 **Verificado nesta passada:** ALFA (sinal e DIR no touch), DELTA (sinal no DIRECT), MOD (STATIC de
 eixo: não trava, 100 × MULT com o lado), rede (acumulador com sinal, com empate). 5 sabotagens,
 todas reprovaram pelo motivo certo.
+
+---
+
+## 32. Achados do simulador do Cronus (D-Sig 1.0.17): o que vale para o PS5
+
+Fonte: `D-Sig_Achados_1.0.17.pdf`, cinco achados medidos no simulador do próprio projeto do
+Cronus (script GPC publicado, versão 1.0.17). Os números são saída literal de execução do
+documento. **Não medi nada novo no PS5.** O que se aplica é o que o desenho do PS5 precisa.
+
+**Achado 1: FINALIZA é inerte num MOD que tem ALFA. Decisão em aberto, não aplicada.**
+No Cronus, um MOD com fonte e só gatilhos em FINALIZA nunca entra no estado "ligado", e o
+FINALIZA não tira nada, porque a ação de finalizar executa o oposto. O documento propõe que
+FINALIZA *conte* para decidir se o MOD obedece ao próprio estado.
+- No PS5 o caso é outro: um MOD com fonte e só FINALIZA **não é órfão por padrão**; `rede_validar`
+  o recusa sem ASSOC (`modelo_sem_ligar`). Isso é uma escolha minha, não a do Cronus.
+- Não implementado. Três caminhos: (a) manter a recusa; (b) nascer ligado e FINALIZA desligar
+  (a regra "com fonte, o MOD nasce ligado" do manual da ZETA, seção 16); (c) a proposta do documento.
+  Preciso de uma decisão sua.
+
+**Achado 2: o sentinela −1 colide, e a temporária é destruída. Aplicado no PS5.**
+O órfão adotado tinha o mesmo tipo de problema: o valor de "não achei" era −1, que também é um
+valor de saída legítimo. No PS5 o sentinela não existe: a herança devolve zero (sem fonte, e zero não
+é intensidade válida) e o sinal vem num campo separado (`lado`). O que o documento mede sobre o
+órfão, e que o desenho agora segue:
+
+| tipo do órfão | sinal | intensidade herdada? |
+|---|---|---|
+| DIRECT → eixo | preservado | sim |
+| STATIC | +, sempre | não: 100 fixo |
+| TURBO → eixo | +, sempre | não: 100 fixo |
+| TURBO → digital | descartado (módulo) | sim |
+
+O caso do TURBO → eixo é o que o documento chama de "nunca vai ao negativo": a fonte do órfão é
+zero, então o modo ABSF decide o polo, e com `raw` sempre zero a condição nunca é verdadeira.
+No PS5 não há modo ABSF ainda (ver seção 31, pendência 2); o sinal + é o que o desenho escreve.
+
+**Achado 3: THR_IN = 0 prende o MOD no portão. Aplicado no PS5.**
+No Cronus, com THR_IN = 0 a zona ficava ativa em repouso, e o portão de entrada nunca liberava.
+O mesmo defeito existia no nosso código: com THR_IN = 0, uma fonte de eixo parada estava "dentro da
+zona" (verificado: `ativa=1` com o analógico em zero). Um DIRECT escreveria zero no eixo parado e
+apagaria o movimento do jogador. **Correção:** sem movimento (módulo zero) a fonte fica fora da
+zona; qualquer movimento conta. O caso invertido (THR_IN > THR_OUT), que o manual manda contar em
+repouso, continua como está.
+- **Nota sobre o documento:** o trecho proposto no achado, `if (Pipe_Thr > 0 && Work_N < Pipe_Thr)
+  return 0;`, sozinho devolve 1 em repouso com THR_IN = 0. A intenção ("zona inativa em repouso") só
+  se realiza com o restante da função, que não está no PDF. A correção aplicada é a minha, feita a
+  partir da intenção do achado, e está verificada na bancada.
+
+**Achado 4: o OLED esconde THR_IN e THR_OUT das fontes de touch. Não se aplica ao PS5 por ora.**
+É um defeito da interface de configuração do Cronus. O PS5 ainda não tem interface. A lição fica
+para quando houver: a tela de configuração tem de mostrar os limiares de todas as fontes que o motor
+aplica, incluindo o touch.
+
+**Achado 5: faixa errada no aviso de STATIC em eixo. Não se aplica ao PS5 por ora.**
+Erro de índice no aviso do app do Cronus (`index.html`): a faixa 12..15 cobria UP como se fosse eixo.
+Não afeta o script nem a EEPROM. A lição fica para a interface futura: avisos que dependem de faixas
+de índice precisam de teste próprio, como qualquer outra verificação.
+
+**Verificado nesta passada:** THR_IN = 0 (ALFA, com verificação e sabotagens T4 e T5); órfão DIRECT
+com sinal, órfão STATIC em 100, órfão TURBO em eixo em 100 (rede, com sabotagens U1 a U3).
+**Não verificado:** o COMBO órfão com destinos mistos (a regra usa o primeiro destino); o achado 1,
+que é decisão.

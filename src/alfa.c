@@ -40,7 +40,10 @@ static int beta_conta(const Beta *b, int32_t v, int dir_vale) {
     if (b->thr_out != 0 && b->thr_in > b->thr_out) {
         zona = (m < (int32_t)b->thr_out) || (m > (int32_t)b->thr_in);
     } else {
-        zona = (m >= (int32_t)b->thr_in) &&
+        /* THR_IN = 0 (sem piso) nao torna a zona ativa em repouso: sem movimento, m = 0 nao esta
+         * na zona. O caso invertido (THR_IN > THR_OUT) continua contando em repouso, de proposito
+         * (manual do EIXOS, 4.1). Achado 3 do simulador do Cronus. */
+        zona = (m >= (int32_t)b->thr_in) && (m > 0) &&
                (b->thr_out == 0 || m <= (int32_t)b->thr_out);
     }
     conta = dir_ok && (b->inv ? !zona : zona);

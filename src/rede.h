@@ -35,6 +35,7 @@ typedef struct {
     uint32_t cai;           /* MODs cuja resposta caiu no quadro anterior */
     uint8_t vale[REDE_MAX]; /* a intensidade que cada MOD oferece a um orfao (cadeia), quadro anterior */
     uint8_t prof[REDE_MAX]; /* a profundidade dessa intensidade: 0 = fonte propria, 1..4 = por orfaos */
+    int8_t lado[REDE_MAX];  /* o sinal dessa intensidade, com o mesmo criterio */
     Dominio dom;            /* o dominio ligado */
     uint32_t trava;         /* MODs travados depois de uma troca de dominio */
 } RedeEstado;

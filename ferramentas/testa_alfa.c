@@ -644,7 +644,47 @@ static void testes_sinal_e_touch(void) {
           "LX DIR POS com -60 nao conta; F1X com -60 conta, lado -1; LX +70 lado +1");
 }
 
+/* ------------------------------------------------------- THR_IN = 0 e invertido */
+/* THR_IN = 0 (sem piso): sem movimento a fonte fica FORA da zona; qualquer movimento conta
+ * (achado 3 do simulador do Cronus). O caso invertido (THR_IN > THR_OUT) conta nas duas pontas,
+ * em repouso e no extremo, de proposito (manual do EIXOS, 4.1). */
+static void testes_thr0(void) {
+    AlfaCfg c; AlfaEstado e; AlfaSaida o; Entrada in; int ok = 1;
+    cfg_vazia(&c);
+    c.abas[ABA_LIVRE].n = 1;
+    c.abas[ABA_LIVRE].eou = EOU_OU;
+    c.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+    c.abas[ABA_LIVRE].fontes[0].tipo = FONTE_EIXO;
+    c.abas[ABA_LIVRE].fontes[0].id = EIXO_LX;
+    c.abas[ABA_LIVRE].fontes[0].beta.mult = 9;
+    c.abas[ABA_LIVRE].fontes[0].beta.thr_in = 0;
+    c.abas[ABA_LIVRE].fontes[0].beta.dir = DIR_ABS;
+    alfa_iniciar(&e);
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 0;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (o.ativa[ABA_LIVRE]) ok = 0;                        /* THR_IN 0, em repouso: fora */
+    alfa_iniciar(&e);
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 1;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (!o.ativa[ABA_LIVRE]) ok = 0;                       /* qualquer movimento conta */
+
+    /* invertido: THR_IN 60 > THR_OUT 20. Conta com modulo < 20 (repouso) ou > 60 */
+    c.abas[ABA_LIVRE].fontes[0].beta.thr_in = 60;
+    c.abas[ABA_LIVRE].fontes[0].beta.thr_out = 20;
+    alfa_iniciar(&e);
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 0;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (!o.ativa[ABA_LIVRE]) ok = 0;                       /* invertido: conta em repouso */
+    alfa_iniciar(&e);
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 40;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (o.ativa[ABA_LIVRE]) ok = 0;                        /* entre os dois: nao conta */
+    passo("THR_IN 0: repouso fora da zona, movimento conta; invertido conta em repouso", ok,
+          "0 -> fora; 1 -> dentro; invertido 0 -> dentro; invertido 40 -> fora");
+}
+
 int main(void) {
+    testes_thr0();
     testes_sinal_e_touch();
     testes_toque_oculto();
     testes_intensidade();
