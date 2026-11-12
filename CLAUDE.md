@@ -94,6 +94,8 @@ ferramentas/testa_dominio.c   a bancada dos domínios, com 8 verificações
 ferramentas/testa_acumula.c   a bancada da acumulação de destinos, com 4 verificações
 src/toque.c, src/toque.h      o toque do touchpad: dedos como botão e como eixo com trava (fase 3a)
 ferramentas/testa_toque.c     a bancada do toque, com 8 verificações
+src/formato.c, src/formato.h  o formato binário do perfil: magic, versão, CRC32 e validação (fase 3a)
+ferramentas/testa_formato.c   a bancada do formato, com 11 verificações
 ferramentas/testa_tempo.c     a bancada da tabela de tempo
 ferramentas/testa_perfil.c    a bancada do buffer duplo, com duas threads
 docs/ESTUDO.md                o que aprendemos lendo PoorDS4, etaHEN, ProsperoMgr, pldmgr

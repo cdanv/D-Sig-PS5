@@ -1500,3 +1500,27 @@ afirma a faixa real. Ela precisa ser medida no console, lendo `touchData` com o 
 
 **Pendente:** ocultar o toque do jogo (o Cronus tem `Util_Touchpad`). Hoje uma fonte de dedo
 oculta não suprime nada.
+
+---
+
+## 27. Formato binário do perfil (fase 3a)
+
+**O que é:** a configuração de uma rede de MODs como bytes, para salvar e carregar. Campo a campo,
+em little-endian, sem depender do layout de memória do compilador.
+
+**Layout:** cabeçalho de 8 bytes (magic `DSG1`, versão 1, n de MODs, 2 reservados). Por MOD: 302
+bytes de ALFA, acoes e DELTA, mais 14 de ZETA (BLOQ, ASSOC, EXCL, INIC) e domínio. Rodapé: CRC32 de
+tudo que vem antes. Com 2 MODs, o arquivo tem 644 bytes.
+
+**Leitura:** só aceita o arquivo se o magic, a versão e o CRC batem, se o tamanho é exato (sem
+byte sobrando nem faltando), e se a rede passa em `rede_validar`. Qualquer falha devolve erro, e a
+configuração não deve ser usada.
+
+**Verificado:** bancada do formato com 11 verificações, incluindo o vetor padrão do CRC32
+(`123456789` → `cbf43926`), ida e volta byte a byte, e comportamento igual antes e depois de
+gravar e ler. 5 sabotagens, todas reprovaram pelo motivo certo: domínio não gravado, CRC não
+conferido, versão não conferida, validação ignorada e constante de bloco errada.
+
+**Limites:** o formato guarda a configuração, não o estado de execução. A rede carregada começa
+parada, como ao ligar. A versão 1 é fixa; quando o formato mudar, a versão sobe e a leitura antiga
+é recusada, em vez de ser interpretada errado.
