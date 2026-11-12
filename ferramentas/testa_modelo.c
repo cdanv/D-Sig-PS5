@@ -332,7 +332,41 @@ static void testes_static_eixo(void) {
           "lado -1 com 100; fora da zona 0; lado +1 com 100; MULT x0.5 com 50");
 }
 
+/* ------------------------------------------- STATIC de gatilho: trava e teto (manual 8.3) */
+/* THR_IN 20, THR_OUT 60, MULT x1.0. Sequencia do L2: 0, 30 (entra na zona: trava), 40 (segue),
+ * 70 (passa do teto: destrava), 40 (desce pela zona: nao religa), 10 (repouso: rearma),
+ * 30 (entra de novo: trava). O sinal e sempre + e o valor 100. */
+static void testes_static_gatilho(void) {
+    ModCfg m; ModEstado e; ModSaida o; Entrada in; int ok = 1;
+    static const uint8_t seq[7]  = { 0, 30, 40, 70, 40, 10, 30 };
+    static const uint8_t esper[7] = { 0, 1, 1, 0, 0, 0, 1 };
+    unsigned k;
+    memset(&m, 0, sizeof m);
+    m.alfa.janela = 0;
+    for (k = 0; k < ALFA_ABAS; k++) m.alfa.abas[k].delay = ALFA_DELAY_NAO_ESCOLHIDO;
+    m.alfa.abas[ABA_LIVRE].n = 1;
+    m.alfa.abas[ABA_LIVRE].eou = EOU_OU;
+    m.alfa.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+    m.alfa.abas[ABA_LIVRE].fontes[0].tipo = FONTE_GATILHO;
+    m.alfa.abas[ABA_LIVRE].fontes[0].id = GATILHO_L2;
+    m.alfa.abas[ABA_LIVRE].fontes[0].beta.mult = 9;
+    m.alfa.abas[ABA_LIVRE].fontes[0].beta.thr_in = 20;
+    m.alfa.abas[ABA_LIVRE].fontes[0].beta.thr_out = 60;
+    m.acao[ABA_LIVRE] = ACAO_LIGA;
+    m.delta.tipo = DELTA_STATIC; m.delta.n_dest = 1; m.delta.dest[0] = 0; m.delta.lat = DELTA_SEM_LAT;
+    modelo_iniciar(&e);
+    for (k = 0; k < 7; k++) {
+        memset(&in, 0, sizeof in); in.gatilho[GATILHO_L2] = seq[k]; in.t_us = k * 10000u;
+        modelo_avaliar(&m, &e, &in, &o);
+        if ((o.destinos != 0) != (esper[k] != 0)) ok = 0;
+        if (esper[k] && (o.intensidade != 100 || o.sinal != 1)) ok = 0;
+    }
+    passo("STATIC de gatilho: entra na zona e trava; passa do teto e destrava; so rearma abaixo do THR_IN", ok,
+          "0,30,40,70,40,10,30 -> off,on,on,off,off,off,on");
+}
+
 int main(void) {
+    testes_static_gatilho();
     testes_static_eixo();
     testes_so_ocultar_toque();
     testes_validacao();

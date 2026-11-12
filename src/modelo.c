@@ -53,6 +53,24 @@ int modelo_validar(const ModCfg *m) {
 void modelo_iniciar(ModEstado *e) {
     alfa_iniciar(&e->alfa);
     delta_iniciar(&e->delta);
+    e->gz_ant = 0;
+    e->gz_destravado = 0;
+}
+
+/* STATIC com fonte de gatilho (manual do EIXOS, 8.3): so LIVRE, so LIGA, so gatilhos, nivel (sem DELAY).
+ * O teto e a memoria "ja destravou" valem para este caso. */
+static int gatilho_static(const ModCfg *m) {
+    unsigned a, k;
+    const Aba *l = &m->alfa.abas[ABA_LIVRE];
+    if (m->delta.tipo != DELTA_STATIC) return 0;
+    if (l->n == 0 || m->acao[ABA_LIVRE] != ACAO_LIGA) return 0;
+    if (l->delay != ALFA_DELAY_OFF && l->delay != ALFA_DELAY_NAO_ESCOLHIDO) return 0;
+    for (k = 0; k < l->n; k++) if (l->fontes[k].tipo != FONTE_GATILHO) return 0;
+    for (a = 1; a < ALFA_ABAS; a++) {
+        if (a == ABA_BLOCK) continue;
+        if (m->alfa.abas[a].n != 0) return 0;
+    }
+    return 1;
 }
 
 int modelo_sem_ligar(const ModCfg *m) {
@@ -169,6 +187,28 @@ static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uin
         de.liga = (uint8_t)((adota || (e->delta.ligado && !fim)) ? 1 : 0);
     }
 
+    if (gatilho_static(m) && !encerra) {
+        /* manual do EIXOS, 8.3: dentro da zona (>= THR_IN e <= THR_OUT) trava; alem do THR_OUT
+         * destrava; de volta ao repouso (< THR_IN) pode travar de novo. A memoria "ja destravou"
+         * impede que a descida pela zona religue o MOD. O sinal e sempre + e o valor 100 x MULT. */
+        uint8_t b = as.bruto[ABA_LIVRE], t_in = as.bruto_in[ABA_LIVRE], t_out = as.bruto_out[ABA_LIVRE];
+        uint8_t zona = (b > 0 && b >= t_in && (t_out == 0 || b <= t_out)) ? 1 : 0;
+        uint8_t repouso = (b == 0 || b < t_in) ? 1 : 0;
+        uint8_t passou_teto = (t_out > 0 && b > t_out) ? 1 : 0;
+        uint8_t liga = 0, fim = 0;
+        if (passou_teto) {
+            fim = 1;
+            e->gz_destravado = 1;
+        } else if (zona && !e->gz_ant && !e->gz_destravado) {
+            liga = 1;
+        }
+        if (repouso) e->gz_destravado = 0;
+        e->gz_ant = zona;
+        de.liga = liga;
+        de.finaliza = fim;
+        de.intensidade = as.bruto_teto[ABA_LIVRE];
+        de.lado = 1;
+    }
     cfg = m->delta;
     if (puro && tem_fonte && m->delta.tipo == DELTA_STATIC && !modelo_sem_ligar(m)) {
         /* manual, 8.1: STATIC em eixo nao trava. Segue a zona, escreve 100 x MULT com o lado atual */

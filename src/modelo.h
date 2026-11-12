@@ -20,6 +20,8 @@ typedef struct {
 typedef struct {
     AlfaEstado alfa;
     DeltaEstado delta;
+    uint8_t gz_ant;                /* STATIC de gatilho: estava na zona no quadro anterior */
+    uint8_t gz_destravado;         /* STATIC de gatilho: passou do teto; so rearma abaixo do THR_IN */
 } ModEstado;
 
 typedef struct {

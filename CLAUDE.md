@@ -70,7 +70,7 @@ e seguir com o que está dentro — não inventar um jeito de atender.
 |---|---|
 | **Alvo 1 — passagem pura** | **feito.** `src/passagem.c`, 4 verificações, 4 sabotagens |
 | **Alvo 2 — o primeiro MOD de verdade** | **feito na bancada.** Troca de botão e acorde. `src/passagem.c`, `ferramentas/testa_mod.c`, 9 sabotagens |
-| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a fechada na bancada** (ver a seção 4 deste arquivo, abaixo da tabela, para o que ficou de fora). Fases 3b a 3d precisam de console |
+| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a fechada na bancada** (o bloco abaixo da tabela diz o que ficou de fora). Fases 3b a 3d precisam de console |
 | Alvo 4 — ícone na tela inicial | caminho conhecido e barato (ver `docs/ESTUDO.md`) |
 
 **Fase 3a: fechada na bancada.** Tudo o que cabe verificar sem console está verificado e publicado.
@@ -87,10 +87,9 @@ O que a fase 3a entrega:
   cada decisão de leitura está registrada em `docs/ARQUITETURA.md` (seções 21 a 35).
 
 **O que ficou de fora da 3a (não é console; é trabalho de bancada ainda pendente):**
-1. **Gatilho STATIC com teto que destrava** (manual de EIXOS, 8.3). Hoje o gatilho trava como botão.
-2. **Órfão DIRECT com gatilho em FINALIZA** (manual da ZETA, 7.6): o valor-base vir do botão físico
+1. **Órfão DIRECT com gatilho em FINALIZA** (manual da ZETA, 7.6): o valor-base vir do botão físico
    do gatilho. Não implementado.
-3. **COMBO com destinos mistos** (seção 35, decisão 3): a regra é a do TURBO por passo, mas o caso
+2. **COMBO com destinos mistos** (seção 35, decisão 3): a regra é a do TURBO por passo, mas o caso
    misto ainda não tem verificação própria.
 
 **O que só o console confirma (não é bancada):**
@@ -114,7 +113,7 @@ ferramentas/testa_alfa.c      a bancada da ALFA v4, com 33 verificações
 src/delta.c, src/delta.h      o DELTA: DIRECT, STATIC, TURBO e COMBO (fase 3a)
 ferramentas/testa_delta.c     a bancada do DELTA, com 22 verificações
 src/modelo.c, src/modelo.h    o MOD completo: ALFA ligada ao DELTA, com validação (fase 3a)
-ferramentas/testa_modelo.c    a bancada do MOD completo, com 8 verificações
+ferramentas/testa_modelo.c    a bancada do MOD completo, com 9 verificações
 src/rede.c, src/rede.h        a rede de MODs com a ZETA: BLOQ, ASSOC e EXCL (fase 3a)
 ferramentas/testa_rede.c      a bancada da ZETA, com 20 verificações
 src/dominio.c, src/dominio.h  os domínios D1 a D4 e seus comandos fixos (fase 3a)

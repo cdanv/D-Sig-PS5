@@ -228,6 +228,18 @@ void alfa_avaliar(const AlfaCfg *c, AlfaEstado *e, const Entrada *in, AlfaSaida 
             solta[g] = (uint8_t)(!nivel[g] && e->nivel_ant[g]);
             e->nivel_ant[g] = nivel[g];
             if (borda[g]) e->t_borda[g] = in->t_us;
+            if (f->tipo == FONTE_GATILHO) {
+                /* a leitura bruta vale dentro e fora da zona: o STATIC de gatilho precisa saber se
+                 * passou do teto (manual, 8.3). */
+                int32_t raw = beta_valor(&f->beta, in->gatilho[f->id]);
+                if (raw < 0) raw = -raw;
+                if ((uint8_t)raw > out->bruto[a] || out->bruto_teto[a] == 0) {
+                    out->bruto[a] = (uint8_t)raw;
+                    out->bruto_in[a] = f->beta.thr_in;
+                    out->bruto_out[a] = f->beta.thr_out;
+                    out->bruto_teto[a] = teto_fonte(f);
+                }
+            }
             if (nivel[g]) {
                 int v = intensidade_fonte(f, in);
                 nivel_m[a] |= 1u << k;

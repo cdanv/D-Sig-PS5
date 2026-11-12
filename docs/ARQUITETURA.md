@@ -1873,3 +1873,39 @@ Não foi verificado com destinos mistos. A regra de cada passo é a mesma do TUR
 
 **Verificado:** zero após o fim dos ciclos (DELTA, com sabotagem X1); gatilho como destino com valor e
 passa-cru (rede, com sabotagens X2 e X3).
+
+---
+
+## 36. STATIC com gatilho: trava, teto e memória (manual do EIXOS, 8.3)
+
+**O que faz.** Um STATIC cuja fonte é só um gatilho (L2 ou R2) vira chave com dois comandos, sem
+depender de tempo: pressão leve liga, pressão forte desliga.
+
+| leitura do gatilho | efeito |
+|---|---|
+| entra na zona (≥ THR_IN e ≤ THR_OUT) | trava (liga), se não estiver "destravado" |
+| passa do THR_OUT | destrava (desliga), e marca "já destravou pelo teto" |
+| desce pela zona, sem chegar ao repouso | não religa: a memória impede |
+| volta ao repouso (< THR_IN) | rearma: pode travar de novo |
+
+O valor é 100 × MULT, com sinal sempre +.
+
+**Por que a memória.** Sem ela, soltar o gatilho faria a fonte atravessar a zona de volta e
+retravar na hora, desfazendo o destrave no mesmo movimento (manual, 8.3).
+
+**Como fica.** A ALFA expõe a leitura bruta do gatilho mais forte, dentro e fora da zona, com os
+limiares e o teto (`bruto`, `bruto_in`, `bruto_out`, `bruto_teto`). A zona da ALFA não serve sozinha,
+porque não distingue "acima do teto" de "repouso". O MOD mantém duas flags (`gz_ant`,
+`gz_destravado`) e traduz a máquina em pulsos de LIGA e FINALIZA para o DELTA. O DELTA continua
+sendo o STATIC de sempre.
+
+**Decisões de leitura:**
+- A máquina roda mesmo com o MOD congelado (BLOQ ou ASSOC). O gatilho é um estado físico, e a memória
+  precisa acompanhá-lo. Por isso o que acontece durante o congelamento é diferente do que acontece com
+  eventos de FINALIZA (seção 31): aqui a leitura não é um evento guardado, é o estado do gatilho.
+- Só se aplica ao caso puro: STATIC, LIVRE, só gatilhos, só LIGA, nível (sem DELAY), sem outras abas.
+  Qualquer outra combinação com gatilho fica como estava.
+
+**Verificado:** sequência 0, 30, 40, 70, 40, 10, 30 com THR_IN 20 e THR_OUT 60, esperada como
+off, on, on, off, off, off, on. Três sabotagens reprovaram pelo motivo certo: sem destrave, sem memória
+(a descida religa no quadro 40), sem rearme (não volta a travar depois do repouso).
