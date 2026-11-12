@@ -39,6 +39,7 @@ typedef struct {
 
 typedef struct {
     ModSaida mod[REDE_MAX];
+    uint32_t botoes;        /* a saida do controle: a entrada, sem os suprimidos, mais os destinos */
 } RedeSaida;
 
 /* 0 se valido, -1 se nao. Recusa: MOD invalido, relacao com indice fora de 0..n-1,

@@ -1363,3 +1363,27 @@ seus botões, e é destravado quando a sua fonte volta ao repouso.
 um alvo de ZETA que não divide o domínio, que o manual aponta como aviso); os comandos são fixos
 (o manual também os trata como fixos); e a suspensão de cascata de domínio não foi testada
 além do caso simples.
+
+### 23.3 Acumulação de destinos entre MODs
+
+| peça | arquivo | bancada | verificações | sabotagens |
+|---|---|---|---|---|
+| acumulação e saída do controle | `src/rede.c` (`rede_avaliar`), `src/rede.h` (`RedeSaida.botoes`) | `ferramentas/testa_acumula.c` | 4 | 4, todas pelo motivo certo |
+
+**Regras (manual, seção 26):**
+
+- **Digital escreve só quando liga, por OU.** Dois MODs no mesmo botão funcionam como OU.
+- **Saída desligada não força zero.** O sinal cru do jogador passa, porque o MOD não afirma zero.
+- **O destino vence a supressão.** A supressão das fontes OCULTO vem antes; os destinos são
+  escritos por último.
+- **MOD fora do domínio não suprime.** Só os MODs que rodam participam da supressão.
+
+**Saída:** `out->botoes = (entrada & ~suprimidos) | acumulados`.
+
+**Limite desta fatia:** os destinos 10 a 13 são eixos (LX, LY, RX, RY). Eles ainda não viram
+botão, porque o modelo não tem intensidade de eixo. Eixos ficam para a próxima fatia, com a regra
+de "maior intensidade absoluta" do manual (seção 26.1), que é diferente do OU dos digitais.
+
+**Correção nas bancadas:** o destino de TRIANGLE é o 9, e não o 12 (que é RX). As bancadas da
+ZETA e dos domínios usavam 12. Os resultados não mudaram, porque os testes comparavam bits de
+destino entre si, mas o nome agora bate com o manual.

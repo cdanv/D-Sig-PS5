@@ -4,7 +4,26 @@
  */
 #include "rede.h"
 #include "alfa.h"
+#include "pad.h"
 #include <string.h>
+
+/* Botao de cada destino digital (manual, secao 14.2). Os destinos 10 a 13 sao eixos e ainda
+ * nao viram botao: esta fatia nao tem intensidade de eixo. Valor 0 = sem botao. */
+static const uint32_t g_botao_do_destino[DELTA_DESTINOS] = {
+    DS_BTN_L1, DS_BTN_L2, DS_BTN_L3, DS_BTN_R1, DS_BTN_R2, DS_BTN_R3,
+    DS_BTN_CROSS, DS_BTN_CIRCLE, DS_BTN_SQUARE, DS_BTN_TRIANGLE,
+    0, 0, 0, 0,
+    DS_BTN_UP, DS_BTN_DOWN, DS_BTN_LEFT, DS_BTN_RIGHT
+};
+
+static uint32_t botoes_dos_destinos(uint32_t destinos) {
+    uint32_t b = 0;
+    unsigned i;
+    for (i = 0; i < DELTA_DESTINOS; i++) {
+        if (((destinos >> i) & 1u) && g_botao_do_destino[i]) b |= g_botao_do_destino[i];
+    }
+    return b;
+}
 
 int rede_validar(const RedeCfg *r) {
     unsigned i;
@@ -90,4 +109,16 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
     e->sobe = resp_agora & ~resp;
     e->cai = resp & ~resp_agora;
     e->resp = resp_agora;
+
+    /* acumulacao (manual, secao 26): cada MOD escreve no seu acumulador, e tudo e aplicado no
+     * fim. Digital escreve so quando liga, por OU; uma saida desligada nao forca zero, e o
+     * sinal cru do jogador passa. O destino vence a supressao: a supressao vem antes. */
+    {
+        uint32_t suprimido = 0, acumulado = 0;
+        for (i = 0; i < r->n; i++) {
+            suprimido |= out->mod[i].ocultar_botoes;
+            acumulado |= botoes_dos_destinos(out->mod[i].destinos);
+        }
+        out->botoes = (in->botoes & ~suprimido) | acumulado;
+    }
 }

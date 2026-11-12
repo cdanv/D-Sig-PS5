@@ -15,7 +15,7 @@
 #define B_SQUARE 15
 #define D_L1 0
 #define D_CIRCLE 7
-#define D_TRIANGLE 12
+#define D_TRIANGLE 9      /* destino 9 = TRIANGLE (manual, secao 14.2); o botao de entrada e o bit 12 */
 
 static int falhas = 0;
 static void passo(const char *nome, int ok, const char *detalhe) {
