@@ -116,7 +116,12 @@ void delta_avaliar(const DeltaCfg *c, DeltaEstado *e, const DeltaEntrada *in, De
 
     case DELTA_DIRECT:
         /* acompanha o nivel de LIGA */
-        e->ligado = in->liga ? 1 : 0;
+        /* DIRECT segue o nivel da fonte, mas com FINALIZA: a regra e "com fonte, o gatilho so
+         * desliga; a fonte religa" (achado 1 do simulador do Cronus). FINALIZA desliga, e so a proxima
+         * subida da fonte religa. Sem FINALIZA, a flag nunca sobe e o DIRECT segue o nivel como antes. */
+        if (liga_borda) e->finalizado = 0;
+        if (finaliza_borda) e->finalizado = 1;
+        e->ligado = (in->liga && !e->finalizado) ? 1 : 0;
         if (e->ligado) {
             for (i = 0; i < c->n_dest; i++) out->destinos |= 1u << c->dest[i];
             out->intensidade = in->intensidade;             /* DIRECT segue a fonte do quadro */

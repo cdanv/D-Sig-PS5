@@ -39,6 +39,7 @@ typedef struct {
     uint64_t t_pausa;              /* instante em que o congelamento comecou */
     uint8_t intens;                /* STATIC e TURBO/COMBO: a intensidade travada (0..100) */
     int8_t lado_trava;             /* STATIC e TURBO/COMBO: o sinal travado junto com a intensidade */
+    uint8_t finalizado;            /* DIRECT: FINALIZA desligou; so a proxima subida da fonte religa */
 } DeltaEstado;
 
 /* entrada do quadro: o que as abas da ALFA produziram */

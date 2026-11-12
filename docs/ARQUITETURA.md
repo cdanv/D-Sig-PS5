@@ -1776,3 +1776,29 @@ de índice precisam de teste próprio, como qualquer outra verificação.
 com sinal, órfão STATIC em 100, órfão TURBO em eixo em 100 (rede, com sabotagens U1 a U3).
 **Não verificado:** o COMBO órfão com destinos mistos (a regra usa o primeiro destino); o achado 1,
 que é decisão.
+
+---
+
+## 33. Decisão: FINALIZA (achado 1 do simulador do Cronus)
+
+**Decidido.** Duas situações, decididas de forma diferente porque são coisas diferentes.
+
+**1. MOD com fonte e FINALIZA (o caso do achado): FINALIZA desliga; a fonte religa.**
+É a regra que o próprio projeto já tinha escrito (achado 1, citando a regra derivada do Cronus):
+"com fonte, o gatilho só DESLIGA (a fonte religa)". O Cronus não a cumpria: o MOD ficava
+"sempre ativo". No PS5:
+- STATIC e TURBO já cumpriam a regra.
+- **DIRECT não cumpria** (ignorava FINALIZA, e portanto era inerte com esse gatilho). Corrigido
+  nesta passada: FINALIZA liga a flag `finalizado`; a flag só cai na próxima subida da fonte.
+- Verificado: DIRECT (desliga; fonte segue sem religar; solta; sobe de novo, religa) e STATIC
+  (desliga; fonte segura não religa). Sabotagens V1 e V2 reprovaram pelo motivo certo.
+
+**2. MOD sem nenhuma fonte que liga, só com FINALIZA: fica inerte e avisa. Não nasce ligado.**
+Recusei a proposta do documento ("nasce ligado; FINALIZA derruba"). Motivo: um MOD que nasce ligado
+sem nenhuma fonte que o ligue depois é exatamente o "sempre ativo" que o achado mediu como defeito.
+Se ninguém pode ligá-lo, ele não deve estar ligado. O comportamento é o do alerta `ALERTA_INERTE`
+(seção 31, rede): roda, nunca liga, e avisa. Não é recusa (a rede recusa só o malformado).
+O órfão segue a mesma regra: só a subida de um alvo da ASSOC o liga (ZETA, 7.2).
+
+**Consequência:** nenhuma configuração que hoje liga passa a ficar ligada sem ordem. A única mudança de
+comportamento é o DIRECT com FINALIZA, que antes era inerte e agora desliga como o manual manda.

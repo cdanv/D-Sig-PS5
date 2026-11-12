@@ -346,7 +346,42 @@ static void testes_sinal(void) {
     passo("sinal DIRECT: leva o lado da fonte junto com a intensidade", ok, "lado -1, intensidade 60");
 }
 
+/* ------------------------------------------------- FINALIZA com fonte (achado 1) */
+/* Com fonte, o gatilho em FINALIZA so desliga; a fonte religa com uma nova subida. Vale para o
+ * DIRECT (o que o simulador do Cronus nao fazia) e para o STATIC, que ja fazia. */
+static void testes_fin_com_fonte(void) {
+    DeltaCfg c; DeltaEstado e; DeltaEntrada in; DeltaSaida out; int ok = 1;
+    cfg_base(&c, DELTA_DIRECT); c.n_dest = 1; c.dest[0] = D_CIRCLE; c.origem_pulso = 0;
+    delta_iniciar(&e);
+    memset(&in, 0, sizeof in); in.liga = 1; in.t_us = 0;                    /* fonte sobe */
+    delta_avaliar(&c, &e, &in, &out); if (!out.destinos) ok = 0;
+    memset(&in, 0, sizeof in); in.liga = 1; in.finaliza = 1; in.t_us = 10000; /* FINALIZA */
+    delta_avaliar(&c, &e, &in, &out); if (out.destinos) ok = 0;
+    memset(&in, 0, sizeof in); in.liga = 1; in.t_us = 20000;                /* fonte segue, sem nova subida */
+    delta_avaliar(&c, &e, &in, &out); if (out.destinos) ok = 0;
+    memset(&in, 0, sizeof in); in.liga = 0; in.t_us = 30000;                /* fonte solta */
+    delta_avaliar(&c, &e, &in, &out); if (out.destinos) ok = 0;
+    memset(&in, 0, sizeof in); in.liga = 1; in.t_us = 40000;                /* fonte sobe de novo */
+    delta_avaliar(&c, &e, &in, &out); if (!out.destinos) ok = 0;
+    passo("FINALIZA com fonte (DIRECT): desliga; so a nova subida da fonte religa", ok,
+          "on; FINALIZA off; fonte segue off; solta; sobe on");
+
+    ok = 1;
+    cfg_base(&c, DELTA_STATIC); c.n_dest = 1; c.dest[0] = D_CIRCLE; c.origem_pulso = 1;
+    delta_iniciar(&e);
+    memset(&in, 0, sizeof in); in.liga = 1; in.t_us = 0;
+    delta_avaliar(&c, &e, &in, &out); if (!out.destinos) ok = 0;
+    memset(&in, 0, sizeof in); in.liga = 1; in.finaliza = 1; in.t_us = 10000;  /* FINALIZA, fonte segura */
+    delta_avaliar(&c, &e, &in, &out); if (out.destinos) ok = 0;
+    memset(&in, 0, sizeof in); in.liga = 1; in.t_us = 20000;                /* fonte segue, sem nova subida */
+    delta_avaliar(&c, &e, &in, &out); if (out.destinos) ok = 0;
+    memset(&in, 0, sizeof in); in.liga = 1; in.t_us = 30000;
+    delta_avaliar(&c, &e, &in, &out); if (out.destinos) ok = 0;
+    passo("FINALIZA com fonte (STATIC): desliga; a fonte mantida nao religa", ok, "fonte segura: off");
+}
+
 int main(void) {
+    testes_fin_com_fonte();
     testes_sinal();
     testes_intensidade();
     testes_validacao();
