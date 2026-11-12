@@ -70,7 +70,7 @@ e seguir com o que está dentro — não inventar um jeito de atender.
 |---|---|
 | **Alvo 1 — passagem pura** | **feito.** `src/passagem.c`, 4 verificações, 4 sabotagens |
 | **Alvo 2 — o primeiro MOD de verdade** | **feito na bancada.** Troca de botão e acorde. `src/passagem.c`, `ferramentas/testa_mod.c`, 9 sabotagens |
-| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. Fase 3a (perfil e buffer duplo) é a próxima, sem console. Fases 3b a 3d precisam de console |
+| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a em andamento:** tabela de tempo e buffer duplo feitos na bancada. Falta o modelo de MOD v3 em C e o formato binário do perfil. Fases 3b a 3d precisam de console |
 | Alvo 4 — ícone na tela inicial | caminho conhecido e barato (ver `docs/ESTUDO.md`) |
 
 ```
@@ -79,6 +79,10 @@ src/dsig.h                    a interface do roteador. Estreita de propósito
 src/passagem.c                o roteador. Copia, e aplica MOD de botão quando carregado
 ferramentas/testa_passagem.c  a bancada do Alvo 1 (passagem)
 ferramentas/testa_mod.c       a bancada do Alvo 2 (o primeiro MOD)
+src/tempo.c, src/tempo.h      a tabela única de tempo: 67 valores, por índice (fase 3a)
+src/perfil.c, src/perfil.h    o buffer duplo com versão, com escritor e leitor (fase 3a)
+ferramentas/testa_tempo.c     a bancada da tabela de tempo
+ferramentas/testa_perfil.c    a bancada do buffer duplo, com duas threads
 docs/ESTUDO.md                o que aprendemos lendo PoorDS4, etaHEN, ProsperoMgr, pldmgr
 docs/ARQUITETURA.md           decisões de desenho do Alvo 3: processos, perfil, privilégio, celular
 docs/REFERENCIA_CRONUS.md     análise do manual do Cronus 1.0.17: o que manter, o que não se aplica
