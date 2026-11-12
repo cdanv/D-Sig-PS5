@@ -286,7 +286,57 @@ static void testes_congelado(void) {
     passo("DELTA congelado: zera a saida, nao aceita eventos, e retoma com o tempo que faltava", ok, "passo acaba em 130 ms, depois de retomar em 80");
 }
 
+/* ------------------------------------------------------------ intensidade */
+/* DIRECT segue a intensidade do quadro; STATIC trava (botao vale 100, eixo segue a zona e segura
+ * fora dela); TURBO captura a intensidade do inicio. Leitura do manual, secao 26.1 e 7.4. */
+static void testes_intensidade(void) {
+    DeltaCfg c; DeltaEstado e; DeltaEntrada in; DeltaSaida out; int ok = 1;
+    cfg_base(&c, DELTA_DIRECT); c.n_dest = 1; c.dest[0] = D_CIRCLE; c.origem_pulso = 0;
+    delta_iniciar(&e);
+    memset(&in, 0, sizeof in); in.liga = 1; in.intensidade = 60; in.t_us = 0;
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 60) ok = 0;
+    memset(&in, 0, sizeof in); in.liga = 1; in.intensidade = 30; in.t_us = 10000;
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 30) ok = 0;                      /* segue o quadro */
+    memset(&in, 0, sizeof in); in.t_us = 20000;
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 0) ok = 0;                       /* desligado: 0 */
+    passo("intensidade DIRECT: segue a fonte do quadro; desligado vale 0", ok, "60, 30, depois 0");
+
+    ok = 1;
+    cfg_base(&c, DELTA_STATIC); c.n_dest = 1; c.dest[0] = D_L1; c.origem_pulso = 1;
+    delta_iniciar(&e);
+    memset(&in, 0, sizeof in); in.liga = 1; in.intensidade = 100; in.t_us = 0;   /* botao: 100 */
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 100) ok = 0;
+    memset(&in, 0, sizeof in); in.t_us = 10000;            /* soltou: a trava segura 100 */
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 100 || !out.destinos) ok = 0;
+    memset(&in, 0, sizeof in); in.intensidade = 40; in.t_us = 20000;   /* eixo na zona com 40 */
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 40) ok = 0;
+    memset(&in, 0, sizeof in); in.t_us = 30000;            /* fora da zona: segura 40 */
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 40) ok = 0;
+    passo("intensidade STATIC: botao trava em 100; eixo segue a zona e segura fora dela", ok,
+          "100, 100 solto, 40 na zona, 40 fora dela");
+
+    ok = 1;
+    cfg_base(&c, DELTA_TURBO); c.n_dest = 1; c.dest[0] = D_CROSS; c.tempo[0] = idx_ms(100); c.origem_pulso = 1;
+    delta_iniciar(&e);
+    memset(&in, 0, sizeof in); in.liga = 1; in.intensidade = 50; in.t_us = 0;   /* inicio: 50 */
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 50 || !out.destinos) ok = 0;
+    memset(&in, 0, sizeof in); in.intensidade = 90; in.t_us = 200000;   /* meio do ciclo: ainda 50 */
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 50) ok = 0;
+    passo("intensidade TURBO: captura a intensidade do inicio, nao a do quadro", ok,
+          "inicio 50; no meio do ciclo, com a fonte em 90, continua 50");
+}
+
 int main(void) {
+    testes_intensidade();
     testes_validacao();
     testes_direct();
     testes_static();

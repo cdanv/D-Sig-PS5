@@ -119,15 +119,23 @@ void delta_avaliar(const DeltaCfg *c, DeltaEstado *e, const DeltaEntrada *in, De
         e->ligado = in->liga ? 1 : 0;
         if (e->ligado) {
             for (i = 0; i < c->n_dest; i++) out->destinos |= 1u << c->dest[i];
+            out->intensidade = in->intensidade;             /* DIRECT segue a fonte do quadro */
         }
         break;
 
     case DELTA_STATIC:
-        if (liga_borda && !e->ligado) e->ligado = 1;
-        if (alterna_borda) e->ligado = (uint8_t)!e->ligado;
+        if (liga_borda && !e->ligado) { e->ligado = 1; e->intens = in->intensidade; }
+        if (alterna_borda) {
+            e->ligado = (uint8_t)!e->ligado;
+            if (e->ligado) e->intens = in->intensidade;
+        }
         if (finaliza_borda) e->ligado = 0;
         if (e->ligado) {
             for (i = 0; i < c->n_dest; i++) out->destinos |= 1u << c->dest[i];
+            /* STATIC trava: uma fonte de botao vale 100 e fica travada; eixo acompanha a zona
+             * enquanto esta nela, e segura o ultimo valor fora dela (leitura do manual, 26.1) */
+            if (in->intensidade > 0) e->intens = in->intensidade;
+            out->intensidade = e->intens;
         }
         break;
 
@@ -139,12 +147,14 @@ void delta_avaliar(const DeltaCfg *c, DeltaEstado *e, const DeltaEntrada *in, De
                 e->em_latencia = 0;
                 e->ciclos_feitos = 0;
                 e->t_fase = in->t_us;
+                e->intens = in->intensidade;   /* TURBO/COMBO: a intensidade e a do inicio */
             } else if (alterna_borda) {                /* ALTERNA tambem liga */
                 e->ligado = 1;
                 e->passo = 0;
                 e->em_latencia = 0;
                 e->ciclos_feitos = 0;
                 e->t_fase = in->t_us;
+                e->intens = in->intensidade;   /* TURBO/COMBO: a intensidade e a do inicio */
             }
         } else {
             if (finaliza_borda || alterna_borda) {     /* FINALIZA, ou ALTERNA desligando */
@@ -175,6 +185,7 @@ void delta_avaliar(const DeltaCfg *c, DeltaEstado *e, const DeltaEntrada *in, De
             }
             if (e->ligado && !e->em_latencia) {
                 out->destinos |= 1u << c->dest[e->passo];
+                out->intensidade = e->intens;
             }
         }
         break;

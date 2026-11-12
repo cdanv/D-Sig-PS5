@@ -33,6 +33,8 @@ typedef struct {
     uint32_t resp;          /* MODs com resposta de pe, no quadro anterior */
     uint32_t sobe;          /* MODs cuja resposta subiu no quadro anterior */
     uint32_t cai;           /* MODs cuja resposta caiu no quadro anterior */
+    uint8_t vale[REDE_MAX]; /* a intensidade que cada MOD oferece a um orfao (cadeia), quadro anterior */
+    uint8_t prof[REDE_MAX]; /* a profundidade dessa intensidade: 0 = fonte propria, 1..4 = por orfaos */
     Dominio dom;            /* o dominio ligado */
     uint32_t trava;         /* MODs travados depois de uma troca de dominio */
 } RedeEstado;
@@ -40,6 +42,7 @@ typedef struct {
 typedef struct {
     ModSaida mod[REDE_MAX];
     uint32_t botoes;        /* a saida do controle: a entrada, sem os suprimidos, mais os destinos */
+    int32_t eixo[4];        /* LX, LY, RX, RY: 0..100 onde um MOD escreveu; senao, o valor cru (manual, 26.1) */
 } RedeSaida;
 
 /* 0 se valido, -1 se nao. Recusa so o que e MALFORMADO: MOD invalido, relacao com indice fora de

@@ -327,7 +327,100 @@ static void testes_alertas(void) {
           "rede de exemplo limpa; cada alerta acende so no caso dele");
 }
 
+/* ------------------------------------------------------- EIXOS e CADEIA */
+static Fonte eixo_fonte(uint8_t id) {
+    Fonte f; memset(&f, 0, sizeof f);
+    f.tipo = FONTE_EIXO; f.id = id;
+    f.beta.mult = 9; f.beta.thr_in = 30; f.beta.thr_out = 0; f.beta.dir = DIR_ABS;
+    return f;
+}
+/* MOD com um eixo como fonte (LIVRE, nivel), resposta DIRECT no destino dado */
+static void mod_eixo(ModCfg *m, uint8_t eixo, uint8_t dest) {
+    mod_base(m);
+    m->alfa.abas[ABA_LIVRE].n = 1;
+    m->alfa.abas[ABA_LIVRE].eou = EOU_OU;
+    m->alfa.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+    m->alfa.abas[ABA_LIVRE].fontes[0] = eixo_fonte(eixo);
+    m->delta.tipo = DELTA_DIRECT;
+    m->delta.n_dest = 1;
+    m->delta.dest[0] = dest;
+}
+/* um quadro com a rede limpa */
+static void um_quadro(const RedeCfg *r, const Entrada *in, RedeSaida *s) {
+    RedeEstado e;
+    rede_iniciar(&e);
+    e.dom.atual = 1;
+    rede_avaliar(r, &e, in, s);
+}
+#define D_LX 10          /* destino 10 = eixo LX (manual, secao 14.2) */
+#define EIX_LX 0         /* EIXO_LX em alfa.h */
+#define EIX_LY 1
+#define EIX_RX 2
+
+static void testes_eixos(void) {
+    RedeCfg r; Entrada in; RedeSaida s; int ok = 1;
+    memset(&r, 0, sizeof r);
+    r.n = 2;
+    todos_d1(&r);
+    mod_eixo(&r.mod[0], EIX_RX, D_LX);
+    mod_eixo(&r.mod[1], EIX_LY, D_LX);
+    if (rede_validar(&r) != 0) ok = 0;
+
+    memset(&in, 0, sizeof in); in.eixo[EIX_RX] = 40; in.eixo[EIX_LY] = 70;
+    um_quadro(&r, &in, &s);
+    if (s.eixo[0] != 70) ok = 0;                          /* dois escrevem LX: vence o de 70 */
+    memset(&in, 0, sizeof in); in.eixo[EIX_RX] = 40;
+    um_quadro(&r, &in, &s);
+    if (s.eixo[0] != 40) ok = 0;                          /* so um escreve: 40 */
+    memset(&in, 0, sizeof in); in.eixo[EIX_LX] = 25;
+    um_quadro(&r, &in, &s);
+    if (s.eixo[0] != 25) ok = 0;                          /* ninguem escreve: passa o cru, 25 */
+    passo("eixos: o maior vence entre os que escrevem LX; sem escrita, passa o cru", ok,
+          "70 contra 40 -> 70; so 40 -> 40; sem escrita, 25 cru");
+}
+
+static void testes_cadeia(void) {
+    RedeCfg r; RedeEstado e; RedeSaida s; Entrada in; int ok = 1;
+    uint64_t f;
+    unsigned k;
+    memset(&r, 0, sizeof r);
+    r.n = 6;
+    todos_d1(&r);
+    mod_eixo(&r.mod[0], EIX_RX, D_CIRCLE);            /* MOD 0: a fonte, com intensidade 60 */
+    for (k = 1; k < 6; k++) {                         /* MODs 1 a 5: orfaos, em cadeia, ASSOC ao anterior */
+        mod_orfao(&r.mod[k], DELTA_DIRECT, 0);
+        r.mod[k].delta.dest[0] = D_TRIANGLE;
+        r.z[k].assoc = BIT(k - 1);
+    }
+    if (rede_validar(&r) != 0) ok = 0;
+
+    rede_iniciar(&e);
+    e.dom.atual = 1;
+    /* RX = 60 o tempo todo: a fonte fica na zona. Quadros de 10 ms; a cadeia desce um nivel por quadro */
+    for (f = 0; f <= 12; f++) {
+        memset(&in, 0, sizeof in); in.eixo[EIX_RX] = 60; in.t_us = f * 10000u;
+        rede_avaliar(&r, &e, &in, &s);
+    }
+    /* orfao 4 esta no nivel 4 da cadeia: herda 60 e responde */
+    if (s.mod[4].intensidade != 60 || !(s.mod[4].destinos & BIT(D_TRIANGLE))) ok = 0;
+    /* orfao 5 esta no nivel 5: passa do limite de 4 niveis, o valor e zero, e ele se encerra */
+    if (s.mod[5].intensidade != 0 || (s.mod[5].destinos & BIT(D_TRIANGLE))) ok = 0;
+    passo("cadeia de orfaos: herda ate 4 niveis; no 5o nivel, zero, e autoencerra", ok,
+          "orfao 4 com 60 e ligado; orfao 5 com 0 e desligado");
+
+    /* a fonte sai da zona: a cadeia cai a zero, e os orfaos se encerram */
+    ok = 1;
+    for (f = 13; f <= 25; f++) {
+        memset(&in, 0, sizeof in); in.eixo[EIX_RX] = 0; in.t_us = f * 10000u;
+        rede_avaliar(&r, &e, &in, &s);
+    }
+    if (s.mod[1].intensidade != 0 || (s.mod[1].destinos & BIT(D_TRIANGLE))) ok = 0;
+    passo("cadeia sem fonte: sem valor, o orfao se encerra", ok, "fonte fora da zona: orfao 1 com 0 e desligado");
+}
+
 int main(void) {
+    testes_eixos();
+    testes_cadeia();
     testes_alertas();
     testes_orfao();
     testes_validacao();

@@ -84,12 +84,12 @@ int modelo_validar_adotado(const ModCfg *m) {
 /* Nucleo comum de modelo_avaliar_ext e modelo_avaliar_adotado. `adota` e a borda que liga o
  * orfao (manual, secao 7.2); para um MOD com fonte, e sempre 0. */
 static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uint8_t adota,
-                           uint8_t congela, uint8_t encerra, ModSaida *out) {
+                           uint8_t intens_alvo, uint8_t congela, uint8_t encerra, ModSaida *out) {
     AlfaSaida as;
     DeltaEntrada de;
     DeltaSaida ds;
     unsigned a;
-    uint8_t bloqueio = 0;
+    uint8_t bloqueio = 0, fonte_int = 0;
 
     memset(out, 0, sizeof *out);
     memset(&de, 0, sizeof de);
@@ -104,14 +104,22 @@ static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uin
             if (as.ativa[a]) bloqueio = 1;                      /* BLOCK */
             continue;
         }
+        if (as.intens[a] > fonte_int) fonte_int = as.intens[a];
         /* o disparo de cada aba (com DELAY) alimenta o DELTA pela sua acao */
         switch (m->acao[a]) {
-        case ACAO_LIGA:     de.liga |= as.disparo[a];     break;
-        case ACAO_ALTERNA:  de.alterna |= as.disparo[a];  break;
+        case ACAO_LIGA:
+            de.liga |= as.disparo[a];
+            if (as.disparo[a] && as.intens[a] > de.intensidade) de.intensidade = as.intens[a];
+            break;
+        case ACAO_ALTERNA:
+            de.alterna |= as.disparo[a];
+            if (as.disparo[a] && as.intens[a] > de.intensidade) de.intensidade = as.intens[a];
+            break;
         case ACAO_FINALIZA: de.finaliza |= as.disparo[a]; break;
         default:            break;
         }
     }
+    out->fonte_intens = modelo_sem_ligar(m) ? 0 : fonte_int;
 
     out->bloqueado = (uint8_t)(bloqueio || congela);
 
@@ -126,6 +134,7 @@ static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uin
     de.congelado = (uint8_t)(bloqueio || congela);
     de.t_us = in->t_us;
     if (adota) de.liga = 1;
+    if (modelo_sem_ligar(m)) de.intensidade = intens_alvo;   /* o orfao responde com a do alvo (manual, 7.4) */
 
     if (modelo_sem_ligar(m) && m->delta.tipo == DELTA_DIRECT) {
         /* DIRECT sem gatilho que ligue nao segue nivel nenhum: o estado e um trinco. Sobe com a
@@ -138,16 +147,17 @@ static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uin
 
     out->destinos = out->bloqueado ? 0 : ds.destinos;
     out->terminou = ds.terminou;
+    out->intensidade = out->bloqueado ? 0 : ds.intensidade;
 }
 
 void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,
                         uint8_t congela, uint8_t encerra, ModSaida *out) {
-    avaliar_nucleo(m, e, in, 0, congela, encerra, out);
+    avaliar_nucleo(m, e, in, 0, 0, congela, encerra, out);
 }
 
 void modelo_avaliar_adotado(const ModCfg *m, ModEstado *e, const Entrada *in, uint8_t adota,
-                            uint8_t congela, uint8_t encerra, ModSaida *out) {
-    avaliar_nucleo(m, e, in, adota, congela, encerra, out);
+                            uint8_t intens_alvo, uint8_t congela, uint8_t encerra, ModSaida *out) {
+    avaliar_nucleo(m, e, in, adota, intens_alvo, congela, encerra, out);
 }
 
 void modelo_avaliar(const ModCfg *m, ModEstado *e, const Entrada *in, ModSaida *out) {

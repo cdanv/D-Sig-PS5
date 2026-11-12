@@ -550,7 +550,45 @@ static void testes_sensores(void) {
     passo("ocultacao de sensores e gatilhos: bits separados (ACCX no 4, L2 no 10)", ok, "");
 }
 
+/* ------------------------------------------------------------ intensidade */
+/* A intensidade de uma aba e a maior das fontes com nivel nela (manual, secao 26.1). Eixo: o modulo
+ * do valor depois do MULT, so na zona. Botao: 100. Os valores abaixo sao escritos a mao. */
+static void testes_intensidade(void) {
+    AlfaCfg c; AlfaEstado e; AlfaSaida o; Entrada in; int ok = 1;
+    cfg_vazia(&c);
+    c.abas[ABA_LIVRE].n = 2;
+    c.abas[ABA_LIVRE].eou = EOU_OU;
+    c.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+    c.abas[ABA_LIVRE].fontes[0].tipo = FONTE_EIXO;
+    c.abas[ABA_LIVRE].fontes[0].id = EIXO_LX;
+    c.abas[ABA_LIVRE].fontes[0].beta.mult = 9;      /* x1.0 */
+    c.abas[ABA_LIVRE].fontes[0].beta.thr_in = 50;   /* zona: modulo >= 50 */
+    c.abas[ABA_LIVRE].fontes[0].beta.dir = DIR_ABS;
+    c.abas[ABA_LIVRE].fontes[1] = botao(B_CROSS);
+    alfa_iniciar(&e);
+
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 70; in.t_us = 0;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (!o.ativa[ABA_LIVRE] || o.intens[ABA_LIVRE] != 70) ok = 0;         /* eixo 70 -> intensidade 70 */
+
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = -80; in.t_us = 10000;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (!o.ativa[ABA_LIVRE] || o.intens[ABA_LIVRE] != 80) ok = 0;         /* sinal negativo: modulo 80 */
+
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 30; in.t_us = 20000;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (o.ativa[ABA_LIVRE] || o.intens[ABA_LIVRE] != 0) ok = 0;           /* fora da zona: nada */
+
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 60; in.botoes = BIT(B_CROSS); in.t_us = 30000;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (o.intens[ABA_LIVRE] != 100) ok = 0;                               /* botao vale 100: o maior */
+
+    passo("intensidade: eixo pelo modulo na zona; botao vale 100; o maior vence", ok,
+          "70 -> 70; -80 -> 80; 30 fora da zona -> 0; 60 com botao -> 100");
+}
+
 int main(void) {
+    testes_intensidade();
     testes_sensores();
     testes_delay();
     testes_validacao();

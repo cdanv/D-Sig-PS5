@@ -28,6 +28,8 @@ typedef struct {
     uint8_t bloqueado;             /* BLOCK ativo: o MOD nao responde */
     uint32_t ocultar_botoes;       /* da ALFA: botoes suprimidos do jogo */
     uint16_t ocultar_analog;
+    uint8_t intensidade;           /* 0..100: com que intensidade o MOD responde neste quadro */
+    uint8_t fonte_intens;          /* 0..100: a intensidade da propria fonte (0 se e orfao) */
 } ModSaida;
 
 /* 0 se o MOD e valido, -1 se nao */
@@ -41,9 +43,10 @@ int modelo_sem_ligar(const ModCfg *m);
 /* Valida um MOD que depende da adocao. A ASSOC que o adota e conferida na rede. 0 se valido. */
 int modelo_validar_adotado(const ModCfg *m);
 /* Igual a modelo_avaliar_ext, mas com a adocao: `adota` = 1 injeta a borda de subida de um alvo
- * da ASSOC. Para um MOD com gatilho que liga, `adota` nao muda nada e pode ser 0. */
+ * da ASSOC; `intens_alvo` e a intensidade herdada da cadeia (0 = sem fonte, autoencerra). Para um MOD
+ * com gatilho que liga, os dois nao mudam nada e podem ser 0. */
 void modelo_avaliar_adotado(const ModCfg *m, ModEstado *e, const Entrada *in, uint8_t adota,
-                            uint8_t congela, uint8_t encerra, ModSaida *out);
+                            uint8_t intens_alvo, uint8_t congela, uint8_t encerra, ModSaida *out);
 
 /* MOD travado por dominio: nao detecta nem responde, mas as abas OCULTO continuam
  * suprimindo os seus botoes (manual, secao 25.1). */

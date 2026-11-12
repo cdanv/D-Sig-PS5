@@ -1596,3 +1596,55 @@ Sabotagens, todas reprovaram pelo motivo certo:
 - **Cadeia de heranças (seção 7.5).** Até 4 níveis. Depende da intensidade.
 - **Órfão com gatilho em FINALIZA, DIRECT (seção 7.6).** O valor-base vem do botão físico do gatilho.
   Depende da intensidade.
+
+---
+
+## 29. Eixos com intensidade e a herança do órfão (fase 3a)
+
+Fontes: manual da ZETA, seções 7.4 a 7.6 e 8.4; REFERENCIA_CRONUS seção 3.3 (acumulação por
+intensidade máxima, manual do Cronus 26.1). **Leitura minha onde o manual não diz; marcada abaixo.**
+
+**Intensidade da fonte (ALFA, `intens[]`), 0..100:**
+- botão e toque: 100 quando há nível;
+- eixo: o valor depois do MULT (`beta_valor`), em módulo, **só na zona**;
+- gatilho: o valor depois do MULT, **só na zona**.
+
+**Intensidade com que o MOD responde (DELTA, `intensidade`):**
+- DIRECT: segue a intensidade do quadro. *(leitura minha)*
+- STATIC: botão trava em 100; eixo acompanha enquanto está na zona e segura o último valor fora dela.
+  *(leitura minha: o manual diz que o eixo "segue a zona", sem dizer o que acontece fora dela)*
+- TURBO e COMBO: a intensidade do início, travada até o fim. Manual, 7.4: "o pulso digital sai com a
+  intensidade do alvo". *(a parte "do início" é leitura minha)*
+
+**Destinos de eixo (10 a 13 = LX, LY, RX, RY):**
+- um MOD que escreve um eixo põe nele a sua intensidade, com sinal **positivo**. *(o sinal não está
+  definido no manual que tenho; pendência)*
+- acumulação: o **maior** valor vence entre os MODs que escrevem o mesmo eixo (manual 26.1);
+- se ninguém escreve, o eixo passa cru;
+- se um MOD suprime o eixo e ninguém o escreve, o eixo sai zerado (destino vence supressão, como nos
+  botões).
+
+**Órfão e a cadeia (manual 7.4 a 7.6):**
+- o órfão responde com a intensidade do alvo: o primeiro alvo da ASSOC que tem fonte na zona;
+- a busca sobe até **4 níveis**; um alvo mais longe não entra;
+- sem fonte na cadeia, o valor é zero, e o órfão **se encerra** (manual, 7.6: "valor zero aciona o
+  autoencerramento");
+- a cadeia usa o **quadro anterior** (`vale`, `prof`), como o resto da ZETA. Cada salto leva um quadro.
+  **Desvio do manual:** o manual sugere busca instantânea. Com quadros de 10 ms, um órfão no nível 4
+  responde 4 quadros (40 ms) depois da fonte. Não medi isso no console.
+- a fonte de um órfão é a cadeia: a intensidade própria de um órfão é zero (não entra na cadeia como fonte).
+
+**Verificado (bancada, sem console):**
+- ALFA: intensidade pelo módulo na zona; botão vale 100; o maior vence (70 → 70; -80 → 80; 30 fora da
+  zona → 0; 60 com botão → 100). 2 sabotagens (eixo fixo em 100; o primeiro vence).
+- DELTA: DIRECT segue (60, 30, 0); STATIC trava (100, 100 solto, 40 na zona, 40 fora dela); TURBO
+  captura o início (50, e continua 50 com a fonte em 90). 3 sabotagens.
+- Rede: eixos (70 contra 40 → 70; só 40 → 40; sem escrita → 25 cru). Cadeia: órfão 4 com 60 e
+  ligado; órfão 5 com 0 e desligado; fonte fora da zona → órfão se encerra. 4 sabotagens: primeiro
+  vence, sem limite de nível, sem autoencerramento, eixo sem passar o cru.
+
+**Não feito:**
+- o sinal dos eixos (positivo sempre, por enquanto);
+- o órfão com gatilho em FINALIZA e DIRECT (manual 7.6, o valor-base vem do botão físico do gatilho);
+- o MULT é aplicado à intensidade, mas as verificações não variam o MULT (um caso a mais se for preciso);
+- a busca instantânea da cadeia (ver o desvio acima).

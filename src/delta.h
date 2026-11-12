@@ -37,6 +37,7 @@ typedef struct {
     uint64_t t_fase;               /* inicio da fase corrente (passo ou latencia) */
     uint8_t congelado_ant;         /* o BLOCK estava ativo no quadro anterior */
     uint64_t t_pausa;              /* instante em que o congelamento comecou */
+    uint8_t intens;                /* STATIC e TURBO/COMBO: a intensidade travada (0..100) */
 } DeltaEstado;
 
 /* entrada do quadro: o que as abas da ALFA produziram */
@@ -45,12 +46,14 @@ typedef struct {
     uint8_t alterna;               /* ALTERNA neste quadro (pulso) */
     uint8_t finaliza;              /* FINALIZA neste quadro (pulso) */
     uint8_t congelado;             /* BLOCK ativo: o MOD para de responder e os tempos param */
+    uint8_t intensidade;           /* 0..100: a intensidade da fonte neste quadro (manual, 26.1) */
     uint64_t t_us;
 } DeltaEntrada;
 
 typedef struct {
     uint32_t destinos;             /* bit i = destino i ligado neste quadro */
     uint8_t terminou;              /* TURBO/COMBO terminaram sozinhos neste quadro */
+    uint8_t intensidade;           /* 0..100: a intensidade com que o MOD responde (0 se nao responde) */
 } DeltaSaida;
 
 /* 0 se valido, -1 se nao. Nao altera nada. */

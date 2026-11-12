@@ -107,6 +107,7 @@ typedef struct {
     uint8_t ativa[ALFA_ABAS];           /* por aba: nivel (LIVRE, BLOCK) ou pulso (demais) */
     uint8_t disparo[ALFA_ABAS];         /* por aba, depois do DELAY: pulso que vai ao DELTA */
     uint8_t reiniciou[ALFA_ABAS];       /* SEQUENCIA: reiniciou neste quadro */
+    uint8_t intens[ALFA_ABAS];          /* 0..100: a maior intensidade das fontes com nivel na aba (manual, 26.1) */
     uint32_t ocultar_botoes;
     uint16_t ocultar_analog;            /* bits 0..13 eixos (EIXO_*), 14 L2, 15 R2 */
 } AlfaSaida;
