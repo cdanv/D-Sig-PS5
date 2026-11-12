@@ -888,3 +888,28 @@ ALFA. Cada tipo de gatilho tem as mesmas duas partes:
    porque o Cronus tinha touch só como categoria de fonte.
 
 Enquanto essas três não forem respondidas, não altero `src/alfa.c`.
+
+### 18.2 Respostas do autor às perguntas da seção 18.1
+
+**Pergunta 1 (modos).** As alternativas de ALFA que são **fontes** são: **SEQUÊNCIA**, **2CLK**,
+**HOLD_AT**, **HOLD_AP** e **BLOCK**. Nas alternativas de fonte, as escolhas de botão, gatilho
+e eixo ficam abertas. O sinal **+** adiciona uma entrada à lista.
+
+- **2CLK não é sequência.** Ele não entra como passo de SEQUÊNCIA.
+
+**Pergunta 2 (entradas por MOD).** Respondida parcialmente: 2CLK não é sequência. O teto de
+entradas por MOD **não foi respondido**.
+
+**Pergunta 3 (arrasto).** O arrasto do dedo define os eixos X e Y. O sinal **trava no último
+toque**: ao soltar o dedo, o eixo continua no último valor. Isso é o mesmo comportamento de
+STATIC para eixo.
+
+### 18.3 O que ainda precisa de confirmação
+
+1. **O "+" muda o significado conforme a alternativa?** Em SEQUÊNCIA, a ordem dos "+" é a ordem
+   da sequência. Em 2CLK, HOLD_AT, HOLD_AP e BLOCK, o "+" junta entradas que devem acontecer
+   juntas, como o SIMULTÂNEO? Ou cada entrada é independente, como o QUALQUER?
+2. **QUALQUER e SIMULTÂNEO continuam como alternativas de fonte?** Só SEQUÊNCIA foi citado.
+3. **Teto de entradas por MOD.** Não foi respondido.
+4. **Eixo do touch antes do primeiro toque.** Vale zero? Proposta: zero, e a posição absoluta
+   do dedo mapeada para -100 a +100.
