@@ -179,10 +179,13 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
         for (i = 0; i < r->n; i++) if (out->mod[i].ocultar_toque) out->ocultar_toque = 1;
         for (k = 0; k < 4; k++) {
             int tem = 0;
-            uint8_t melhor = 0;
+            int melhor = 0;     /* com o sinal dele: o maior em modulo vence (manual, 6.1) */
             for (i = 0; i < r->n; i++) {
+                int v;
                 if (!((out->mod[i].destinos >> (DEST_EIXO0 + k)) & 1u)) continue;
-                if (!tem || out->mod[i].intensidade > melhor) melhor = out->mod[i].intensidade;
+                v = (int)out->mod[i].sinal * (int)out->mod[i].intensidade;
+                /* empate em modulo: o primeiro avaliado fica (estritamente maior troca) */
+                if (!tem || (v < 0 ? -v : v) > (melhor < 0 ? -melhor : melhor)) melhor = v;
                 tem = 1;
             }
             if (tem) out->eixo[k] = melhor;

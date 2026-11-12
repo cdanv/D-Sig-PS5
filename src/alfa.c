@@ -49,13 +49,24 @@ static int beta_conta(const Beta *b, int32_t v, int dir_vale) {
 
 /* intensidade da fonte neste quadro, 0..100. Botao e toque: 100 quando ha nivel. Eixo: o modulo do
  * valor depois do MULT, so quando esta na zona. Gatilho: o valor depois do MULT, so na zona. */
+/* DIR so vale para os quatro analogicos e os sensores; o touch (EIXO_F1X..F2Y) nao tem DIR (manual, 2.1 e 5.3) */
+static int dir_vale(const Fonte *f) {
+    return !(f->tipo == FONTE_EIXO && f->id >= EIXO_F1X);
+}
+
+/* MULT como teto de um STATIC de eixo: 100 x MULT, limitado a 100 (manual, 8.1) */
+static uint8_t teto_fonte(const Fonte *f) {
+    int pct = (f->beta.mult + 1) * 10;
+    return (uint8_t)(pct > 100 ? 100 : pct);
+}
+
 static int intensidade_fonte(const Fonte *f, const Entrada *in) {
     int32_t w;
     switch (f->tipo) {
     case FONTE_BOTAO:   return ((in->botoes >> f->id) & 1u) ? 100 : 0;
     case FONTE_DEDO:    return in->dedo[f->id] ? 100 : 0;
     case FONTE_EIXO:
-        if (!beta_conta(&f->beta, in->eixo[f->id], 1)) return 0;
+        if (!beta_conta(&f->beta, in->eixo[f->id], dir_vale(f))) return 0;
         w = beta_valor(&f->beta, in->eixo[f->id]);
         return w < 0 ? -w : w;
     case FONTE_GATILHO:
@@ -68,7 +79,7 @@ static int intensidade_fonte(const Fonte *f, const Entrada *in) {
 static int nivel_fonte(const Fonte *f, const Entrada *in) {
     switch (f->tipo) {
     case FONTE_BOTAO:   return (int)((in->botoes >> f->id) & 1u);
-    case FONTE_EIXO:    return beta_conta(&f->beta, in->eixo[f->id], 1);
+    case FONTE_EIXO:    return beta_conta(&f->beta, in->eixo[f->id], dir_vale(f));
     case FONTE_GATILHO: return beta_conta(&f->beta, in->gatilho[f->id], 0);
     case FONTE_DEDO:    return in->dedo[f->id] ? 1 : 0;
     default:            return 0;
@@ -217,7 +228,11 @@ void alfa_avaliar(const AlfaCfg *c, AlfaEstado *e, const Entrada *in, AlfaSaida 
             if (nivel[g]) {
                 int v = intensidade_fonte(f, in);
                 nivel_m[a] |= 1u << k;
-                if (v > out->intens[a]) out->intens[a] = (uint8_t)v;
+                if (v > out->intens[a]) {
+                    out->intens[a] = (uint8_t)v;
+                    out->teto[a] = teto_fonte(f);
+                    out->lado[a] = (f->tipo == FONTE_EIXO && beta_valor(&f->beta, in->eixo[f->id]) < 0) ? -1 : 1;
+                }
             }
             if (borda[g]) borda_m[a] |= 1u << k;
             if (solta[g]) solta_m[a] |= 1u << k;

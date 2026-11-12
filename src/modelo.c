@@ -89,10 +89,14 @@ static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uin
     DeltaEntrada de;
     DeltaSaida ds;
     unsigned a;
-    uint8_t bloqueio = 0, fonte_int = 0;
+    uint8_t bloqueio = 0, fonte_int = 0, teto_win = 0;
+    unsigned k;
+    int puro = 1, tem_fonte = 0;
+    DeltaCfg cfg;
 
     memset(out, 0, sizeof *out);
     memset(&de, 0, sizeof de);
+    de.lado = 1;                                        /* botao e orfao: o lado e sempre +1 */
 
     alfa_avaliar(&m->alfa, &e->alfa, in, &as);
     out->ocultar_botoes = as.ocultar_botoes;
@@ -106,15 +110,20 @@ static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uin
             continue;
         }
         if (as.intens[a] > fonte_int) fonte_int = as.intens[a];
+        /* STATIC de eixo puro: so LIVRE, so LIGA, so fontes de eixo, e nivel (sem DELAY) */
+        tem_fonte = 1;
+        if (a != ABA_LIVRE || m->acao[a] != ACAO_LIGA) puro = 0;
+        if (m->alfa.abas[a].delay != ALFA_DELAY_OFF && m->alfa.abas[a].delay != ALFA_DELAY_NAO_ESCOLHIDO) puro = 0;
+        for (k = 0; k < m->alfa.abas[a].n; k++) if (m->alfa.abas[a].fontes[k].tipo != FONTE_EIXO) puro = 0;
         /* o disparo de cada aba (com DELAY) alimenta o DELTA pela sua acao */
         switch (m->acao[a]) {
         case ACAO_LIGA:
             de.liga |= as.disparo[a];
-            if (as.disparo[a] && as.intens[a] > de.intensidade) de.intensidade = as.intens[a];
+            if (as.disparo[a] && as.intens[a] > de.intensidade) { de.intensidade = as.intens[a]; de.lado = as.lado[a]; teto_win = as.teto[a]; }
             break;
         case ACAO_ALTERNA:
             de.alterna |= as.disparo[a];
-            if (as.disparo[a] && as.intens[a] > de.intensidade) de.intensidade = as.intens[a];
+            if (as.disparo[a] && as.intens[a] > de.intensidade) { de.intensidade = as.intens[a]; de.lado = as.lado[a]; teto_win = as.teto[a]; }
             break;
         case ACAO_FINALIZA: de.finaliza |= as.disparo[a]; break;
         default:            break;
@@ -144,11 +153,18 @@ static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uin
         de.liga = (uint8_t)((adota || (e->delta.ligado && !fim)) ? 1 : 0);
     }
 
-    delta_avaliar(&m->delta, &e->delta, &de, &ds);
+    cfg = m->delta;
+    if (puro && tem_fonte && m->delta.tipo == DELTA_STATIC && !modelo_sem_ligar(m)) {
+        /* manual, 8.1: STATIC em eixo nao trava. Segue a zona, escreve 100 x MULT com o lado atual */
+        cfg.tipo = DELTA_DIRECT;
+        if (de.intensidade > 0) de.intensidade = teto_win;
+    }
+    delta_avaliar(&cfg, &e->delta, &de, &ds);
 
     out->destinos = out->bloqueado ? 0 : ds.destinos;
     out->terminou = ds.terminou;
     out->intensidade = out->bloqueado ? 0 : ds.intensidade;
+    out->sinal = out->bloqueado ? 0 : ds.sinal;
 }
 
 void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,

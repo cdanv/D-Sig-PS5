@@ -108,6 +108,8 @@ typedef struct {
     uint8_t disparo[ALFA_ABAS];         /* por aba, depois do DELAY: pulso que vai ao DELTA */
     uint8_t reiniciou[ALFA_ABAS];       /* SEQUENCIA: reiniciou neste quadro */
     uint8_t intens[ALFA_ABAS];          /* 0..100: a maior intensidade das fontes com nivel na aba (manual, 26.1) */
+    int8_t lado[ALFA_ABAS];             /* sinal da fonte mais forte: -1 ou +1 (eixo); +1 para botao e gatilho */
+    uint8_t teto[ALFA_ABAS];            /* 100 x MULT, limitado a 100: o valor que um STATIC de eixo escreve (manual, 8.1) */
     uint32_t ocultar_botoes;
     uint16_t ocultar_analog;            /* bits 0..13 eixos (EIXO_*), 14 L2, 15 R2 */
     uint8_t ocultar_toque;              /* 1 = o toque do touchpad e suprimido do jogo (aba oculta com FONTE_DEDO) */

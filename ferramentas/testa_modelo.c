@@ -293,7 +293,47 @@ static void testes_so_ocultar_toque(void) {
     passo("travado: so-ocultar suprime o toque da aba oculta, e so ela", ok, "");
 }
 
+/* ------------------------------------------------- STATIC de eixo (manual, 8.1) */
+/* STATIC em eixo nao trava: responde enquanto a fonte esta na zona, escreve 100 x MULT, com o lado
+ * atual. Fora da zona fica calado. */
+static void testes_static_eixo(void) {
+    ModCfg m; ModEstado e; ModSaida o; Entrada in; int ok = 1;
+    unsigned t;
+    memset(&m, 0, sizeof m);
+    m.alfa.janela = 0;
+    for (t = 0; t < ALFA_ABAS; t++) m.alfa.abas[t].delay = ALFA_DELAY_NAO_ESCOLHIDO;
+    m.alfa.abas[ABA_LIVRE].n = 1;
+    m.alfa.abas[ABA_LIVRE].eou = EOU_OU;
+    m.alfa.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+    m.alfa.abas[ABA_LIVRE].fontes[0].tipo = FONTE_EIXO;
+    m.alfa.abas[ABA_LIVRE].fontes[0].id = EIXO_LX;
+    m.alfa.abas[ABA_LIVRE].fontes[0].beta.mult = 9;      /* x1.0: teto 100 */
+    m.alfa.abas[ABA_LIVRE].fontes[0].beta.thr_in = 30;
+    m.alfa.abas[ABA_LIVRE].fontes[0].beta.dir = DIR_ABS;
+    m.acao[ABA_LIVRE] = ACAO_LIGA;
+    m.delta.tipo = DELTA_STATIC; m.delta.n_dest = 1; m.delta.dest[0] = 0; m.delta.lat = DELTA_SEM_LAT;
+    modelo_iniciar(&e);
+
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = -60; in.t_us = 0;          /* na zona, lado -1 */
+    modelo_avaliar(&m, &e, &in, &o);
+    if (!o.destinos || o.intensidade != 100 || o.sinal != -1) ok = 0;
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 10; in.t_us = 10000;       /* fora da zona: calado */
+    modelo_avaliar(&m, &e, &in, &o);
+    if (o.destinos != 0) ok = 0;                                              /* nao trava */
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 50; in.t_us = 20000;       /* na zona de novo, lado +1 */
+    modelo_avaliar(&m, &e, &in, &o);
+    if (!o.destinos || o.intensidade != 100 || o.sinal != 1) ok = 0;
+    m.alfa.abas[ABA_LIVRE].fontes[0].beta.mult = 4;                          /* x0.5: teto 50 */
+    modelo_iniciar(&e);
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = -60; in.t_us = 30000;
+    modelo_avaliar(&m, &e, &in, &o);
+    if (o.intensidade != 50) ok = 0;                                          /* 100 x MULT */
+    passo("STATIC de eixo: nao trava; fora da zona fica calado; escreve 100 x MULT com o lado", ok,
+          "lado -1 com 100; fora da zona 0; lado +1 com 100; MULT x0.5 com 50");
+}
+
 int main(void) {
+    testes_static_eixo();
     testes_so_ocultar_toque();
     testes_validacao();
     testes_static();

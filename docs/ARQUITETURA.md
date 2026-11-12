@@ -1669,3 +1669,48 @@ ocultar, não); rede (um MOD suprime o toque na saída, e sem ocultar, passa); M
 **Limite:** o sinal sai da rede, mas quem apaga o toque do pacote que vai ao jogo é a ponte
 com a `libScePad`, que só existe no console. Aqui, o que se prova é que o sinal chega à saída
 certa, não que o jogo deixa de ver o toque.
+
+---
+
+## 31. Revisão contra o manual de EIXOS (fase 3a)
+
+Fonte: `D-Sig_EIXOS_Manual.pdf`, manual detalhado do D-Sig 1.0.17 (25 páginas). Esta seção
+diz o que o código faz hoje contra o manual, e o que ficou para depois.
+
+**Divergências que eram erros meus, corrigidas nesta passada:**
+
+| tema | antes | manual | agora |
+|---|---|---|---|
+| STATIC de eixo | segurava a intensidade fora da zona | "trava? não"; responde enquanto a fonte está na zona (8.1) | não trava: fora da zona fica calado |
+| valor do STATIC de eixo | a intensidade da fonte | 100 × MULT, com o lado atual (8.1, 8.4) | teto 100 × MULT, com sinal |
+| DIR no touch | valia para TOUCH_X/Y | DIR só para os quatro analógicos e os sensores (2.1, 5.3) | não vale no touch |
+| sinal no acumulador | sempre positivo | o valor guardado mantém o sinal; vence o de maior módulo (6.1, 10.1) | com sinal; empate em módulo fica o primeiro |
+
+**Confere com o manual (sem mudança):** THR_IN/THR_OUT em módulo (4.1); DIR ABS inclui zero (4.2);
+MULT aplicado com sinal e limitado a ±100 (4.3); PASSIVO zera o eixo para o jogo (4.4); destino de
+eixo vence a supressão (4.4); botão em eixo vale 0 ou 100 (7.2); eixo para digital é o módulo (11.1);
+DIRECT fora da zona fica calado (14.2); destinos 10 a 13 são LX, LY, RX, RY (2.2); os direcionais
+são 14 a 17 (2.2); a intensidade do órfão vem do alvo (ZETA 7.4).
+
+**Pendências (o manual define, o código ainda não faz):**
+1. **TURBO em eixo escreve no silêncio.** O zero da latência e a fase de silêncio fazem parte da
+   resposta (9.1). O código hoje não escreve no silêncio. Afeta a "máscara de eixo tocado" (6.2) e o
+   que vaza do analógico cru entre os pulsos.
+2. **Modos do TURBO em eixo: POS, NEG, ABS, ABSF** (9.2). Hoje só existe a intensidade positiva.
+   ABS alterna entre +100 e −100 e não repousa, exceto ao terminar os ciclos (9.2, "exceção obrigatória").
+3. **Digital recebe valor (6.1 e 11.1).** Eixo para digital entrega o valor absoluto (ex.: CROSS
+   recebe 80). Os destinos digitais hoje são bits, sem valor. É a mudança mais larga desta lista.
+4. **Gatilho STATIC trava, com teto que destrava** (8.3). Dentro de THR_IN trava; além de THR_OUT
+   destrava; volta ao repouso sem destravar. Hoje o gatilho trava como botão, sem o teto.
+5. **Órfão e sinal.** O manual dá o valor do alvo, mas não diz o sinal do órfão. Hoje o órfão sai
+   sempre com +1. É uma leitura minha, a confirmar.
+
+**Pontos que o manual não resolve:**
+- o que acontece com FINALIZA num STATIC de eixo. Hoje o caso puro (só LIGA, só eixo, sem DELAY) é
+  tratado como DIRECT, e qualquer outro caso fica como estava. O manual não diz.
+- o sinal de DOWN/UP no console: a convenção "frente é negativo" (3.1) depende do valor que o
+  ScePadData entrega. Só se confirma no console.
+
+**Verificado nesta passada:** ALFA (sinal e DIR no touch), DELTA (sinal no DIRECT), MOD (STATIC de
+eixo: não trava, 100 × MULT com o lado), rede (acumulador com sinal, com empate). 5 sabotagens,
+todas reprovaram pelo motivo certo.

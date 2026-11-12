@@ -335,7 +335,19 @@ static void testes_intensidade(void) {
           "inicio 50; no meio do ciclo, com a fonte em 90, continua 50");
 }
 
+/* ------------------------------------------------------------- sinal */
+static void testes_sinal(void) {
+    DeltaCfg c; DeltaEstado e; DeltaEntrada in; DeltaSaida out; int ok = 1;
+    cfg_base(&c, DELTA_DIRECT); c.n_dest = 1; c.dest[0] = D_CIRCLE; c.origem_pulso = 0;
+    delta_iniciar(&e);
+    memset(&in, 0, sizeof in); in.liga = 1; in.intensidade = 60; in.lado = -1; in.t_us = 0;
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.intensidade != 60 || out.sinal != -1) ok = 0;   /* DIRECT leva o lado da fonte */
+    passo("sinal DIRECT: leva o lado da fonte junto com a intensidade", ok, "lado -1, intensidade 60");
+}
+
 int main(void) {
+    testes_sinal();
     testes_intensidade();
     testes_validacao();
     testes_direct();

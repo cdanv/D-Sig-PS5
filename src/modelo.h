@@ -30,6 +30,7 @@ typedef struct {
     uint16_t ocultar_analog;
     uint8_t ocultar_toque;         /* 1 = suprime o toque do jogo neste quadro */
     uint8_t intensidade;           /* 0..100: com que intensidade o MOD responde neste quadro */
+    int8_t sinal;                  /* -1 ou +1: o lado com que o MOD responde (0 se nao responde) */
     uint8_t fonte_intens;          /* 0..100: a intensidade da propria fonte (0 se e orfao) */
 } ModSaida;
 

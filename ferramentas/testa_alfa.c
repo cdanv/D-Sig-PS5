@@ -609,7 +609,43 @@ static void testes_toque_oculto(void) {
     passo("toque oculto: aba oculta com dedo suprime o toque; sem ocultar, nao", ok, "");
 }
 
+/* ------------------------------------------------------- sinal e DIR no touch */
+/* DIR vale para LX/RX (analogicos) e nao vale para o touch (manual, 2.1 e 5.3). O lado e o sinal. */
+static void testes_sinal_e_touch(void) {
+    AlfaCfg c; AlfaEstado e; AlfaSaida o; Entrada in; int ok = 1;
+    cfg_vazia(&c);
+    c.abas[ABA_LIVRE].n = 1;
+    c.abas[ABA_LIVRE].eou = EOU_OU;
+    c.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+    c.abas[ABA_LIVRE].fontes[0].tipo = FONTE_EIXO;
+    c.abas[ABA_LIVRE].fontes[0].id = EIXO_LX;
+    c.abas[ABA_LIVRE].fontes[0].beta.mult = 9;
+    c.abas[ABA_LIVRE].fontes[0].beta.thr_in = 30;
+    c.abas[ABA_LIVRE].fontes[0].beta.dir = DIR_POS;
+    /* LX com DIR POS: -60 nao conta (o DIR corta o lado negativo) */
+    alfa_iniciar(&e);
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = -60;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (o.ativa[ABA_LIVRE]) ok = 0;
+    /* o mesmo valor no touch: o DIR nao vale, a fonte conta, e o lado e negativo */
+    c.abas[ABA_LIVRE].fontes[0].id = EIXO_F1X;
+    memset(&in, 0, sizeof in); in.eixo[EIXO_F1X] = -60;      /* o touch le o seu proprio campo */
+    alfa_iniciar(&e);
+    alfa_avaliar(&c, &e, &in, &o);
+    if (!o.ativa[ABA_LIVRE] || o.intens[ABA_LIVRE] != 60 || o.lado[ABA_LIVRE] != -1) ok = 0;
+    /* analogico com DIR ABS: o lado acompanha o sinal */
+    c.abas[ABA_LIVRE].fontes[0].id = EIXO_LX;
+    c.abas[ABA_LIVRE].fontes[0].beta.dir = DIR_ABS;
+    alfa_iniciar(&e);
+    memset(&in, 0, sizeof in); in.eixo[EIXO_LX] = 70;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (o.lado[ABA_LIVRE] != 1 || o.teto[ABA_LIVRE] != 100) ok = 0;
+    passo("sinal e DIR: DIR corta o lado no analogico, nao no touch; o lado segue o sinal", ok,
+          "LX DIR POS com -60 nao conta; F1X com -60 conta, lado -1; LX +70 lado +1");
+}
+
 int main(void) {
+    testes_sinal_e_touch();
     testes_toque_oculto();
     testes_intensidade();
     testes_sensores();

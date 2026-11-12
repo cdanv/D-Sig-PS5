@@ -440,7 +440,31 @@ static void testes_toque_rede(void) {
     passo("toque na rede: um MOD com dedo oculto suprime o toque da saida; sem ocultar, passa", ok, "");
 }
 
+/* ------------------------------------------------------ eixos com sinal */
+/* O acumulador guarda o sinal, e o maior em modulo vence (manual, 10.1). Empate em modulo: o
+ * primeiro avaliado (o de numero menor). */
+static void testes_eixos_sinal(void) {
+    RedeCfg r; Entrada in; RedeSaida s; int ok = 1;
+    memset(&r, 0, sizeof r);
+    r.n = 2;
+    todos_d1(&r);
+    mod_eixo(&r.mod[0], EIX_RX, D_LX);
+    mod_eixo(&r.mod[1], EIX_LY, D_LX);
+    memset(&in, 0, sizeof in); in.eixo[EIX_RX] = -70; in.eixo[EIX_LY] = 40;
+    um_quadro(&r, &in, &s);
+    if (s.eixo[0] != -70) ok = 0;                     /* -70 contra +40: vence o -70 */
+    memset(&in, 0, sizeof in); in.eixo[EIX_RX] = 70; in.eixo[EIX_LY] = -70;
+    um_quadro(&r, &in, &s);
+    if (s.eixo[0] != 70) ok = 0;                      /* +70 contra -70: empate, fica o primeiro (+70) */
+    memset(&in, 0, sizeof in); in.eixo[EIX_RX] = -70; in.eixo[EIX_LY] = 90;
+    um_quadro(&r, &in, &s);
+    if (s.eixo[0] != 90) ok = 0;                      /* +90 contra -70: o maior em modulo, +90 */
+    passo("eixos com sinal: -70 contra +40 e -70; empate fica o primeiro; +90 contra -70 vai a +90", ok,
+          "manual, 10.1 e 6.1");
+}
+
 int main(void) {
+    testes_eixos_sinal();
     testes_toque_rede();
     testes_eixos();
     testes_cadeia();
