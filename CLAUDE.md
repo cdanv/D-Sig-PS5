@@ -81,6 +81,7 @@ ferramentas/testa_passagem.c  a bancada do Alvo 1 (passagem)
 ferramentas/testa_mod.c       a bancada do Alvo 2 (o primeiro MOD)
 docs/ESTUDO.md                o que aprendemos lendo PoorDS4, etaHEN, ProsperoMgr, pldmgr
 docs/ARQUITETURA.md           decisões de desenho do Alvo 3: processos, perfil, privilégio, celular
+docs/REFERENCIA_CRONUS.md     análise do manual do Cronus 1.0.17: o que manter, o que não se aplica
 ```
 
 ```bash

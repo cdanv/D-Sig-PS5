@@ -337,12 +337,23 @@ tem ajuste de tempo.
 
 | item que usa tempo | parte | referência no Cronus |
 |---|---|---|
-| janela do 2CLK | GAMA | `TIME_SHORT_PRESS` = 250 ms |
-| tempo do HOLD_AT | GAMA | `TIME_HOLD` = 500 ms (confirmar se é o mesmo uso) |
-| tempo do HOLD_AP | GAMA | a definir |
-| tempo do AFTER | GAMA | a definir |
-| delay | ALFA | `SHIFT_DELAY` (valor a confirmar) |
-| duração, período de turbo e intervalo de combo | DELTA | tabelas `TLAT` e `TPASSO` |
+| janela do 2CLK | GAMA | **fixa, não ajustável: 300 ms** (manual, seção 13.5). Não entra na tabela |
+| tempo do HOLD_AT / HOLD_AP | GAMA | tabela de **63 valores**, de 50 ms a 4 s, escalonada (manual, seção 13.3) |
+| tempo do AFTER | GAMA | tabela de **8 valores**, de 50 ms a 2 s (manual, seção 13.4) |
+| delay | ALFA | tabela de **4 valores**: OFF, 300 ms, 700 ms, 1,2 s (manual, seção 17) |
+| tempo de passo do TURBO | DELTA | tabela de **8 valores**, de 30 ms a 1 s (manual, seção 14.5) |
+| latência (LAT) do TURBO | DELTA | tabela de **16 valores**, com "sem latência" e de 10 ms a 750 ms (manual, seção 14.5) |
+
+**Verificado por cálculo** (`scratchpad/tempos/tabela.py`): a união dessas tabelas tem
+**67 entradas**. AFTER e DELAY são subconjuntos da tabela do HOLD. Os únicos valores que
+não estão no HOLD são 10, 20, 30 e 40 ms, todos vindos do LAT e do passo do TURBO. Não é
+preciso um esquema de tabelas separadas: uma tabela de 67 entradas basta, e cada item
+guarda só um índice.
+
+Ficam **fora** da tabela os tempos fixos de comando e de tela, como `TIME_SHORT_PRESS`
+(250 ms, janela do duplo clique de domínio e touchpad), `TIME_HOLD` (500 ms, para cair em
+D3 e D4), `TIME_CIRCLE_CLOSE`, `TIME_SQ_RESET`, `TIME_SHARE_SAVE`, `TIME_TRI_DELETE` e
+`OLED_TIMEOUT`. Eles não são ajustáveis, e a tabela única é só para os que são.
 
 **Proposta de leitura, a confirmar:** a tabela é um **catálogo**. Cada entrada tem nome,
 unidade e valor. Cada MOD aponta para uma entrada. Assim, mudar uma entrada muda todos os
@@ -365,7 +376,9 @@ um quadro.
 2. **BLOK.** O que exatamente ele faz? Liga e desliga o MOD, ou só bloqueia enquanto
    estiver pressionado?
 3. **Tabela de tempos.** Catálogo com referência por MOD, ou valor fixo por item?
-4. **Valor de referência do HOLD_AT** é o mesmo `TIME_HOLD` de 500 ms?
+4. ~~**Valor de referência do HOLD_AT** é o mesmo `TIME_HOLD` de 500 ms?~~ **Respondida
+   pelo manual:** não. `TIME_HOLD` é a duração para cair em D3 e D4. O HOLD dos MODs usa
+   a tabela de 63 valores.
 5. **Teto de gatilhos por GAMA.** A definir depois de medir o custo por quadro.
 6. **Turbo e combo no mesmo destino** (pendência 5 da seção 10): continua em aberto.
 7. **Cronus.** PASSIVO → OCULTO precisa ser feito no repositório do Cronus. Você faz, ou me
