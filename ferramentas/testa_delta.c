@@ -40,7 +40,7 @@ typedef struct { uint8_t liga, alterna, finaliza; uint64_t t; } Q;
 
 static void quadro(const DeltaCfg *c, DeltaEstado *e, Q q, DeltaSaida *s) {
     DeltaEntrada in;
-    in.liga = q.liga; in.alterna = q.alterna; in.finaliza = q.finaliza;
+    in.liga = q.liga; in.alterna = q.alterna; in.finaliza = q.finaliza; in.congelado = 0;
     in.t_us = q.t * 1000u;
     delta_avaliar(c, e, &in, s);
 }
@@ -84,7 +84,7 @@ static void testes_direct(void) {
     {
         uint64_t t;
         for (t = 0; t <= 300; t += 10) {
-            in.liga = (t >= 100 && t < 200); in.alterna = 0; in.finaliza = 0; in.t_us = t * 1000u;
+            in.liga = (t >= 100 && t < 200); in.alterna = 0; in.finaliza = 0; in.congelado = 0; in.t_us = t * 1000u;
             delta_avaliar(&c, &e, &in, &s);
             if (((s.destinos & BIT(D_CROSS)) != 0) != (in.liga != 0)) ok = 0;
         }
@@ -258,6 +258,34 @@ static void testes_finaliza(void) {
     passo("COMBO com ciclos ATIVO: nao termina sozinho; FINALIZA encerra", ok, "");
 }
 
+/* ------------------------------------------- congelamento (BLOCK) no DELTA */
+static void testes_congelado(void) {
+    DeltaCfg c; DeltaEstado e; DeltaSaida s; DeltaEntrada in;
+    int ok = 1;
+    cfg_base(&c, DELTA_TURBO); c.n_dest = 1; c.dest[0] = D_CROSS;
+    c.tempo[0] = (uint8_t)idx_ms(100); c.lat = (uint8_t)idx_ms(30); c.ciclos = DELTA_CICLOS_ATIVO;
+    delta_iniciar(&e);
+    /* liga em 0; congela de 50 a 80: nenhuma saida durante o congelamento, e a fase para */
+    memset(&in, 0, sizeof in); in.liga = 1; in.t_us = 0; delta_avaliar(&c, &e, &in, &s);
+    if (!(s.destinos & BIT(D_CROSS))) ok = 0;
+    memset(&in, 0, sizeof in); in.congelado = 1; in.t_us = 50000; delta_avaliar(&c, &e, &in, &s);
+    if (s.destinos != 0) ok = 0;
+    memset(&in, 0, sizeof in); in.congelado = 1; in.t_us = 70000; delta_avaliar(&c, &e, &in, &s);
+    if (s.destinos != 0) ok = 0;
+    /* durante o congelamento, um LIGA nao reinicia nem dispara nada */
+    memset(&in, 0, sizeof in); in.congelado = 1; in.liga = 1; in.t_us = 75000; delta_avaliar(&c, &e, &in, &s);
+    if (s.destinos != 0) ok = 0;
+    /* o passo comecou em 0 e foi congelado em 50 (50 ms consumidos). Retoma em 80: restam
+     * 50 ms, entao o passo acaba em 130 e a latencia vai de 130 a 160. */
+    memset(&in, 0, sizeof in); in.t_us = 80000; delta_avaliar(&c, &e, &in, &s);
+    if (!(s.destinos & BIT(D_CROSS))) ok = 0;
+    memset(&in, 0, sizeof in); in.t_us = 120000; delta_avaliar(&c, &e, &in, &s);
+    if (!(s.destinos & BIT(D_CROSS))) ok = 0;
+    memset(&in, 0, sizeof in); in.t_us = 130000; delta_avaliar(&c, &e, &in, &s);
+    if (s.destinos & BIT(D_CROSS)) ok = 0;                 /* latencia de 130 a 160 */
+    passo("DELTA congelado: zera a saida, nao aceita eventos, e retoma com o tempo que faltava", ok, "passo acaba em 130 ms, depois de retomar em 80");
+}
+
 int main(void) {
     testes_validacao();
     testes_direct();
@@ -265,6 +293,7 @@ int main(void) {
     testes_turbo();
     testes_combo();
     testes_finaliza();
+    testes_congelado();
     if (falhas) { printf("  => BANCADA DO DELTA FECHADA: %d reprovaram\n", falhas); return 1; }
     printf("  => bancada do DELTA aberta: todas as verificacoes passaram\n");
     return 0;

@@ -1202,7 +1202,7 @@ que vai ao DELTA. O DELTA decide, por tipo, o que fazer com ele.
 
 | peça | arquivo | bancada | verificações | sabotagens |
 |---|---|---|---|---|
-| DELTA: DIRECT, STATIC, TURBO, COMBO | `src/delta.c`, `src/delta.h` | `ferramentas/testa_delta.c` | 10 | 6, todas pelo motivo certo |
+| DELTA: DIRECT, STATIC, TURBO, COMBO | `src/delta.c`, `src/delta.h` | `ferramentas/testa_delta.c` | 11 | 6, todas pelo motivo certo |
 
 **Sem deriva.** Cada fase começa no instante planejado (início anterior mais a duração), e
 não no quadro em que a anterior foi detectada. Assim o erro não se acumula. Só ressincroniza
@@ -1236,3 +1236,39 @@ fica para a próxima fatia.
 - *Minha:* **DIRECT só aceita origem de nível** (LIVRE ou BLOCK). Já estava em 19.7.
 - *Minha:* o MOD precisa de pelo menos uma aba que alimente o DELTA.
 - *Minha:* a ação ALTERNA/FINALIZA/LIGA é configurada por aba, fora da ALFA, no `ModCfg`.
+
+### 21.2 Integração implementada e verificada
+
+| peça | arquivo | bancada | verificações | sabotagens |
+|---|---|---|---|---|
+| MOD completo: ALFA + DELTA, com validação | `src/modelo.c`, `src/modelo.h` | `ferramentas/testa_modelo.c` | 6 | 5, 4 pelo motivo certo; 1 é mutante equivalente |
+| congelamento (BLOCK) no DELTA | `src/delta.c` | `ferramentas/testa_delta.c` (teste novo) | 11 no total | 1 nova, reprova |
+
+**Como o MOD funciona, por quadro:** a ALFA avalia as abas. Cada aba com LIGA, ALTERNA ou
+FINALIZA entrega o seu disparo (já com DELAY) ao DELTA, pela ação dela. Uma aba BLOCK ativa
+congela o DELTA. A saída do DELTA vira o destino do MOD, e as ocultações da ALFA seguem para o
+jogo.
+
+**Validação.** O MOD é recusado se: DIRECT tiver origem de pulso ou DELAY; BLOCK tiver ação que
+não seja suspender; não houver nenhuma aba que alimente o DELTA; ou a ALFA for inválida.
+
+**Erros da bancada que aparecem no caminho e foram corrigidos:**
+
+- O helper de teste punha ciclos ATIVO em todo MOD. STATIC e DIRECT recusam ciclos, então
+  todos os MODs de STATIC eram inválidos. Isso só apareceu porque a validação era verificada.
+- Um instante de 119 ms não era amostrado (a bancada amostra de 10 em 10 ms), e a bancada
+  reaproveitava o valor da chamada anterior. Agora uma amostra não feita reprova.
+- O caso de congelamento do DELTA tinha uma expectativa de 150 ms, calculada a partir do cenário
+  do MOD. A conta certa, para o cenário do DELTA, dá 130 ms.
+- **Vazamento na pasta de sabotagem:** a primeira rodada de sabotagens copiava só os arquivos
+  alterados. Uma sabotagem anterior ficou na cópia, e a M3 pareceu reprovar um caso que não
+  tocava. O script foi corrigido para copiar o projeto limpo a cada sabotagem.
+
+**Mutante equivalente (M4).** A linha que zera a saída do MOD quando há BLOCK é redundante,
+porque o DELTA já zera a saída quando está congelado. A garantia está coberta no DELTA, pelo
+teste de congelamento. A sabotagem no MOD não muda o comportamento, e isso fica registrado
+aqui, em vez de ser escondido.
+
+**Limites desta fatia:** os destinos são booleanos; não há intensidade de eixo nem MULT; a
+validação entre abas não impede um destino de ser escrito por mais de um MOD (isso é tratado
+pela acumulação, que ainda não foi implementada); e a ZETA continua de fora.

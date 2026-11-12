@@ -22,13 +22,14 @@ SAIDA          := build
 all: bancada
 
 # Cada bancada e um binario proprio. Uma reprovacao para o make na hora.
-bancada: $(SAIDA)/testa_passagem $(SAIDA)/testa_mod $(SAIDA)/testa_tempo $(SAIDA)/testa_perfil $(SAIDA)/testa_alfa $(SAIDA)/testa_delta
+bancada: $(SAIDA)/testa_passagem $(SAIDA)/testa_mod $(SAIDA)/testa_tempo $(SAIDA)/testa_perfil $(SAIDA)/testa_alfa $(SAIDA)/testa_delta $(SAIDA)/testa_modelo
 	@$(SAIDA)/testa_passagem
 	@$(SAIDA)/testa_mod
 	@$(SAIDA)/testa_tempo
 	@$(SAIDA)/testa_perfil
 	@$(SAIDA)/testa_alfa
 	@$(SAIDA)/testa_delta
+	@$(SAIDA)/testa_modelo
 
 $(SAIDA)/testa_passagem: ferramentas/testa_passagem.c $(FONTES) src/dsig.h src/pad.h | $(SAIDA)
 	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_passagem.c $(FONTES)
@@ -47,6 +48,9 @@ $(SAIDA)/testa_alfa: ferramentas/testa_alfa.c src/alfa.c src/alfa.h src/tempo.c 
 
 $(SAIDA)/testa_delta: ferramentas/testa_delta.c src/delta.c src/delta.h src/tempo.c src/tempo.h | $(SAIDA)
 	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_delta.c src/delta.c src/tempo.c
+
+$(SAIDA)/testa_modelo: ferramentas/testa_modelo.c src/modelo.c src/modelo.h src/alfa.c src/alfa.h src/delta.c src/delta.h src/tempo.c src/tempo.h src/pad.h | $(SAIDA)
+	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_modelo.c src/modelo.c src/alfa.c src/delta.c src/tempo.c
 
 $(SAIDA):
 	@mkdir -p $(SAIDA)

@@ -88,12 +88,29 @@ static int proximo(const DeltaCfg *c, DeltaEstado *e, uint64_t inicio, int n_pas
 }
 
 void delta_avaliar(const DeltaCfg *c, DeltaEstado *e, const DeltaEntrada *in, DeltaSaida *out) {
-    uint8_t liga_borda = (uint8_t)(in->liga && !e->liga_ant);
-    uint8_t alterna_borda = (uint8_t)(in->alterna && !e->alterna_ant);
-    uint8_t finaliza_borda = (uint8_t)(in->finaliza && !e->finaliza_ant);
+    uint8_t liga_borda, alterna_borda, finaliza_borda;
     unsigned i;
 
     memset(out, 0, sizeof *out);
+
+    /* BLOCK ativo: o MOD para de responder. Os tempos param, e os eventos sao ignorados.
+     * Ao soltar, o tempo decorrido na pausa e descontado: a resposta retoma de onde parou. */
+    if (in->congelado) {
+        if (!e->congelado_ant) e->t_pausa = in->t_us;
+        e->congelado_ant = 1;
+        e->liga_ant = in->liga;
+        e->alterna_ant = in->alterna;
+        e->finaliza_ant = in->finaliza;
+        return;
+    }
+    if (e->congelado_ant) {
+        e->t_fase += in->t_us - e->t_pausa;
+        e->congelado_ant = 0;
+    }
+
+    liga_borda = (uint8_t)(in->liga && !e->liga_ant);
+    alterna_borda = (uint8_t)(in->alterna && !e->alterna_ant);
+    finaliza_borda = (uint8_t)(in->finaliza && !e->finaliza_ant);
 
     switch (c->tipo) {
 

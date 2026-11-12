@@ -35,6 +35,8 @@ typedef struct {
     uint8_t ciclos_feitos;         /* TURBO/COMBO: ciclos completos */
     uint8_t liga_ant, alterna_ant, finaliza_ant;  /* bordas do quadro anterior */
     uint64_t t_fase;               /* inicio da fase corrente (passo ou latencia) */
+    uint8_t congelado_ant;         /* o BLOCK estava ativo no quadro anterior */
+    uint64_t t_pausa;              /* instante em que o congelamento comecou */
 } DeltaEstado;
 
 /* entrada do quadro: o que as abas da ALFA produziram */
@@ -42,6 +44,7 @@ typedef struct {
     uint8_t liga;                  /* LIGA neste quadro (pulso, ou nivel para DIRECT) */
     uint8_t alterna;               /* ALTERNA neste quadro (pulso) */
     uint8_t finaliza;              /* FINALIZA neste quadro (pulso) */
+    uint8_t congelado;             /* BLOCK ativo: o MOD para de responder e os tempos param */
     uint64_t t_us;
 } DeltaEntrada;
 
