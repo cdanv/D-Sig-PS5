@@ -1172,3 +1172,50 @@ então o zeramento não fazia diferença. O caso foi ajustado, e a sabotagem ago
 
 **Fica para o estágio do DELTA:** ALTERNA e FINALIZA. A ALFA entrega `disparo[aba]`, o pulso
 que vai ao DELTA. O DELTA decide, por tipo, o que fazer com ele.
+
+---
+
+## 20. DELTA: a resposta do MOD (fase 3a)
+
+### 20.1 Leitura usada na implementação (a confirmar)
+
+- **Um DELTA por MOD.** As abas da ALFA alimentam esse DELTA.
+- **Cada disparo de aba tem uma ação:** LIGA (padrão), ALTERNA ou FINALIZA. FINALIZA encerra a
+  resposta do próprio MOD.
+- **TURBO é um COMBO de um passo.** A mesma máquina de execução serve aos dois. O TURBO
+  limita a um passo, e o COMBO vai até dez.
+- **DIRECT** segue o nível da origem, e não tem ação própria.
+- **STATIC** trava na subida de LIGA, alterna com ALTERNA e destrava com FINALIZA.
+- **TURBO e COMBO** começam com LIGA e param com FINALIZA, ou ao completar os ciclos
+  (quando CICLOS não é ATIVO). LIGA enquanto já está rodando é ignorado.
+- **Latência:** entre passos e entre ciclos. Não há latência depois do último ciclo.
+
+### 20.2 Limites desta fatia
+
+- Destinos são booleanos (ligado ou não). A intensidade dos eixos, o MULT e a acumulação
+  por intensidade máxima ficam para depois.
+- Os 18 destinos são os do Cronus. Os sinais extras do DualSense não entram ainda.
+- A integração com as abas da ALFA (quem produz LIGA, ALTERNA e FINALIZA) fica para a
+  próxima fatia.
+
+### 20.3 DELTA implementado e verificado
+
+| peça | arquivo | bancada | verificações | sabotagens |
+|---|---|---|---|---|
+| DELTA: DIRECT, STATIC, TURBO, COMBO | `src/delta.c`, `src/delta.h` | `ferramentas/testa_delta.c` | 11 | 6, todas pelo motivo certo |
+
+**Sem deriva.** Cada fase começa no instante planejado (início anterior mais a duração), e
+não no quadro em que a anterior foi detectada. Assim o erro não se acumula. Só ressincroniza
+com o relógio se o quadro atrasou mais de uma fase inteira. A bancada tem um caso com quadros
+de 7 ms, em que o término tem de sair no quadro de 112 ms. A sabotagem que usa o quadro da
+detecção reprova.
+
+**Duas falhas da bancada que eu corrigi, e que estão registradas aqui:**
+- A bancada juntava dois casos com a mesma variável de resultado, então uma falha num caso
+  aparecia no outro.
+- Pulsos consecutivos sem quadro zero entre eles não geram borda. A bancada precisa de quadros
+  zero entre pulsos, como o sistema real tem.
+
+**Limites desta fatia:** destinos booleanos; sem intensidade de eixo nem MULT; sem os sinais
+extras do DualSense; a integração com as abas da ALFA (quem produz LIGA, ALTERNA e FINALIZA)
+fica para a próxima fatia.
