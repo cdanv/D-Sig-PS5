@@ -1510,7 +1510,7 @@ em little-endian, sem depender do layout de memória do compilador.
 
 **Layout:** cabeçalho de 8 bytes (magic `DSG1`, versão 1, n de MODs, 2 reservados). Por MOD: 302
 bytes de ALFA, acoes e DELTA, mais 14 de ZETA (BLOQ, ASSOC, EXCL, INIC) e domínio. Rodapé: CRC32 de
-tudo que vem antes. Com 2 MODs, o arquivo tem 644 bytes.
+tudo que vem antes. Com 2 MODs, o arquivo tem 644 bytes (medido: 8 + 2×316 + 4, rodado com `formato_gravar`).
 
 **Leitura:** só aceita o arquivo se o magic, a versão e o CRC batem, se o tamanho é exato (sem
 byte sobrando nem faltando), e se a rede passa em `rede_validar`. Qualquer falha devolve erro, e a

@@ -15,7 +15,8 @@
 #define FORMATO_VERSAO 1
 #define FORMATO_CABECALHO 8
 #define FORMATO_RODAPE 4
-/* bytes por MOD de ALFA (277) + acoes (6) + DELTA (25). A bancada confere contra a escrita real. */
+/* bytes por MOD: ALFA com janela (1 + 6 abas x 45 = 271) + acoes (6) + DELTA (25) = 302.
+ * A bancada confere contra a escrita real, e a escrita medida deu 644 bytes para 2 MODs. */
 #define FORMATO_BLOCO_ALFA_DELTA 302
 #define FORMATO_ZETA_DOM 14       /* por MOD, depois do bloco de ALFA/acoes/DELTA: ZETA (4+4+4+1) e dominio (1) */
 
