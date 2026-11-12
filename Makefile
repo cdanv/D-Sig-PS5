@@ -54,8 +54,8 @@ $(SAIDA)/testa_delta: ferramentas/testa_delta.c src/delta.c src/delta.h src/temp
 $(SAIDA)/testa_modelo: ferramentas/testa_modelo.c src/modelo.c src/modelo.h src/alfa.c src/alfa.h src/delta.c src/delta.h src/tempo.c src/tempo.h src/pad.h | $(SAIDA)
 	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_modelo.c src/modelo.c src/alfa.c src/delta.c src/tempo.c
 
-$(SAIDA)/testa_rede: ferramentas/testa_rede.c src/rede.c src/rede.h src/modelo.c src/modelo.h src/alfa.c src/alfa.h src/delta.c src/delta.h src/tempo.c src/tempo.h src/pad.h | $(SAIDA)
-	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_rede.c src/rede.c src/modelo.c src/alfa.c src/delta.c src/tempo.c
+$(SAIDA)/testa_rede: ferramentas/testa_rede.c src/rede.c src/rede.h src/dominio.c src/dominio.h src/modelo.c src/modelo.h src/alfa.c src/alfa.h src/delta.c src/delta.h src/tempo.c src/tempo.h src/pad.h | $(SAIDA)
+	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_rede.c src/rede.c src/dominio.c src/modelo.c src/alfa.c src/delta.c src/tempo.c
 
 $(SAIDA)/testa_dominio: ferramentas/testa_dominio.c src/rede.c src/rede.h src/dominio.c src/dominio.h src/modelo.c src/modelo.h src/alfa.c src/alfa.h src/delta.c src/delta.h src/tempo.c src/tempo.h src/pad.h | $(SAIDA)
 	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_dominio.c src/rede.c src/dominio.c src/modelo.c src/alfa.c src/delta.c src/tempo.c
