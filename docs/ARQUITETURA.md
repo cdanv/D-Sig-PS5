@@ -1416,3 +1416,19 @@ pública do PoorDS4 (`payload/*.c`, que cita os bits de botão).
 2. **Bits de PS e SHARE.** Não estão no PoorDS4 nem no `pad.h`. Preciso de outra fonte, ou de você
    medindo no console com o que sai em `buttons`.
 3. **FINGER como botão.** Confirme a leitura: "há dedo sobre o touchpad".
+
+### 24.1 Segunda fonte: etaHEN (`daemon/include/pad.hpp`)
+
+O enum `OrbisPadButton` do etaHEN (que cita o OpenOrbis PS4 Toolchain) confere com `pad.h` em
+todos os botões que lá aparecem: L3 0x0002, R3 0x0004, OPTIONS 0x0008, UP 0x0010, RIGHT 0x0020,
+DOWN 0x0040, LEFT 0x0080, L2 0x0100, R2 0x0200, L1 0x0400, R1 0x0800, TRIANGLE 0x1000,
+CIRCLE 0x2000, CROSS 0x4000, SQUARE 0x8000, TOUCH_PAD 0x100000.
+
+**PS e SHARE não estão nesse enum.** Isso não é prova de que o PS5 não os entrega, mas é um
+indício forte: o campo `buttons` de `ScePadData`, na ABI pública, não os declara. Possivelmente o
+sistema consome PS e SHARE antes do jogo. Não afirmo isso como fato: a confirmação é ler `buttons`
+no console enquanto se aperta cada um, e isso depende do Alvo 3.
+
+**Conferência com o Zen Studio:** não foi feita. O Zen Studio é um programa de Windows ligado ao
+Cronus físico, e o monitor dele mostra o mapeamento do Cronus, não o `ScePadData` do PS5. Ver um
+valor ali não confirmaria o bit do PS5.
