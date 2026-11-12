@@ -1049,3 +1049,37 @@ B. **Cancelamento em abas de pulso.** Em 2CLK, HOLD_AT, HOLD_AP e SEQUÊNCIA, a 
 
 C. **DELAY em abas de nível.** "Fim do pulso", em aba de nível, é a descida do nível, ou a
    subida? Proposta: conta da subida, e o cancelamento é pela descida antes do fim do atraso.
+
+### 19.6 Correção de 19.5 e fluxo: ALFA dispara o DELTA, que gera a resposta
+
+**Correção.** Na seção 19.5, eu escrevi que FINALIZA desliga "a saída de outra aba". Está
+errado. O FINALIZA atua sobre a **resposta do DELTA**.
+
+**Fluxo:** ALFA (abas, inclusive as antigas da GAMA) → DELAY → DELTA (DIRECT, STATIC, TURBO
+ou COMBO) → resposta → destinos.
+
+**Como cada tipo de DELTA termina:**
+
+| tipo | termina sozinho? | observação |
+|---|---|---|
+| DIRECT | sim | quando a fonte sai da zona, ou o gatilho solta |
+| STATIC | não | só FINALIZA encerra |
+| TURBO sem ciclos | não | só FINALIZA encerra |
+| TURBO com ciclos | sim | ao completar os ciclos |
+| COMBO | sim | ao concluir os passos |
+
+**Consequência para FINALIZA:** só tem efeito com STATIC e TURBO sem ciclos. Com DIRECT,
+TURBO com ciclos e COMBO, FINALIZA não faz nada, porque a resposta já termina sozinha.
+
+**Pendências novas:**
+
+A'. **Como o FINALIZA escolhe a resposta que encerra?** Opções: (a) ele encerra a resposta
+do DELTA da própria aba; (b) ele encerra uma resposta de outra aba, escolhida por uma lista,
+como as relações ZETA.
+
+B'. **Quais tipos de DELTA aceitam cada aba de origem?** Proposta:
+- DIRECT: só com fonte de nível (LIVRE, BLOCK). Um pulso não acompanha a fonte.
+- STATIC: qualquer origem com ALTERNA, ou com nível.
+- TURBO e COMBO: qualquer origem. São sequências que tocam sozinhas.
+
+C'. **Cancelamento do DELAY (19.5, B e C)** continua valendo, porque ocorre antes do DELTA.
