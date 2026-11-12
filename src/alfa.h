@@ -23,13 +23,16 @@ enum { ABA_LIVRE = 0, ABA_SEQUENCIA = 1, ABA_2CLK = 2,
        ABA_HOLD_AT = 3, ABA_HOLD_AP = 4, ABA_BLOCK = 5 };
 
 /* tipo de fonte */
-enum { FONTE_BOTAO = 0, FONTE_EIXO = 1, FONTE_GATILHO = 2 };
+enum { FONTE_BOTAO = 0, FONTE_EIXO = 1, FONTE_GATILHO = 2, FONTE_DEDO = 3 };
+/* FONTE_DEDO: "ha dedo sobre o touchpad" (FINGER1 ou FINGER2). Vale 0 ou 100. */
 /* eixos: analogicos do controle (0..3) e os sensores de movimento (4..9, PS5)
  * ACCX/ACCY/ACCZ: acelerometro; GYROX/GYROY/GYROZ: giroscopio. Todos em -100..+100 apos a
  * normalizacao, que ainda nao foi medida (ver docs/ARQUITETURA.md, secao 25). */
 enum { EIXO_LX = 0, EIXO_LY = 1, EIXO_RX = 2, EIXO_RY = 3,
        EIXO_ACCX = 4, EIXO_ACCY = 5, EIXO_ACCZ = 6,
-       EIXO_GYROX = 7, EIXO_GYROY = 8, EIXO_GYROZ = 9, EIXO_N = 10 };
+       EIXO_GYROX = 7, EIXO_GYROY = 8, EIXO_GYROZ = 9,
+       /* posicao do dedo no touchpad: trava no ultimo toque (ver toque.h) */
+       EIXO_F1X = 10, EIXO_F1Y = 11, EIXO_F2X = 12, EIXO_F2Y = 13, EIXO_N = 14 };
 enum { GATILHO_L2 = 0, GATILHO_R2 = 1 };
 enum { DIR_NEG = 0, DIR_ABS = 1, DIR_POS = 2 };
 
@@ -64,6 +67,7 @@ typedef struct {
 typedef struct {
     uint32_t botoes;          /* mascara de bits, como em pad.h */
     int32_t eixo[EIXO_N];     /* EIXO_*: -100 a +100 */
+    uint8_t dedo[2];          /* FINGER1, FINGER2: 1 se ha dedo sobre o touchpad */
     int32_t gatilho[2];       /* L2, R2: 0 a 100 */
     uint64_t t_us;            /* carimbo de tempo, microssegundos */
 } Entrada;
@@ -104,7 +108,7 @@ typedef struct {
     uint8_t disparo[ALFA_ABAS];         /* por aba, depois do DELAY: pulso que vai ao DELTA */
     uint8_t reiniciou[ALFA_ABAS];       /* SEQUENCIA: reiniciou neste quadro */
     uint32_t ocultar_botoes;
-    uint16_t ocultar_analog;            /* bits 0..9 eixos (EIXO_*), 10 L2, 11 R2 */
+    uint16_t ocultar_analog;            /* bits 0..13 eixos (EIXO_*), 14 L2, 15 R2 */
 } AlfaSaida;
 
 /* 1 se nenhuma fonte esta acionada neste quadro (repouso). Usado para destravar um MOD

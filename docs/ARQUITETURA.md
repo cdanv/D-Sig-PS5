@@ -1479,3 +1479,24 @@ hoje a entrada recebe o valor já normalizado.
 
 **Também pendente:** zona morta para o sensor. Movimento parado tem ruído, e sem zona morta um MOD
 de movimento dispara por tremor.
+
+---
+
+## 26. Toque do touchpad: dedos como botão e como eixo (fase 3a)
+
+**Confirmado no monitor do Zen Studio (24.2):** FINGER1 e FINGER2 são botões (100 com o dedo, 0
+sem). FINGER1X/Y e FINGER2X/Y são eixos que acompanham a posição e **travam no último toque**.
+
+**Implementado:** `src/toque.c` converte as coordenadas brutas dos dois dedos para a entrada da
+ALFA. A ALFA ganhou `FONTE_DEDO` (presença, ids 0 e 1) e os eixos `EIXO_F1X..F2Y` (ids 10 a 13).
+`EIXO_N` passou a 14, então L2 e R2 foram para os bits 14 e 15 da máscara de ocultação.
+
+**Verificado:** bancada do toque com 8 verificações. 3 sabotagens (sem trava, sem limite, dedo 2
+lendo o dedo 1), todas reprovaram pelo motivo certo.
+
+**NÃO verificado:** a faixa real das coordenadas do touchpad do PS5. A calibração (`ToqueCal`)
+é um parâmetro. A bancada usa 1000 x 500 como valor **arbitrário**, para testar a lógica, e não
+afirma a faixa real. Ela precisa ser medida no console, lendo `touchData` com o dedo nas bordas.
+
+**Pendente:** ocultar o toque do jogo (o Cronus tem `Util_Touchpad`). Hoje uma fonte de dedo
+oculta não suprime nada.

@@ -46,6 +46,7 @@ static int nivel_fonte(const Fonte *f, const Entrada *in) {
     case FONTE_BOTAO:   return (int)((in->botoes >> f->id) & 1u);
     case FONTE_EIXO:    return beta_conta(&f->beta, in->eixo[f->id], 1);
     case FONTE_GATILHO: return beta_conta(&f->beta, in->gatilho[f->id], 0);
+    case FONTE_DEDO:    return in->dedo[f->id] ? 1 : 0;
     default:            return 0;
     }
 }
@@ -75,6 +76,7 @@ static int fonte_valida(const Fonte *f) {
     if (f->tipo == FONTE_BOTAO) return f->id < 32;
     if (f->tipo == FONTE_EIXO) return f->id < EIXO_N && beta_valida(&f->beta);
     if (f->tipo == FONTE_GATILHO) return f->id <= GATILHO_R2 && beta_valida(&f->beta);
+    if (f->tipo == FONTE_DEDO) return f->id <= 1;
     return 0;
 }
 
@@ -194,7 +196,8 @@ void alfa_avaliar(const AlfaCfg *c, AlfaEstado *e, const Entrada *in, AlfaSaida 
             if (ab->oculto) {
                 if (f->tipo == FONTE_BOTAO) out->ocultar_botoes |= 1u << f->id;
                 else if (f->tipo == FONTE_EIXO) out->ocultar_analog |= (uint16_t)(1u << f->id);
-                else out->ocultar_analog |= (uint16_t)(1u << (EIXO_N + f->id));  /* L2, R2 */
+                else if (f->tipo == FONTE_GATILHO) out->ocultar_analog |= (uint16_t)(1u << (EIXO_N + f->id));  /* L2, R2 */
+                /* FONTE_DEDO: ocultar o toque ainda nao e suportado nesta fatia */
             }
         }
     }

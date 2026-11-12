@@ -22,7 +22,7 @@ SAIDA          := build
 all: bancada
 
 # Cada bancada e um binario proprio. Uma reprovacao para o make na hora.
-bancada: $(SAIDA)/testa_passagem $(SAIDA)/testa_mod $(SAIDA)/testa_tempo $(SAIDA)/testa_perfil $(SAIDA)/testa_alfa $(SAIDA)/testa_delta $(SAIDA)/testa_modelo $(SAIDA)/testa_rede $(SAIDA)/testa_dominio $(SAIDA)/testa_acumula
+bancada: $(SAIDA)/testa_passagem $(SAIDA)/testa_mod $(SAIDA)/testa_tempo $(SAIDA)/testa_perfil $(SAIDA)/testa_alfa $(SAIDA)/testa_delta $(SAIDA)/testa_modelo $(SAIDA)/testa_rede $(SAIDA)/testa_dominio $(SAIDA)/testa_acumula $(SAIDA)/testa_toque
 	@$(SAIDA)/testa_passagem
 	@$(SAIDA)/testa_mod
 	@$(SAIDA)/testa_tempo
@@ -33,6 +33,7 @@ bancada: $(SAIDA)/testa_passagem $(SAIDA)/testa_mod $(SAIDA)/testa_tempo $(SAIDA
 	@$(SAIDA)/testa_rede
 	@$(SAIDA)/testa_dominio
 	@$(SAIDA)/testa_acumula
+	@$(SAIDA)/testa_toque
 
 $(SAIDA)/testa_passagem: ferramentas/testa_passagem.c $(FONTES) src/dsig.h src/pad.h | $(SAIDA)
 	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_passagem.c $(FONTES)
@@ -63,6 +64,9 @@ $(SAIDA)/testa_dominio: ferramentas/testa_dominio.c src/rede.c src/rede.h src/do
 
 $(SAIDA)/testa_acumula: ferramentas/testa_acumula.c src/rede.c src/rede.h src/dominio.c src/dominio.h src/modelo.c src/modelo.h src/alfa.c src/alfa.h src/delta.c src/delta.h src/tempo.c src/tempo.h src/pad.h | $(SAIDA)
 	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_acumula.c src/rede.c src/dominio.c src/modelo.c src/alfa.c src/delta.c src/tempo.c
+
+$(SAIDA)/testa_toque: ferramentas/testa_toque.c src/toque.c src/toque.h src/alfa.c src/alfa.h src/tempo.c src/tempo.h src/pad.h | $(SAIDA)
+	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_toque.c src/toque.c src/alfa.c src/tempo.c
 
 $(SAIDA):
 	@mkdir -p $(SAIDA)
