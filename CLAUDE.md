@@ -70,8 +70,36 @@ e seguir com o que está dentro — não inventar um jeito de atender.
 |---|---|
 | **Alvo 1 — passagem pura** | **feito.** `src/passagem.c`, 4 verificações, 4 sabotagens |
 | **Alvo 2 — o primeiro MOD de verdade** | **feito na bancada.** Troca de botão e acorde. `src/passagem.c`, `ferramentas/testa_mod.c`, 9 sabotagens |
-| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a em andamento:** tabela de tempo, buffer duplo e ALFA v4 (seis abas) feitos na bancada. ALFA com DELAY, DELTA (DIRECT, STATIC, TURBO, COMBO) e a integração ALFA→DELTA (`src/modelo.c`) feitos na bancada. ZETA, domínios D1 a D4 e acumulação de destinos entre MODs em `src/rede.c` e `src/dominio.c`. Órfão adotado pela ZETA feito na bancada. Formato binário do perfil feito. Eixos com intensidade (destinos 10 a 13) e herança do órfão pela cadeia feitos na bancada (ver `docs/ARQUITETURA.md`, seção 29). Falta o sinal dos eixos e o órfão com gatilho em FINALIZA. Fases 3b a 3d precisam de console |
+| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a fechada na bancada** (ver a seção 4 deste arquivo, abaixo da tabela, para o que ficou de fora). Fases 3b a 3d precisam de console |
 | Alvo 4 — ícone na tela inicial | caminho conhecido e barato (ver `docs/ESTUDO.md`) |
+
+**Fase 3a: fechada na bancada.** Tudo o que cabe verificar sem console está verificado e publicado.
+Os números abaixo foram medidos com `make bancada` (todas as 12 bancadas passam, zero falhas).
+
+O que a fase 3a entrega:
+- ALFA v4 com as seis abas, DELAY, intensidade por fonte (eixo, gatilho, botão, toque) e MULT;
+- DELTA com DIRECT, STATIC, TURBO e COMBO, com sinal, intensidade, modos ABS/POS/NEG/ABSF e
+  escrita no silêncio;
+- MOD completo, ZETA (BLOQ, ASSOC, EXCL), órfão adotado pela ASSOC com a cadeia de até 4 níveis,
+  domínios D1 a D4, acumulação de destinos, eixos pelo maior módulo com sinal, gatilhos L2 e R2
+  como destino com valor, toque como botão e eixo, toque oculto e formato binário do perfil.
+- Regras conferidas contra o manual da ZETA, o manual de EIXOS e os achados do simulador do Cronus;
+  cada decisão de leitura está registrada em `docs/ARQUITETURA.md` (seções 21 a 35).
+
+**O que ficou de fora da 3a (não é console; é trabalho de bancada ainda pendente):**
+1. **Gatilho STATIC com teto que destrava** (manual de EIXOS, 8.3). Hoje o gatilho trava como botão.
+2. **Órfão DIRECT com gatilho em FINALIZA** (manual da ZETA, 7.6): o valor-base vir do botão físico
+   do gatilho. Não implementado.
+3. **COMBO com destinos mistos** (seção 35, decisão 3): a regra é a do TURBO por passo, mas o caso
+   misto ainda não tem verificação própria.
+
+**O que só o console confirma (não é bancada):**
+- convenção vertical: "frente é negativo" depende do valor que o ScePadData entrega;
+- faixa e calibração do touch (x_max e y_max usados na bancada são arbitrários);
+- escala de ACC e GYRO, e zona morta dos sensores;
+- conversão de 0..100 para os 0..255 do ScePadData, nos gatilhos L2 e R2;
+- bits de PS e SHARE em `ScePadData`;
+- a ponte que tira o toque do pacote do jogo quando `ocultar_toque` estiver ligado.
 
 ```
 src/pad.h                     o ScePadData — 120 bytes, confirmado por duas fontes
@@ -82,13 +110,13 @@ ferramentas/testa_mod.c       a bancada do Alvo 2 (o primeiro MOD)
 src/tempo.c, src/tempo.h      a tabela única de tempo: 67 valores, por índice (fase 3a)
 src/perfil.c, src/perfil.h    o buffer duplo com versão, com escritor e leitor (fase 3a)
 src/alfa.c, src/alfa.h        a ALFA v4: seis abas (LIVRE, SEQUÊNCIA, 2CLK, HOLD_AT, HOLD_AP, BLOCK) (fase 3a)
-ferramentas/testa_alfa.c      a bancada da ALFA v4, com 26 verificações
+ferramentas/testa_alfa.c      a bancada da ALFA v4, com 33 verificações
 src/delta.c, src/delta.h      o DELTA: DIRECT, STATIC, TURBO e COMBO (fase 3a)
-ferramentas/testa_delta.c     a bancada do DELTA, com 10 verificações
+ferramentas/testa_delta.c     a bancada do DELTA, com 22 verificações
 src/modelo.c, src/modelo.h    o MOD completo: ALFA ligada ao DELTA, com validação (fase 3a)
-ferramentas/testa_modelo.c    a bancada do MOD completo, com 6 verificações
+ferramentas/testa_modelo.c    a bancada do MOD completo, com 8 verificações
 src/rede.c, src/rede.h        a rede de MODs com a ZETA: BLOQ, ASSOC e EXCL (fase 3a)
-ferramentas/testa_rede.c      a bancada da ZETA, com 6 verificações
+ferramentas/testa_rede.c      a bancada da ZETA, com 20 verificações
 src/dominio.c, src/dominio.h  os domínios D1 a D4 e seus comandos fixos (fase 3a)
 ferramentas/testa_dominio.c   a bancada dos domínios, com 8 verificações
 ferramentas/testa_acumula.c   a bancada da acumulação de destinos, com 4 verificações
