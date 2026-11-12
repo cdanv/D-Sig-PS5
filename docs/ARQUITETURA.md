@@ -1272,3 +1272,24 @@ aqui, em vez de ser escondido.
 **Limites desta fatia:** os destinos são booleanos; não há intensidade de eixo nem MULT; a
 validação entre abas não impede um destino de ser escrito por mais de um MOD (isso é tratado
 pela acumulação, que ainda não foi implementada); e a ZETA continua de fora.
+
+---
+
+## 22. ZETA: as relações entre MODs (fase 3a)
+
+### 22.1 Leitura usada (a confirmar)
+
+- **Resposta de pé** = o DELTA do MOD está ligado: DIRECT pelo nível, STATIC pela trava,
+  TURBO e COMBO enquanto rodam, incluindo as fases de silêncio. (Manual, seção 15.1. A
+  alternativa "ou a fonte está na zona" do STATIC fica de fora desta fatia.)
+- **BLOQ:** enquanto algum alvo responde, o MOD fica congelado (como o BLOCK).
+- **ASSOC:** o inverso. O MOD só responde enquanto algum alvo responder. No resto do tempo,
+  fica congelado.
+- **EXCL:** encerra o MOD quando o alvo sobe (INIC) ou quando termina (FIM). Disparo único.
+  Volta (rearme) quando um MOD ligado por ASSOC tem a resposta subindo de novo. Esse rearme
+  vem só da resposta, conforme você confirmou.
+- **Encerrado** zera o DELTA e suprime a saída. A ALFA continua avançando.
+- **Defasagem de um quadro:** as relações olham o estado do quadro anterior. Assim o resultado
+  não depende da ordem dos MODs (manual, seção 24.1).
+- **Limite:** ZETA não tem domínio nesta fatia. Os domínios D1 a D4 ficam para depois, e o
+  órfão adotado (manual, seção 15.5) também.
