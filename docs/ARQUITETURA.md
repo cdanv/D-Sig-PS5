@@ -1387,3 +1387,32 @@ de "maior intensidade absoluta" do manual (seção 26.1), que é diferente do OU
 **Correção nas bancadas:** o destino de TRIANGLE é o 9, e não o 12 (que é RX). As bancadas da
 ZETA e dos domínios usavam 12. Os resultados não mudaram, porque os testes comparavam bits de
 destino entre si, mas o nome agora bate com o manual.
+
+---
+
+## 24. Conferência da lista de fontes do controle (PS5)
+
+Lista enviada pelo autor, conferida contra `src/pad.h`, `src/alfa.h`, `src/rede.c` e a fonte
+pública do PoorDS4 (`payload/*.c`, que cita os bits de botão).
+
+| entrada | no autor | no código | situação |
+|---|---|---|---|
+| L1, L3, R1, R3 | botão | `DS_BTN_*` em `pad.h`; bits confirmados no PoorDS4 | ok |
+| L2, R2 | gatilho | `GATILHO_L2/R2` em `alfa.h`; bits 0x100 e 0x200 confirmados no PoorDS4 | ok |
+| UP, DOWN, LEFT, RIGHT | botão | `DS_BTN_*` em `pad.h` | ok |
+| TRIANGLE, CIRCLE, CROSS, SQUARE | botão | `DS_BTN_*` em `pad.h` | ok |
+| OPTIONS | botão | `DS_BTN_OPTIONS` = 0x08 em `pad.h` | ok (bit não conferido no PoorDS4) |
+| TOUCH | botão | `DS_BTN_TOUCH` = 0x100000 em `pad.h` | ok (bit não conferido no PoorDS4) |
+| LX, LY, RX, RY | eixo | `EIXO_LX..RY` em `alfa.h` | ok |
+| **PS** | botão | **não definido** | **falta.** O bit não está em `pad.h` nem no PoorDS4. Não chutar |
+| **SHARE** | botão | **não definido** | **falta.** Mesmo caso do PS |
+| **FINGER1, FINGER2** (botão) | botão | **não definido** | a confirmar: seria "há dedo tocando", derivado de `touchData.fingers` |
+| **FINGER1X/Y, FINGER2X/Y** | eixo | **não definido** | falta. Vêm de `touchData.touch[].x/y` (16 bits). Pelo que você disse, são eixos estáticos (travam no último toque) |
+
+**Perguntas:**
+
+1. **Destinos.** O Cronus tem 18 destinos, sem PS, SHARE, OPTIONS, TOUCH nem dedos. No PS5, esses
+   entram como destino ou só como fonte? Hoje a rede escreve só os 18.
+2. **Bits de PS e SHARE.** Não estão no PoorDS4 nem no `pad.h`. Preciso de outra fonte, ou de você
+   medindo no console com o que sai em `buttons`.
+3. **FINGER como botão.** Confirme a leitura: "há dedo sobre o touchpad".
