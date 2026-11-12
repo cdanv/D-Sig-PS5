@@ -445,7 +445,31 @@ static void testes_zero_fim_ciclos(void) {
           "silencio sem inicio; zero em 200 ms e 300 ms");
 }
 
+/* ---------------------------------- COMBO com destinos mistos (decisao 3, ARQUITETURA 35) */
+/* Passos: CROSS (digital, 0-50), RX (eixo, 70-120 ligada, 120-140 latencia com ABS), CIRCLE (digital,
+ * 140-190). Cada latencia pertence ao passo que acabou de terminar. Medido no cronograma de 10 ms. */
+static void testes_combo_misto(void) {
+    DeltaCfg c; DeltaEstado e; DeltaEntrada in; DeltaSaida out; int ok = 1; uint64_t t;
+    cfg_base(&c, DELTA_COMBO); c.n_dest = 3;
+    c.dest[0] = 6; c.dest[1] = 12; c.dest[2] = 7;
+    c.tempo[0] = idx_ms(50); c.tempo[1] = idx_ms(50); c.tempo[2] = idx_ms(50);
+    c.lat = idx_ms(20); c.ciclos = DELTA_CICLOS_ATIVO; c.origem_pulso = 1; c.modo = DELTA_MODO_ABS;
+    delta_iniciar(&e);
+    for (t = 0; t <= 150000; t += 10000) {
+        memset(&in, 0, sizeof in); in.liga = (t == 0); in.lado = 1; in.t_us = t;
+        delta_avaliar(&c, &e, &in, &out);
+        if (t == 20000 && out.destinos != BIT(6)) ok = 0;                     /* digital: so CROSS */
+        if (t == 50000 && out.destinos != 0) ok = 0;                          /* latencia digital: nada */
+        if (t == 90000 && (out.destinos != BIT(12) || out.intensidade != 100 || out.sinal != 1)) ok = 0;
+        if (t == 120000 && (out.destinos != BIT(12) || out.intensidade != 100 || out.sinal != -1)) ok = 0;
+        if (t == 140000 && out.destinos != BIT(7)) ok = 0;                    /* digital: so CIRCLE, RX nao escrito */
+    }
+    passo("COMBO misto: cada passo escreve o seu destino; latencia de eixo e do passo que terminou", ok,
+          "CROSS 20 ms; latencia digital 50 ms: nada; RX +100 em 90 ms; RX -100 ABS em 120 ms; CIRCLE 140 ms");
+}
+
 int main(void) {
+    testes_combo_misto();
     testes_zero_fim_ciclos();
     testes_turbo_eixo_modos();
     testes_fin_com_fonte();

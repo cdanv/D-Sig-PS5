@@ -1909,3 +1909,27 @@ sendo o STATIC de sempre.
 **Verificado:** sequência 0, 30, 40, 70, 40, 10, 30 com THR_IN 20 e THR_OUT 60, esperada como
 off, on, on, off, off, off, on. Três sabotagens reprovaram pelo motivo certo: sem destrave, sem memória
 (a descida religa no quadro 40), sem rearme (não volta a travar depois do repouso).
+
+---
+
+## 37. Fechamento das duas pendências de bancada: COMBO misto e órfão com gatilho em FINALIZA
+
+**COMBO com destinos mistos: verificado.** Um COMBO com CROSS (digital), RX (eixo) e CIRCLE (digital),
+medido no cronograma de 10 ms: a fase de CROSS escreve só CROSS; a latência do passo digital não
+escreve nada; a fase ligada de RX escreve +100; a latência de RX escreve −100 (modo ABS), porque a
+latência pertence ao passo que acabou de terminar; o passo de CIRCLE não toca no eixo. Duas sabotagens
+reprovaram pelo motivo certo: o passo usado para escrever passa a ser sempre o primeiro (Z1), e a
+latência de eixo deixa de escrever o silêncio (Z2).
+
+**Órfão DIRECT com gatilho em FINALIZA (manual da ZETA, 7.6): sem efeito na saída. Não codificado.**
+O manual diz, em quatro passos: (1) o valor-base vem do botão físico do gatilho, normalmente zero;
+(2) a herança do alvo sobrescreve esse zero; (3) sem fonte na cadeia, o valor fica zero; (4) zero aciona
+o autoencerramento. Lidos em conjunto, os passos 2 e 3 deixam o valor-base sem efeito:
+- com alvo com fonte na cadeia, a herança sobrescreve o valor-base, então ele não aparece;
+- sem alvo com fonte, o resultado é zero e o órfão se encerra (passo 4), que é o que o código já faz
+  (cadeia de herança, seção 29).
+Além disso, o gatilho do valor-base é o mesmo botão do FINALIZA. Apertá-lo dispara o FINALIZA e
+desliga o órfão, então o valor-base só existiria enquanto o órfão já está desligado.
+Decisão: o código atual já produz o resultado do manual (herança ou zero, com autoencerramento). O
+valor-base não é implementado porque não altera nenhuma saída. Se o manual vier a mostrar um caso em
+que o valor-base aparece, reabro esta decisão.

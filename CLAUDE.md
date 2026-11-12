@@ -70,7 +70,7 @@ e seguir com o que está dentro — não inventar um jeito de atender.
 |---|---|
 | **Alvo 1 — passagem pura** | **feito.** `src/passagem.c`, 4 verificações, 4 sabotagens |
 | **Alvo 2 — o primeiro MOD de verdade** | **feito na bancada.** Troca de botão e acorde. `src/passagem.c`, `ferramentas/testa_mod.c`, 9 sabotagens |
-| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a fechada na bancada** (o bloco abaixo da tabela diz o que ficou de fora). Fases 3b a 3d precisam de console |
+| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a fechada na bancada** (o bloco abaixo da tabela lista o que ainda depende de console). Fases 3b a 3d precisam de console |
 | Alvo 4 — ícone na tela inicial | caminho conhecido e barato (ver `docs/ESTUDO.md`) |
 
 **Fase 3a: fechada na bancada.** Tudo o que cabe verificar sem console está verificado e publicado.
@@ -86,13 +86,10 @@ O que a fase 3a entrega:
 - Regras conferidas contra o manual da ZETA, o manual de EIXOS e os achados do simulador do Cronus;
   cada decisão de leitura está registrada em `docs/ARQUITETURA.md` (seções 21 a 35).
 
-**O que ficou de fora da 3a (não é console; é trabalho de bancada ainda pendente):**
-1. **Órfão DIRECT com gatilho em FINALIZA** (manual da ZETA, 7.6): o valor-base vir do botão físico
-   do gatilho. Não implementado.
-2. **COMBO com destinos mistos** (seção 35, decisão 3): a regra é a do TURBO por passo, mas o caso
-   misto ainda não tem verificação própria.
+**Pendências de bancada da 3a: nenhuma.** O órfão com gatilho em FINALIZA foi decidido (sem efeito na
+saída; ARQUITETURA, seção 37), e o COMBO com destinos mistos foi verificado.
 
-**O que só o console confirma (não é bancada):**
+**O que a 3a deixa para o console (não é bancada):**
 - convenção vertical: "frente é negativo" depende do valor que o ScePadData entrega;
 - faixa e calibração do touch (x_max e y_max usados na bancada são arbitrários);
 - escala de ACC e GYRO, e zona morta dos sensores;
