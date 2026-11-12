@@ -1321,3 +1321,20 @@ que a queda do alvo não congele o MOD e esconda o estado de encerramento.
 **Limites desta fatia:** sem domínios D1 a D4; sem o órfão adotado (manual, seção 15.5); a
 resposta de pé do STATIC é só a trava, sem a alternativa "ou a fonte está na zona"; sem
 acumulação de destinos entre MODs.
+
+---
+
+## 23. Domínios: separação de MODs e desativação (fase 3a)
+
+### 23.1 Leitura usada (a confirmar)
+
+- **Um domínio ligado por vez.** D1 a D4. Um MOD pode estar em um, vários ou nenhum. Sem
+  domínio, o MOD nunca roda, e é assim que se desativa um MOD sem apagá-lo (manual, seção 10).
+- **Comandos fixos** (manual, seção 6): L1 + duplo clique em L3 = D1; R1 + duplo clique em R3
+  = D2; L1 + segurar L3 = D3; R1 + segurar R3 = D4. O mesmo comando no domínio ligado desliga.
+- **Janela do duplo clique de domínio: 250 ms** (`TIME_SHORT_PRESS`, manual seção 18). Não é a
+  janela de 300 ms dos MODs. **Segurar: 500 ms** (`TIME_HOLD`).
+- **Trocar de domínio:** reinicia o estado de execução de todos os MODs (manual, seção 40,
+  `Reset_Perfil`), e trava cada MOD até a fonte voltar ao repouso (manual, seção 25.1).
+- **MOD travado:** não detecta nem responde, mas continua suprimindo os seus botões (manual,
+  seção 25.1). MOD fora do domínio atual: não roda e não suprime nada.
