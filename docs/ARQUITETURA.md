@@ -454,7 +454,7 @@ O modo de acionamento tem três valores, por MOD:
 TRIÂNGULO na fonte, em LIVRE basta apertar um deles, ou todos, em qualquer ordem, e o
 DELTA responde. Em CONJUNTO, o DELTA só sobe se os três forem apertados juntos.
 
-**Nome do modo CONJUNTO: a decidir.** Sugestão em aberto: SIMULTÂNEO (seção 13.5).
+**Nomes decididos (seção 13.5):** QUALQUER (antes LIVRE), SIMULTÂNEO (antes CONJUNTO) e SEQUÊNCIA.
 
 **Pendência de medição.** "Juntos" em CONJUNTO precisa de uma janela de tolerância. Três
 botões apertados por uma pessoa caem em quadros diferentes, e a regra de mesmo quadro
@@ -525,3 +525,14 @@ uma janela, medida a partir da primeira. O valor sai da tabela única de tempo, 
 piso de 10 ms (o menor valor da tabela). O valor real só será escolhido depois de medir
 quanto espaço um humano deixa entre dois botões apertados juntos. Isso é uma medição que
 o Linux não faz, e fica para o console ou para um teste com dados de pessoas.
+
+### 13.6 Decisão final dos nomes e valor provisório da janela
+
+**Nomes:** QUALQUER (OU), SIMULTÂNEO (E no mesmo instante) e SEQUÊNCIA (em ordem).
+LIVRE e CONJUNTO saem do vocabulário.
+
+**Janela de simultaneidade:** **50 ms, provisório.** É um valor já existente na tabela
+única de tempo, escolhido porque cobre o intervalo entre dois botões apertados juntos por
+uma pessoa, na estimativa de quem desenhou o modo. Essa estimativa **não foi medida**. Fica
+marcada como provisória até a medição no console ou com dados de pessoas reais. Enquanto
+isso, a bancada do Alvo 2 continua testando o caso de mesmo quadro, que é o limite inferior.
