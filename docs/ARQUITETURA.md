@@ -723,3 +723,68 @@ mas o caminho de risco é o do gancho, e a leitura dentro do jogo só será conf
 3. **Teto de itens por lista:** a medir, por contagem de operações por quadro na bancada.
 
 Depois da 3a, as fases 3b a 3d precisam de console.
+
+---
+
+## 17. Fase 3a: a ALFA do modelo v3
+
+### 17.1 O que foi feito
+
+| peça | arquivo | bancada | sabotagens |
+|---|---|---|---|
+| ALFA: fonte, BETA, os três modos, sequência, OCULTO | `src/alfa.c`, `src/alfa.h` | `ferramentas/testa_alfa.c` | 6, todas pelo motivo certo |
+
+A bancada tem 21 verificações. Os resultados esperados foram escritos a mão a partir das
+regras do autor, e não vêm do código de `alfa.c`.
+
+**Como a ALFA funciona, por quadro:**
+
+1. Calcula o nível de cada fonte. Para botão é o bit apertado. Para eixo e gatilho é a
+   condição BETA (MULT, zona, DIR, INV).
+2. Calcula a **borda** de cada fonte: o instante em que o nível sobe.
+3. Suprime do jogo as fontes OCULTO.
+4. Aplica o modo: QUALQUER (OU), SIMULTÂNEO (E dentro de uma janela) ou SEQUÊNCIA.
+
+### 17.2 Decisões que eram do autor e foram implementadas como ele definiu
+
+- QUALQUER é OU. SIMULTÂNEO é E dentro de uma janela. SEQUÊNCIA é ordem com espera.
+- Espera estourada reinicia. Passo errado reinicia. Gatilho durante a sequência reinicia.
+- Passo esperado tem prioridade sobre o gatilho, se forem o mesmo botão.
+- OCULTO suprime a fonte do jogo o tempo todo.
+- BETA: MULT escala o valor antes da zona, com limite de ±100. INV inverte a zona.
+
+### 17.3 Decisões que NÃO eram do autor, e que ele precisa confirmar
+
+Estas foram escolhas minhas para fechar a implementação. Estão marcadas no código.
+
+1. **O passo de uma sequência é a borda de subida**, não o nível. Segurar um botão conta
+   uma vez. A bancada tem um teste para isso.
+2. **Passos no mesmo quadro** são processados pela ordem dos índices da sequência.
+3. **Repetir o passo anterior** (por exemplo, apertar CROSS duas vezes seguidas numa
+   sequência de CROSS, CIRCLE, SQUARE) **reinicia**. A regra é estrita: qualquer botão
+   que não seja o passo esperado reinicia. Isso pode ser duro em jogo de luta, e vale
+   revisar com o autor.
+4. **Depois de uma SIMULTÂNEO completa**, o conjunto fica ativo enquanto todas as fontes
+   estiverem apertadas. Soltar uma desmonta.
+
+### 17.4 Perguntas abertas que a ALFA não responde sozinha
+
+- **Resposta da sequência.** Quando a sequência conclui, a ALFA sinaliza um pulso
+  (`concluida` e `ativa` por um quadro). Não está decidido por quanto tempo a resposta
+  dura depois disso. Isso depende de como o DELTA alimenta o COMBO e o TURBO, e fica para
+  a próxima fatia.
+- **Passo errado em jogo de luta.** Como descrito em 17.3, item 3. Só se resolve com o
+  autor e, depois, com teste com pessoas.
+- **Janela do SIMULTÂNEO.** Continua em 50 ms, provisório (seção 13.6).
+
+### 17.5 Limites
+
+- `ALFA_MAX_FONTES = 8` é **provisório**. Não foi medido o custo por quadro.
+- A bancada roda no Linux. O custo no gancho do PS5 não foi medido.
+
+### 17.6 Próximas fatias da fase 3a
+
+1. GAMA como lista de gatilhos (2CLK, TOGGLE, HOLD_AT, HOLD_AP, AFTER, BLOK).
+2. DELTA: DIRECT, STATIC, TURBO (um passo) e COMBO (até dez passos).
+3. ZETA: BLOQ, EXCL (INIC ou FIM, com rearme pela resposta de ASSOC) e ASSOC.
+4. Formato binário do perfil que carrega tudo isso.
