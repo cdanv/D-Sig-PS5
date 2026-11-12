@@ -1021,3 +1021,31 @@ viraram abas, e o E ou OU é escolhido por aba, como manda a seção 18.8.
 - **Gatilho que reinicia a SEQUÊNCIA** (seção 18.9).
 - **Teto de 5 por aba e de 30 no total** são constantes provisórias. O custo por quadro no
   PS5 não foi medido.
+
+### 19.5 Decisões do autor: ALTERNA, FINALIZA, DELAY e reinício da sequência
+
+**Decidido:**
+
+1. **FINALIZA desliga a saída ligada por outra aba** (opção b). Não é a própria aba que se
+   desliga.
+2. **LIVRE e SEQUÊNCIA também aceitam ALTERNA e FINALIZA.** BLOCK continua só com
+   ATIVO/OCULTO.
+3. **DELAY é contado do fim do pulso**, e o valor sai da tabela padrão de 67 valores.
+4. **OFF é uma opção fora da tabela**, como "sem latência" no TURBO.
+5. **DELAY é obrigatório quando a fonte é SEQUÊNCIA.** Nas outras abas, OFF é o padrão.
+6. **Se a fonte solta durante o atraso, o atraso é cancelado.**
+7. **Sem gatilho externo de reinício.** A SEQUÊNCIA reinicia só por espera estourada ou passo
+   errado.
+
+**Pendências que travam a implementação:**
+
+A. **Alvo do FINALIZA.** Se FINALIZA desliga a saída de outra aba, é preciso saber qual. Proposta:
+   um campo "alvo" na aba, com o índice da aba cuja saída é desligada. Pode ser assim?
+
+B. **Cancelamento em abas de pulso.** Em 2CLK, HOLD_AT, HOLD_AP e SEQUÊNCIA, a fonte solta
+   normalmente logo depois do pulso. Se "soltar cancela", todo atraso de aba de pulso
+   seria cancelado. Proposta: o cancelamento vale só para abas de nível (LIVRE e BLOCK).
+   Nas abas de pulso, o atraso não é cancelado pela soltura. Pode ser assim?
+
+C. **DELAY em abas de nível.** "Fim do pulso", em aba de nível, é a descida do nível, ou a
+   subida? Proposta: conta da subida, e o cancelamento é pela descida antes do fim do atraso.
