@@ -822,3 +822,32 @@ parâmetro de duração separado.
 **Perguntas:**
 - Confirma as consequências 1 a 3?
 - A consequência 4 (DELAY obrigatório) vale mesmo com OFF como escolha?
+
+### 17.9 Pergunta aberta: sequência como fonte de STATIC, e ALTERNA/FINALIZA na sequência
+
+**Proposta do autor:** STATIC aceita sequência como fonte, porque a ALFA ganha as variáveis
+ALTERNA/FINALIZA.
+
+**Consequência técnica:** com ALTERNA ou FINALIZA, a sequência deixa de ser um pulso de um
+quadro e passa a ser um **estado** que persiste entre quadros. A ALFA atual só emite pulso,
+então isso exige mudança em `src/alfa.c` e na bancada.
+
+**Leitura proposta, a confirmar:**
+- **ALTERNA:** cada sequência concluída liga o estado se estiver desligado, e desliga se
+  estiver ligado.
+- **FINALIZA:** a sequência concluída só desliga. **Pendente:** com a sequência como única
+  fonte, FINALIZA nunca liga. Ou FINALIZA não se aplica à sequência, ou precisa de outro
+  acionamento para ligar.
+
+**Tabela proposta de compatibilidade (fonte = sequência):**
+
+| tipo de DELTA | aceita? | condição |
+|---|---|---|
+| TURBO | sim | pulso; CICLOS de 1 a 7 |
+| COMBO | sim | pulso; toca uma vez |
+| STATIC | sim | com ALTERNA: a sequência trava e destrava o destino |
+| DIRECT | a decidir | não, ou sim com ALTERNA |
+
+**Perguntas:**
+1. A leitura de ALTERNA e FINALIZA está certa? Como FINALIZA liga, se a sequência é a única fonte?
+2. DIRECT aceita sequência com ALTERNA?
