@@ -1136,3 +1136,21 @@ TURBO iniciado por pulso oscila até FINALIZA encerrar. Fica revogada a proibiç
 
 **Pendência nova:** se um novo pulso chegar enquanto o atraso corre, o atraso atual continua,
 ou é reiniciado? Proposta: continua, e o novo pulso é ignorado.
+
+### 19.10 Decisões do autor: exceção de LIVRE e BLOCK, e reinício do atraso
+
+**Regra geral:** o DELAY conta a partir da **descida do pulso**.
+
+**Exceção, só para LIVRE e BLOCK:** o DELAY pode contar a partir do **acionamento**. Se o
+acionamento descer antes do fim do atraso, a contagem **zera**. Com isso:
+
+- um botão mantido apertado **dispara** a resposta depois do atraso, sem esperar a soltura;
+- se o botão for solto antes do fim do atraso, nada é disparado.
+
+**Correção de 19.9:** a consequência ali descrita ("não dispara enquanto estiver apertado")
+estava errada. Ela vale só para a regra geral, e LIVRE e BLOCK são a exceção.
+
+**Novo pulso durante o atraso:** a contagem **zera**. Não é ignorado.
+
+**Para implementação:** SEQUÊNCIA exige DELAY diferente de OFF. As demais abas aceitam OFF.
+Com OFF, a resposta sai no mesmo quadro do acionamento.
