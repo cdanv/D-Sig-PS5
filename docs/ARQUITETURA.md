@@ -932,3 +932,22 @@ STATIC para eixo.
    L1 + R1, o 2CLK conta quando L1 é clicado duas vezes, ou quando L1 e R1 são clicados juntos?
    A aba LIVRE é o OU?
 2. **Teto de 30.** É o total de entradas da ALFA, somando todas as abas? Ou por aba?
+
+### 18.6 Decisões do autor: E e OU por aba, e teto de 30
+
+**Decidido:**
+
+- **2CLK com "+" é OU, por botão.** Cada botão conta pelo próprio duplo clique. Apertar duas
+  vezes L1 e duas vezes R1 conta, porque cada botão fez a própria ação dupla. Não é a soma
+  de L1 com R1.
+- **LIVRE aceita E e OU.** O autor escolhe, na própria aba, qual dos dois vale.
+- **Teto de 30 entradas na ALFA, no total.** São cinco por aba. Como são seis abas, o total
+  bate com o teto de 30.
+
+**Lacunas identificadas pelo código (não respondidas pelo autor):**
+
+1. **TOGGLE não aparece nas abas.** Proposta: TOGGLE é a condição ALTERNA aplicada a uma fonte,
+   e não uma aba própria.
+2. **HOLD_AT, HOLD_AP e BLOCK com "+".** Presumo OU por botão, como o 2CLK. Confirmar.
+3. **O E da aba LIVRE** exige que as entradas aconteçam dentro da janela de simultaneidade
+   (50 ms, provisório), como no SIMULTÂNEO. Confirmar.
