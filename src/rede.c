@@ -3,6 +3,7 @@
  * Ver rede.h e docs/ARQUITETURA.md, secao 22.
  */
 #include "rede.h"
+#include "alfa.h"
 #include <string.h>
 
 int rede_validar(const RedeCfg *r) {
@@ -17,6 +18,7 @@ int rede_validar(const RedeCfg *r) {
         if (((z->bloq | z->assoc | z->excl) & ~todos) != 0) return -1;   /* indice fora da rede */
         if (((z->bloq | z->assoc | z->excl) >> i) & 1u) return -1;       /* relacao consigo */
         if (z->excl_inic > 1) return -1;
+        if (r->dom[i] > 0x0Fu) return -1;                                 /* so D1..D4 */
     }
     return 0;
 }
@@ -24,19 +26,47 @@ int rede_validar(const RedeCfg *r) {
 void rede_iniciar(RedeEstado *e) {
     unsigned i;
     memset(e, 0, sizeof *e);
+    dominio_iniciar(&e->dom);
     for (i = 0; i < REDE_MAX; i++) modelo_iniciar(&e->mod[i]);
 }
 
 void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida *out) {
     unsigned i;
+    DominioSaida dso;
+    uint8_t atual;
     uint32_t resp_agora = 0;
     uint32_t resp = e->resp, sobe = e->sobe, cai = e->cai;
 
     memset(out, 0, sizeof *out);
 
+    /* dominio: a troca reinicia o estado de todos os MODs e os trava ate a fonte repousar */
+    dominio_avaliar(&e->dom, in, &dso);
+    atual = e->dom.atual;
+    if (dso.trocou) {
+        for (i = 0; i < r->n; i++) {
+            modelo_iniciar(&e->mod[i]);
+            e->encerrado[i] = 0;
+        }
+        e->trava = (r->n >= 32) ? 0xFFFFFFFFu : ((1u << r->n) - 1u);
+        resp = sobe = cai = 0;
+    }
+
     for (i = 0; i < r->n; i++) {
         const Zeta *z = &r->z[i];
         uint8_t congela = 0, encerra;
+
+        /* fora do dominio atual, o MOD nao roda e nao suprime nada */
+        if (!atual || !((r->dom[i] >> (atual - 1)) & 1u)) continue;
+
+        /* travado: so suprime, ate a fonte repousar */
+        if (e->trava & (1u << i)) {
+            if (alfa_em_repouso(&r->mod[i].alfa, in)) {
+                e->trava &= ~(1u << i);
+            } else {
+                modelo_so_ocultar(&r->mod[i], &out->mod[i]);
+                continue;
+            }
+        }
 
         /* BLOQ: suspende enquanto um alvo responde */
         if (z->bloq & resp) congela = 1;

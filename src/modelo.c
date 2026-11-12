@@ -106,3 +106,18 @@ void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,
 void modelo_avaliar(const ModCfg *m, ModEstado *e, const Entrada *in, ModSaida *out) {
     modelo_avaliar_ext(m, e, in, 0, 0, out);
 }
+
+void modelo_so_ocultar(const ModCfg *m, ModSaida *out) {
+    unsigned a, k;
+    memset(out, 0, sizeof *out);
+    for (a = 0; a < ALFA_ABAS; a++) {
+        const Aba *ab = &m->alfa.abas[a];
+        if (!ab->oculto) continue;
+        for (k = 0; k < ab->n; k++) {
+            const Fonte *f = &ab->fontes[k];
+            if (f->tipo == FONTE_BOTAO) out->ocultar_botoes |= 1u << f->id;
+            else if (f->tipo == FONTE_EIXO) out->ocultar_analog |= (uint8_t)(1u << f->id);
+            else out->ocultar_analog |= (uint8_t)(1u << (4 + f->id));
+        }
+    }
+}

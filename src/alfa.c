@@ -50,6 +50,16 @@ static int nivel_fonte(const Fonte *f, const Entrada *in) {
     }
 }
 
+int alfa_em_repouso(const AlfaCfg *c, const Entrada *in) {
+    unsigned a, k;
+    for (a = 0; a < ALFA_ABAS; a++) {
+        for (k = 0; k < c->abas[a].n; k++) {
+            if (nivel_fonte(&c->abas[a].fontes[k], in)) return 0;
+        }
+    }
+    return 1;
+}
+
 /* ------------------------------------------------------------ validacao */
 
 static int beta_valida(const Beta *b) {

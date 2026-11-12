@@ -70,7 +70,7 @@ e seguir com o que está dentro — não inventar um jeito de atender.
 |---|---|
 | **Alvo 1 — passagem pura** | **feito.** `src/passagem.c`, 4 verificações, 4 sabotagens |
 | **Alvo 2 — o primeiro MOD de verdade** | **feito na bancada.** Troca de botão e acorde. `src/passagem.c`, `ferramentas/testa_mod.c`, 9 sabotagens |
-| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a em andamento:** tabela de tempo, buffer duplo e ALFA v4 (seis abas) feitos na bancada. ALFA com DELAY, DELTA (DIRECT, STATIC, TURBO, COMBO) e a integração ALFA→DELTA (`src/modelo.c`) feitos na bancada. ZETA (BLOQ, ASSOC, EXCL) em `src/rede.c`. Falta acumulação de destinos entre MODs, domínios, órfão adotado e o formato binário do perfil. Fases 3b a 3d precisam de console |
+| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a em andamento:** tabela de tempo, buffer duplo e ALFA v4 (seis abas) feitos na bancada. ALFA com DELAY, DELTA (DIRECT, STATIC, TURBO, COMBO) e a integração ALFA→DELTA (`src/modelo.c`) feitos na bancada. ZETA (BLOQ, ASSOC, EXCL) e domínios D1 a D4 em `src/rede.c` e `src/dominio.c`. Falta acumulação de destinos entre MODs, órfão adotado e o formato binário do perfil. Fases 3b a 3d precisam de console |
 | Alvo 4 — ícone na tela inicial | caminho conhecido e barato (ver `docs/ESTUDO.md`) |
 
 ```
@@ -89,6 +89,8 @@ src/modelo.c, src/modelo.h    o MOD completo: ALFA ligada ao DELTA, com validaç
 ferramentas/testa_modelo.c    a bancada do MOD completo, com 6 verificações
 src/rede.c, src/rede.h        a rede de MODs com a ZETA: BLOQ, ASSOC e EXCL (fase 3a)
 ferramentas/testa_rede.c      a bancada da ZETA, com 6 verificações
+src/dominio.c, src/dominio.h  os domínios D1 a D4 e seus comandos fixos (fase 3a)
+ferramentas/testa_dominio.c   a bancada dos domínios, com 8 verificações
 ferramentas/testa_tempo.c     a bancada da tabela de tempo
 ferramentas/testa_perfil.c    a bancada do buffer duplo, com duas threads
 docs/ESTUDO.md                o que aprendemos lendo PoorDS4, etaHEN, ProsperoMgr, pldmgr

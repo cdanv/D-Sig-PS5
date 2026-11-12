@@ -9,6 +9,7 @@
 #pragma once
 #include <stdint.h>
 #include "modelo.h"
+#include "dominio.h"
 
 #define REDE_MAX 20
 
@@ -23,6 +24,7 @@ typedef struct {
     uint8_t n;
     ModCfg mod[REDE_MAX];
     Zeta z[REDE_MAX];
+    uint8_t dom[REDE_MAX];   /* PL_HAB: bit d-1 = o MOD roda no dominio Dd (d = 1..4). 0 = desativado */
 } RedeCfg;
 
 typedef struct {
@@ -31,6 +33,8 @@ typedef struct {
     uint32_t resp;          /* MODs com resposta de pe, no quadro anterior */
     uint32_t sobe;          /* MODs cuja resposta subiu no quadro anterior */
     uint32_t cai;           /* MODs cuja resposta caiu no quadro anterior */
+    Dominio dom;            /* o dominio ligado */
+    uint32_t trava;         /* MODs travados depois de uma troca de dominio */
 } RedeEstado;
 
 typedef struct {

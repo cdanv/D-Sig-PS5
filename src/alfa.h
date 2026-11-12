@@ -102,6 +102,10 @@ typedef struct {
     uint8_t ocultar_analog;             /* bits 0..3 eixos, 4 L2, 5 R2 */
 } AlfaSaida;
 
+/* 1 se nenhuma fonte esta acionada neste quadro (repouso). Usado para destravar um MOD
+ * depois de uma troca de dominio (manual, secao 25.1). Nao altera nada. */
+int alfa_em_repouso(const AlfaCfg *c, const Entrada *in);
+
 /* 0 se valido, -1 se nao. Nao altera nada. */
 int alfa_validar(const AlfaCfg *c);
 void alfa_iniciar(AlfaEstado *e);

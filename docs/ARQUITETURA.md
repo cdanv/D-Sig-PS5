@@ -1338,3 +1338,28 @@ acumulação de destinos entre MODs.
   `Reset_Perfil`), e trava cada MOD até a fonte voltar ao repouso (manual, seção 25.1).
 - **MOD travado:** não detecta nem responde, mas continua suprimindo os seus botões (manual,
   seção 25.1). MOD fora do domínio atual: não roda e não suprime nada.
+
+### 23.2 Dominios implementados e verificados
+
+| peça | arquivo | bancada | verificações | sabotagens |
+|---|---|---|---|---|
+| comandos de dominio (D1 a D4) | `src/dominio.c`, `src/dominio.h` | `ferramentas/testa_dominio.c` | 8 | 8, todas pelo motivo certo |
+| rede com dominios, trava e reinicio | `src/rede.c` (alterado), `src/alfa.c` (`alfa_em_repouso`), `src/modelo.c` (`modelo_so_ocultar`) | `ferramentas/testa_dominio.c` e `ferramentas/testa_rede.c` | — | — |
+
+**Como funciona:** a rede lê os comandos de domínio a cada quadro. Um MOD roda só se o seu
+PL_HAB (máscara de D1 a D4) contém o domínio ligado. Trocar de domínio reinicia o estado de
+todos os MODs e os trava. Um MOD travado não detecta nem responde, mas continua suprimindo os
+seus botões, e é destravado quando a sua fonte volta ao repouso.
+
+**Como as sabotagens foram conferidas:** na primeira rodada, três sabotagens sobreviveram:
+- D1 (troca não reinicia o estado), porque a trava escondia o efeito. Agora a bancada confere o
+  instante depois de a trava soltar, quando o estado antigo apareceria.
+- D4 (o modificador não é exigido no duplo clique), porque nenhum caso soltava o modificador
+  entre os dois cliques. Agora há um caso para isso.
+- D8 (janela de 300 ms em vez de 250 ms), porque nenhum caso tinha intervalo entre 250 e 300 ms.
+  Agora há um caso com 280 ms.
+
+**Limites desta fatia:** a validação entre domínios e relações não é verificada (por exemplo,
+um alvo de ZETA que não divide o domínio, que o manual aponta como aviso); os comandos são fixos
+(o manual também os trata como fixos); e a suspensão de cascata de domínio não foi testada
+além do caso simples.

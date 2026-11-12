@@ -35,6 +35,10 @@ int modelo_validar(const ModCfg *m);
 void modelo_iniciar(ModEstado *e);
 void modelo_avaliar(const ModCfg *m, ModEstado *e, const Entrada *in, ModSaida *out);
 
+/* MOD travado por dominio: nao detecta nem responde, mas as abas OCULTO continuam
+ * suprimindo os seus botoes (manual, secao 25.1). */
+void modelo_so_ocultar(const ModCfg *m, ModSaida *out);
+
 /* Igual a modelo_avaliar, mas com as relacoes da ZETA: `congela` suspende o MOD (BLOQ, ASSOC);
  * `encerra` desliga o MOD (EXCL), e ele fica sem responder. A ALFA continua avancando. */
 void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,

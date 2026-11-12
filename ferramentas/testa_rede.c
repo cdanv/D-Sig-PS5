@@ -34,6 +34,12 @@ static unsigned idx_ms(unsigned ms) {
     return 255u;
 }
 
+/* todos os MODs no dominio D1, e o D1 ligado no inicio (sem passar pela troca, que travaria) */
+static void todos_d1(RedeCfg *r) {
+    unsigned i;
+    for (i = 0; i < r->n; i++) r->dom[i] = 0x1;
+}
+
 static void mod_base(ModCfg *m) {
     unsigned a;
     memset(m, 0, sizeof *m);
@@ -62,6 +68,7 @@ typedef uint32_t (*Cron)(uint64_t t_ms);
 static uint32_t saida_em(const RedeCfg *r, Cron cr, uint64_t fim_ms, uint64_t t_ms, unsigned i) {
     RedeEstado e; RedeSaida s; uint64_t t; uint32_t v = 0xFFFFFFFFu;
     rede_iniciar(&e);
+    e.dom.atual = 1;                       /* D1 ligado: sem a troca, que travaria os MODs */
     for (t = 0; t <= fim_ms; t += 10) {
         Entrada in;
         memset(&in, 0, sizeof in);
@@ -79,6 +86,7 @@ static void testes_validacao(void) {
     int ok = 1;
     memset(&r, 0, sizeof r);
     r.n = 2;
+    todos_d1(&r);
     mod_resposta(&r.mod[0], B_CROSS, DELTA_DIRECT, D_CIRCLE);
     mod_resposta(&r.mod[1], B_SQUARE, DELTA_DIRECT, D_TRIANGLE);
     if (rede_validar(&r) != 0) ok = 0;
@@ -100,6 +108,7 @@ static void testes_bloq(void) {
     RedeCfg r; int ok = 1;
     memset(&r, 0, sizeof r);
     r.n = 2;
+    todos_d1(&r);
     mod_resposta(&r.mod[0], B_CROSS, DELTA_DIRECT, D_CIRCLE);
     mod_resposta(&r.mod[1], B_SQUARE, DELTA_DIRECT, D_TRIANGLE);
     r.z[1].bloq = BIT(0);                                /* MOD 1 e suspenso enquanto MOD 0 responde */
@@ -123,6 +132,7 @@ static void testes_assoc(void) {
     RedeCfg r; int ok = 1;
     memset(&r, 0, sizeof r);
     r.n = 2;
+    todos_d1(&r);
     mod_resposta(&r.mod[0], B_CROSS, DELTA_DIRECT, D_CIRCLE);
     mod_resposta(&r.mod[1], B_SQUARE, DELTA_DIRECT, D_TRIANGLE);
     r.z[1].assoc = BIT(0);                               /* MOD 1 so responde enquanto MOD 0 responde */
@@ -148,6 +158,7 @@ static void testes_excl_inic(void) {
     RedeCfg r; int ok = 1;
     memset(&r, 0, sizeof r);
     r.n = 2;
+    todos_d1(&r);
     mod_resposta(&r.mod[0], B_SQUARE, DELTA_STATIC, D_L1);
     mod_resposta(&r.mod[1], B_CROSS, DELTA_DIRECT, D_CIRCLE);
     r.z[0].excl = BIT(1);
@@ -173,6 +184,7 @@ static void testes_excl_fim(void) {
     RedeCfg r; int ok = 1;
     memset(&r, 0, sizeof r);
     r.n = 2;
+    todos_d1(&r);
     mod_resposta(&r.mod[0], B_SQUARE, DELTA_STATIC, D_L1);
     mod_resposta(&r.mod[1], B_CROSS, DELTA_DIRECT, D_CIRCLE);
     r.z[0].excl = BIT(1);
@@ -205,6 +217,7 @@ static void testes_rearme(void) {
     RedeCfg r; int ok = 1;
     memset(&r, 0, sizeof r);
     r.n = 4;
+    todos_d1(&r);
     mod_resposta(&r.mod[0], B_SQUARE, DELTA_STATIC, D_L1);
     mod_resposta(&r.mod[1], B_CROSS, DELTA_DIRECT, D_CIRCLE);
     mod_resposta(&r.mod[2], B_TRIANGLE, DELTA_DIRECT, D_TRIANGLE);
