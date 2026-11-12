@@ -55,7 +55,8 @@ void modelo_iniciar(ModEstado *e) {
     delta_iniciar(&e->delta);
 }
 
-void modelo_avaliar(const ModCfg *m, ModEstado *e, const Entrada *in, ModSaida *out) {
+void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,
+                        uint8_t congela, uint8_t encerra, ModSaida *out) {
     AlfaSaida as;
     DeltaEntrada de;
     DeltaSaida ds;
@@ -84,11 +85,24 @@ void modelo_avaliar(const ModCfg *m, ModEstado *e, const Entrada *in, ModSaida *
         }
     }
 
-    de.congelado = bloqueio;
+    out->bloqueado = (uint8_t)(bloqueio || congela);
+
+    if (encerra) {
+        /* EXCL: o MOD se encerra. Zera o DELTA; a saida fica desligada */
+        delta_iniciar(&e->delta);
+        out->destinos = 0;
+        out->terminou = 0;
+        return;
+    }
+
+    de.congelado = (uint8_t)(bloqueio || congela);
     de.t_us = in->t_us;
     delta_avaliar(&m->delta, &e->delta, &de, &ds);
 
-    out->destinos = bloqueio ? 0 : ds.destinos;
+    out->destinos = out->bloqueado ? 0 : ds.destinos;
     out->terminou = ds.terminou;
-    out->bloqueado = bloqueio;
+}
+
+void modelo_avaliar(const ModCfg *m, ModEstado *e, const Entrada *in, ModSaida *out) {
+    modelo_avaliar_ext(m, e, in, 0, 0, out);
 }

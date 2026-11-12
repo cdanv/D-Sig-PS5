@@ -34,3 +34,8 @@ typedef struct {
 int modelo_validar(const ModCfg *m);
 void modelo_iniciar(ModEstado *e);
 void modelo_avaliar(const ModCfg *m, ModEstado *e, const Entrada *in, ModSaida *out);
+
+/* Igual a modelo_avaliar, mas com as relacoes da ZETA: `congela` suspende o MOD (BLOQ, ASSOC);
+ * `encerra` desliga o MOD (EXCL), e ele fica sem responder. A ALFA continua avancando. */
+void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,
+                        uint8_t congela, uint8_t encerra, ModSaida *out);

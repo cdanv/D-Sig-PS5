@@ -1293,3 +1293,31 @@ pela acumulação, que ainda não foi implementada); e a ZETA continua de fora.
   não depende da ordem dos MODs (manual, seção 24.1).
 - **Limite:** ZETA não tem domínio nesta fatia. Os domínios D1 a D4 ficam para depois, e o
   órfão adotado (manual, seção 15.5) também.
+
+### 22.2 ZETA implementada e verificada
+
+| peça | arquivo | bancada | verificações | sabotagens |
+|---|---|---|---|---|
+| rede de MODs com BLOQ, ASSOC e EXCL | `src/rede.c`, `src/rede.h` | `ferramentas/testa_rede.c` | 6 | 7, todas pelo motivo certo |
+| avaliação do MOD com congelamento e encerramento vindos da rede | `src/modelo.c` (`modelo_avaliar_ext`) | — (coberto pela bancada da rede) | — | — |
+
+**Como funciona, por quadro:** a rede guarda quem está respondendo, quem subiu e quem caiu
+no quadro anterior. Cada MOD recebe, então, dois sinais: "congelado" (por BLOQ ou por ASSOC)
+e "encerrado" (por EXCL). Um MOD encerrado zera o DELTA e fica sem saída. O rearme acontece
+quando um MOD ligado por ASSOC sobe de novo.
+
+**O que a bancada cobre:** validação (relação consigo, índice fora da rede); BLOQ com
+defasagem; ASSOC congelando e liberando; EXCL INIC com disparo único; EXCL FIM; e o rearme,
+que só acontece pela subida de um MOD ligado por ASSOC. O caso de rearme usa quatro MODs, para
+que a queda do alvo não congele o MOD e esconda o estado de encerramento.
+
+**Sabotagens (7):**
+
+- Z1 (BLOQ ignorado), Z2 (ASSOC ignorado), Z3 (EXCL sem disparo único), Z4 (sem rearme),
+  Z5 (INIC usando a queda), Z6 (FIM ignorado): cada uma reprovou a verificação correspondente.
+- Z7 apaga o quadro anterior, então nenhuma relação reage. É uma sabotagem mais forte que
+  "sem defasagem", que ficaria para depois, porque exige recalcular a rede no mesmo quadro.
+
+**Limites desta fatia:** sem domínios D1 a D4; sem o órfão adotado (manual, seção 15.5); a
+resposta de pé do STATIC é só a trava, sem a alternativa "ou a fonte está na zona"; sem
+acumulação de destinos entre MODs.
