@@ -951,3 +951,33 @@ STATIC para eixo.
 2. **HOLD_AT, HOLD_AP e BLOCK com "+".** Presumo OU por botão, como o 2CLK. Confirmar.
 3. **O E da aba LIVRE** exige que as entradas aconteçam dentro da janela de simultaneidade
    (50 ms, provisório), como no SIMULTÂNEO. Confirmar.
+
+### 18.7 Confirmações do autor
+
+- **TOGGLE sai das abas.** ALTERNA, uma das condições, faz o papel dele.
+- **HOLD_AT, HOLD_AP e BLOCK aceitam E ou OU**, escolhido pelo autor, como o LIVRE. Padrão
+  de implementação: OU, até o autor escolher outro.
+- **E exige a janela de simultaneidade (50 ms provisório)**, em todas as abas que o aceitam,
+  inclusive HOLD_AT, HOLD_AP e BLOCK.
+- **2CLK é sempre OU**, por botão. Não aceita E.
+- **SEQUÊNCIA é sempre ordenada.** Não aceita E nem OU.
+
+### 18.8 Regra de cada aba (resumo para implementação)
+
+| aba | fonte | E ou OU | acionamento |
+|---|---|---|---|
+| LIVRE | botão, gatilho, eixo | escolhido | nível: a aba fica ativa enquanto o acionamento vale |
+| SEQUÊNCIA | botão, gatilho, eixo | ordem | pulso ao concluir a sequência |
+| 2CLK | botão, gatilho, eixo | OU, por botão | pulso no segundo clique, dentro de 300 ms (fixo) |
+| HOLD_AT | botão, gatilho, eixo | escolhido | pulso na soltura, se a pressão ficou até o tempo (toque curto) |
+| HOLD_AP | botão, gatilho, eixo | escolhido | pulso quando a pressão passa do tempo, ainda apertado |
+| BLOCK | botão, gatilho, eixo | escolhido | suspende o MOD enquanto o acionamento vale |
+
+**Limite:** 5 entradas por aba. Teto total de 30 na ALFA.
+
+### 18.9 O que ainda não tem regra, e fica fora desta fatia
+
+- **ALTERNA, FINALIZA e DELAY** nas abas. Dependem de como uma aba de nível interage com o
+  DELAY, e do que FINALIZA faz quando a fonte é a própria aba. Pendente de decisão.
+- **Gatilho que reinicia a sequência.** A GAMA saiu, então não há mais um gatilho externo.
+  Pendente: qual aba reinicia a SEQUÊNCIA, se alguma.
