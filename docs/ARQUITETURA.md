@@ -422,7 +422,7 @@ do fim da sequência. Para MOD sem sequência, o comportamento é o do Cronus.
 tempo de espera, guardados na tabela pré-alocada. Não tem relógio próprio. Isso segue a
 lição do combo do Cronus, seção 3.1 de `REFERENCIA_CRONUS.md`.
 
-### Perguntas em aberto sobre sequência
+### Perguntas sobre sequência (respondidas na seção 13)
 
 1. **Espera entre passos é máxima?** Se o usuário demora mais que o tempo de espera, a
    sequência reinicia, ou fica esperando?
@@ -433,3 +433,66 @@ lição do combo do Cronus, seção 3.1 de `REFERENCIA_CRONUS.md`.
    silêncio um combo que já está rodando, e o manual aponta isso como bug (seção 29).
 4. **Sequência com OCULTO.** Enquanto a sequência roda, os botões dos passos somem do jogo?
    Ou só depois que ela termina?
+
+---
+
+## 13. Decisões do autor: modos de ALFA, sequência e EXCL
+
+Responde as perguntas da seção 12 e define "finalizar" para cada tipo de resposta.
+
+### 13.1 Modo de acionamento em ALFA (três opções, não duas)
+
+O modo de acionamento tem três valores, por MOD:
+
+| modo | regra | interpretação |
+|---|---|---|
+| **LIVRE** | cada fonte age sozinha; basta uma | OU entre as fontes. Aperta um, ou dois juntos, e o MOD responde |
+| **CONJUNTO** | todas as fontes devem estar acionadas juntas | E entre as fontes, no mesmo quadro. É o acorde do Alvo 2 |
+| **SEQUÊNCIA** | as fontes em ordem, cada uma com espera até a próxima | a sequência descrita na seção 12 |
+
+*Confirmar:* a leitura de LIVRE como OU e de CONJUNTO como E. As duas são a regra do
+acorde ao contrário, e o Alvo 2 já implementa o caso CONJUNTO.
+
+### 13.2 Sequência: as quatro respostas
+
+| pergunta | decisão |
+|---|---|
+| Espera entre passos estoura | **reinicia** a sequência |
+| Passo errado | **reinicia** a sequência |
+| Gatilho durante a sequência | **reinicia** a sequência. O passo esperado tem prioridade sobre o gatilho, se os dois forem o mesmo botão |
+| Botões dos passos durante a sequência | **ficam OCULTOS durante a sequência**, desde o primeiro passo. O jogo só vê o que sai da sequência, quando ela termina |
+
+**Justificativa para jogos de luta (Mortal Kombat, Street Fighter).** Um movimento de luta
+é uma sequência curta e rígida. Quem usa o D-Sig precisa que o movimento saia igual toda
+vez, e que um erro seja visível e recomeçável. "Reiniciar" dá essas duas coisas. "Ignorar
+em silêncio" faria o usuário apertar uma vez e não saber se a sequência está correndo, que
+é o defeito do combo do Cronus. A escolha tem um custo que fica registrado: um botão
+apertado um instante antes do passo certo também reinicia. Esse risco é controlado pela
+espera entre passos e só será medido no console.
+
+### 13.3 O que significa "finalizar" para cada tipo de resposta
+
+O EXCL passa a ter duas opções de momento: **SOBE** (o Cronus) e **FINALIZA** (novo).
+Para definir "finalizar", usamos uma regra única: **subir** é o instante em que a resposta
+começa; **finalizar** é o instante em que ela termina.
+
+| resposta | sobe (começa) | finaliza (termina) |
+|---|---|---|
+| **DIRECT** | a fonte entra na zona ativa e o destino acompanha | a fonte sai da zona, ou o gatilho solta e o destino cai a zero |
+| **STATIC** | o destino trava no alto | a trava é solta: por gatilho, por relação, ou pela saída da zona |
+| **TURBO** | a primeira fase ativa começa | a máquina para: ao fim do último ciclo, ou quando a resposta é desligada. Fases de silêncio contam como parte da resposta, como o manual já diz |
+| **SEQUÊNCIA** (ALFA) | a sequência termina, e a resposta começa | a resposta termina, pelo tipo de DELTA que a sequência alimenta |
+
+**Consequência para EXCL:** com SOBE, o alvo que começa encerra o MOD (comportamento do
+Cronus). Com FINALIZA, o MOD só é encerrado quando o alvo termina. Isso permite, por
+exemplo, um MOD que espera um turbo acabar antes de agir. "Disparo único" continua valendo
+nos dois casos.
+
+### 13.4 Pontos que ficam para o autor
+
+1. Confirmar a leitura de LIVRE como OU e de CONJUNTO como E (seção 13.1).
+2. Para TURBO, a definição de "finalizar" inclui o caso de a resposta ser desligada antes
+   do fim dos ciclos. Confirmar que isso deve encerrar a máquina.
+3. Confirmar se "sequência como resposta" em DELTA é o mesmo que TURBO. Pela seção 14 do
+   manual, é: o TURBO é a sequência de até quatro passos. Se for, a tabela de DELTA continua
+   com três tipos, e não quatro.
