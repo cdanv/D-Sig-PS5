@@ -225,7 +225,7 @@ void alfa_avaliar(const AlfaCfg *c, AlfaEstado *e, const Entrada *in, AlfaSaida 
                 if (f->tipo == FONTE_BOTAO) out->ocultar_botoes |= 1u << f->id;
                 else if (f->tipo == FONTE_EIXO) out->ocultar_analog |= (uint16_t)(1u << f->id);
                 else if (f->tipo == FONTE_GATILHO) out->ocultar_analog |= (uint16_t)(1u << (EIXO_N + f->id));  /* L2, R2 */
-                /* FONTE_DEDO: ocultar o toque ainda nao e suportado nesta fatia */
+                else if (f->tipo == FONTE_DEDO) out->ocultar_toque = 1;
             }
         }
     }

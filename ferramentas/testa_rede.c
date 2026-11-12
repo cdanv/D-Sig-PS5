@@ -418,7 +418,30 @@ static void testes_cadeia(void) {
     passo("cadeia sem fonte: sem valor, o orfao se encerra", ok, "fonte fora da zona: orfao 1 com 0 e desligado");
 }
 
+/* ---------------------------------------------------- toque oculto na rede */
+static void testes_toque_rede(void) {
+    RedeCfg r; Entrada in; RedeSaida s; int ok = 1;
+    memset(&r, 0, sizeof r);
+    r.n = 2;
+    todos_d1(&r);
+    mod_resposta(&r.mod[0], B_CROSS, DELTA_DIRECT, D_CIRCLE);
+    mod_resposta(&r.mod[1], B_SQUARE, DELTA_DIRECT, D_TRIANGLE);
+    r.mod[1].alfa.abas[ABA_LIVRE].n = 1;
+    r.mod[1].alfa.abas[ABA_LIVRE].oculto = 1;
+    r.mod[1].alfa.abas[ABA_LIVRE].fontes[0].tipo = FONTE_DEDO;
+    r.mod[1].alfa.abas[ABA_LIVRE].fontes[0].id = 0;
+    if (rede_validar(&r) != 0) ok = 0;
+    memset(&in, 0, sizeof in); in.dedo[0] = 1;
+    um_quadro(&r, &in, &s);
+    if (!s.ocultar_toque) ok = 0;                          /* um MOD oculta o toque: a rede o suprime */
+    r.mod[1].alfa.abas[ABA_LIVRE].oculto = 0;
+    um_quadro(&r, &in, &s);
+    if (s.ocultar_toque) ok = 0;
+    passo("toque na rede: um MOD com dedo oculto suprime o toque da saida; sem ocultar, passa", ok, "");
+}
+
 int main(void) {
+    testes_toque_rede();
     testes_eixos();
     testes_cadeia();
     testes_alertas();

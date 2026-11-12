@@ -1648,3 +1648,24 @@ intensidade máxima, manual do Cronus 26.1). **Leitura minha onde o manual não 
 - o órfão com gatilho em FINALIZA e DIRECT (manual 7.6, o valor-base vem do botão físico do gatilho);
 - o MULT é aplicado à intensidade, mas as verificações não variam o MULT (um caso a mais se for preciso);
 - a busca instantânea da cadeia (ver o desvio acima).
+
+---
+
+## 30. Toque oculto: a aba oculta com dedo suprime o toque do jogo (fase 3a)
+
+**O que é:** uma aba OCULTO com `FONTE_DEDO` faz o toque do touchpad sair suprimido do jogo. É o
+equivalente do `Util_Touchpad` do Cronus. Pendência desde a seção 26; a ALFA dizia "ainda não é
+suportado nesta fatia".
+
+**Como ficou:** um sinal `ocultar_toque` (0 ou 1) sobe pela cadeia: a ALFA marca a aba oculta
+com dedo; o MOD copia o sinal; o MOD travado por domínio também (`modelo_so_ocultar`); a rede
+faz o OU de todos os MODs que estão de pé no domínio. Como nos botões e eixos, um MOD fora do
+domínio atual não suprime nada.
+
+**Verificado:** 3 verificações, uma em cada ponto da cadeia: ALFA (aba oculta com dedo, e sem
+ocultar, não); rede (um MOD suprime o toque na saída, e sem ocultar, passa); MOD travado
+(só a aba oculta suprime). Sabotagens T1 a T3, todas reprovaram pelo motivo certo.
+
+**Limite:** o sinal sai da rede, mas quem apaga o toque do pacote que vai ao jogo é a ponte
+com a `libScePad`, que só existe no console. Aqui, o que se prova é que o sinal chega à saída
+certa, não que o jogo deixa de ver o toque.

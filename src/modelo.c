@@ -97,6 +97,7 @@ static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uin
     alfa_avaliar(&m->alfa, &e->alfa, in, &as);
     out->ocultar_botoes = as.ocultar_botoes;
     out->ocultar_analog = as.ocultar_analog;
+    out->ocultar_toque = as.ocultar_toque;
 
     for (a = 0; a < ALFA_ABAS; a++) {
         if (m->alfa.abas[a].n == 0) continue;
@@ -175,6 +176,7 @@ void modelo_so_ocultar(const ModCfg *m, ModSaida *out) {
             if (f->tipo == FONTE_BOTAO) out->ocultar_botoes |= 1u << f->id;
             else if (f->tipo == FONTE_EIXO) out->ocultar_analog |= (uint16_t)(1u << f->id);
             else if (f->tipo == FONTE_GATILHO) out->ocultar_analog |= (uint16_t)(1u << (EIXO_N + f->id));  /* L2, R2 */
+            else if (f->tipo == FONTE_DEDO) out->ocultar_toque = 1;
         }
     }
 }

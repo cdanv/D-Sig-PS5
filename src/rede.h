@@ -42,6 +42,7 @@ typedef struct {
 typedef struct {
     ModSaida mod[REDE_MAX];
     uint32_t botoes;        /* a saida do controle: a entrada, sem os suprimidos, mais os destinos */
+    uint8_t ocultar_toque;  /* 1 = o toque do touchpad sai suprimido do jogo (manual, secao 26) */
     int32_t eixo[4];        /* LX, LY, RX, RY: 0..100 onde um MOD escreveu; senao, o valor cru (manual, 26.1) */
 } RedeSaida;
 

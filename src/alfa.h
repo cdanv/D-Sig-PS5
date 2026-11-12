@@ -110,6 +110,7 @@ typedef struct {
     uint8_t intens[ALFA_ABAS];          /* 0..100: a maior intensidade das fontes com nivel na aba (manual, 26.1) */
     uint32_t ocultar_botoes;
     uint16_t ocultar_analog;            /* bits 0..13 eixos (EIXO_*), 14 L2, 15 R2 */
+    uint8_t ocultar_toque;              /* 1 = o toque do touchpad e suprimido do jogo (aba oculta com FONTE_DEDO) */
 } AlfaSaida;
 
 /* 1 se nenhuma fonte esta acionada neste quadro (repouso). Usado para destravar um MOD

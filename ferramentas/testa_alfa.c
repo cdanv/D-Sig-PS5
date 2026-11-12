@@ -587,7 +587,30 @@ static void testes_intensidade(void) {
           "70 -> 70; -80 -> 80; 30 fora da zona -> 0; 60 com botao -> 100");
 }
 
+/* ------------------------------------------------------- toque oculto */
+/* Uma aba oculta com FONTE_DEDO suprime o toque do touchpad do jogo; sem ocultar, nao. */
+static void testes_toque_oculto(void) {
+    AlfaCfg c; AlfaEstado e; AlfaSaida o; Entrada in; int ok = 1;
+    cfg_vazia(&c);
+    c.abas[ABA_LIVRE].n = 1;
+    c.abas[ABA_LIVRE].eou = EOU_OU;
+    c.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+    c.abas[ABA_LIVRE].oculto = 1;
+    c.abas[ABA_LIVRE].fontes[0].tipo = FONTE_DEDO;
+    c.abas[ABA_LIVRE].fontes[0].id = 0;
+    alfa_iniciar(&e);
+    memset(&in, 0, sizeof in); in.dedo[0] = 1; in.t_us = 0;
+    alfa_avaliar(&c, &e, &in, &o);
+    if (!o.ocultar_toque) ok = 0;                          /* oculta: o toque sai do jogo */
+    c.abas[ABA_LIVRE].oculto = 0;
+    alfa_iniciar(&e);
+    alfa_avaliar(&c, &e, &in, &o);
+    if (o.ocultar_toque) ok = 0;                           /* sem ocultar: o toque passa */
+    passo("toque oculto: aba oculta com dedo suprime o toque; sem ocultar, nao", ok, "");
+}
+
 int main(void) {
+    testes_toque_oculto();
     testes_intensidade();
     testes_sensores();
     testes_delay();

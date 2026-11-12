@@ -276,7 +276,25 @@ static void testes_oculto_delay(void) {
           "trava em 230 ms");
 }
 
+/* MOD travado por dominio: so suprime. Um dedo em aba oculta continua suprimindo o toque. */
+static void testes_so_ocultar_toque(void) {
+    ModCfg m; ModSaida o; int ok = 1;
+    memset(&m, 0, sizeof m);
+    m.alfa.janela = 0;
+    m.alfa.abas[ABA_LIVRE].n = 1;
+    m.alfa.abas[ABA_LIVRE].oculto = 1;
+    m.alfa.abas[ABA_LIVRE].fontes[0].tipo = FONTE_DEDO;
+    m.alfa.abas[ABA_LIVRE].fontes[0].id = 0;
+    modelo_so_ocultar(&m, &o);
+    if (o.ocultar_toque != 1) ok = 0;
+    m.alfa.abas[ABA_LIVRE].oculto = 0;
+    modelo_so_ocultar(&m, &o);
+    if (o.ocultar_toque != 0) ok = 0;
+    passo("travado: so-ocultar suprime o toque da aba oculta, e so ela", ok, "");
+}
+
 int main(void) {
+    testes_so_ocultar_toque();
     testes_validacao();
     testes_static();
     testes_turbo();

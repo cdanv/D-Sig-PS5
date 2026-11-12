@@ -176,6 +176,7 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
         unsigned k;
         uint32_t supp = 0;
         for (i = 0; i < r->n; i++) supp |= out->mod[i].ocultar_analog;
+        for (i = 0; i < r->n; i++) if (out->mod[i].ocultar_toque) out->ocultar_toque = 1;
         for (k = 0; k < 4; k++) {
             int tem = 0;
             uint8_t melhor = 0;
