@@ -450,8 +450,16 @@ O modo de acionamento tem três valores, por MOD:
 | **CONJUNTO** | todas as fontes devem estar acionadas juntas | E entre as fontes, no mesmo quadro. É o acorde do Alvo 2 |
 | **SEQUÊNCIA** | as fontes em ordem, cada uma com espera até a próxima | a sequência descrita na seção 12 |
 
-*Confirmar:* a leitura de LIVRE como OU e de CONJUNTO como E. As duas são a regra do
-acorde ao contrário, e o Alvo 2 já implementa o caso CONJUNTO.
+**Confirmado pelo autor:** LIVRE é OU, CONJUNTO é E. Exemplo: com QUADRADO, CROSS e
+TRIÂNGULO na fonte, em LIVRE basta apertar um deles, ou todos, em qualquer ordem, e o
+DELTA responde. Em CONJUNTO, o DELTA só sobe se os três forem apertados juntos.
+
+**Nome do modo CONJUNTO: a decidir.** Sugestão em aberto: SIMULTÂNEO (seção 13.5).
+
+**Pendência de medição.** "Juntos" em CONJUNTO precisa de uma janela de tolerância. Três
+botões apertados por uma pessoa caem em quadros diferentes, e a regra de mesmo quadro
+do Alvo 2 seria estrita demais para uso real. A janela entra na tabela única de tempo, e
+o valor só será escolhido depois de medir (seção 13.5).
 
 ### 13.2 Sequência: as quatro respostas
 
@@ -496,3 +504,24 @@ nos dois casos.
 3. Confirmar se "sequência como resposta" em DELTA é o mesmo que TURBO. Pela seção 14 do
    manual, é: o TURBO é a sequência de até quatro passos. Se for, a tabela de DELTA continua
    com três tipos, e não quatro.
+
+### 13.5 Nome do modo CONJUNTO e janela de simultaneidade
+
+**Sugestão de nome: SIMULTÂNEO.** Os três modos descrevem a relação entre as fontes:
+
+| modo | relação no tempo |
+|---|---|
+| LIVRE | independentes: qualquer uma basta |
+| SIMULTÂNEO | ao mesmo tempo: todas juntas |
+| SEQUÊNCIA | uma depois da outra, em ordem |
+
+"Simultâneo" nomeia o mecanismo exato e fica simétrico a "sequência", que é o outro eixo
+de tempo. "Conjunto" descreve o resultado, e não a regra de tempo. Alternativas
+aceitáveis: TODAS (curto, mas pode ser lido como "todas as fontes, em qualquer ordem"),
+e JUNTAS. Se o nome de CONJUNTO mudar, LIVRE pode virar QUALQUER, para formar par com TODAS.
+
+**Janela de simultaneidade.** Proposta: SIMULTÂNEO aceita as fontes apertadas dentro de
+uma janela, medida a partir da primeira. O valor sai da tabela única de tempo, com um
+piso de 10 ms (o menor valor da tabela). O valor real só será escolhido depois de medir
+quanto espaço um humano deixa entre dois botões apertados juntos. Isso é uma medição que
+o Linux não faz, e fica para o console ou para um teste com dados de pessoas.
