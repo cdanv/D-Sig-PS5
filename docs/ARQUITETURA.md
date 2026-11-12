@@ -913,3 +913,22 @@ STATIC para eixo.
 3. **Teto de entradas por MOD.** Não foi respondido.
 4. **Eixo do touch antes do primeiro toque.** Vale zero? Proposta: zero, e a posição absoluta
    do dedo mapeada para -100 a +100.
+
+### 18.4 Decisões do autor: abas da ALFA, ordem e teto
+
+**Decidido:**
+
+- A ALFA tem abas: **LIVRE**, **SEQUÊNCIA**, **2CLK**, **HOLD_AT**, **HOLD_AP** e **BLOCK**.
+  Em cada aba, o **+** adiciona botões, gatilhos e eixos.
+- **Só a SEQUÊNCIA obriga a ordem.** As outras abas aceitam acionamento simultâneo.
+- **Teto provisório de 30 modos.**
+- **Eixo do touch:** zero antes do primeiro toque. Depois, posição absoluta do dedo mapeada
+  para -100 a +100, e o valor trava no último toque (confirmado na seção 18.2, item 4).
+
+### 18.5 Perguntas que faltam para codar
+
+1. **"Acionamento simultâneo" nas abas que não são SEQUÊNCIA.** Os botões do mesmo "+" valem
+   como OU (basta um) ou como E (todos juntos no mesmo instante)? Exemplo: numa aba 2CLK com
+   L1 + R1, o 2CLK conta quando L1 é clicado duas vezes, ou quando L1 e R1 são clicados juntos?
+   A aba LIVRE é o OU?
+2. **Teto de 30.** É o total de entradas da ALFA, somando todas as abas? Ou por aba?
