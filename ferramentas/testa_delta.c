@@ -423,7 +423,30 @@ static void testes_turbo_eixo_modos(void) {
     passo("TURBO eixo ABSF: segue o lado atual da fonte na fase ligada; 0 no silencio", ok, "-100 (fonte -1) / 0");
 }
 
+/* ----------------- zero depois dos ciclos, enquanto desligado (manual 9.2, decisao do autor) */
+static void testes_zero_fim_ciclos(void) {
+    DeltaCfg c; DeltaEstado e; DeltaEntrada in; DeltaSaida out; int ok = 1; uint64_t t;
+    cfg_base(&c, DELTA_TURBO); c.n_dest = 1; c.dest[0] = 12; c.tempo[0] = idx_ms(100);
+    c.lat = DELTA_SEM_LAT; c.ciclos = 1; c.origem_pulso = 1; c.modo = DELTA_MODO_ABS;
+    /* nunca iniciou: em silencio */
+    delta_iniciar(&e);
+    memset(&in, 0, sizeof in); in.t_us = 300000;
+    delta_avaliar(&c, &e, &in, &out);
+    if (out.destinos != 0) ok = 0;
+    /* inicia, termina o ciclo (100 ms), e depois fica em zero enquanto desligado */
+    delta_iniciar(&e);
+    for (t = 0; t <= 300000; t += 10000) {
+        memset(&in, 0, sizeof in); in.liga = (t == 0); in.t_us = t;
+        delta_avaliar(&c, &e, &in, &out);
+        if (t == 200000 && (!(out.destinos & BIT(12)) || out.intensidade != 0 || out.sinal != 0)) ok = 0;
+        if (t == 300000 && (!(out.destinos & BIT(12)) || out.intensidade != 0)) ok = 0;
+    }
+    passo("TURBO: depois do fim dos ciclos, o eixo fica em zero enquanto desligado; sem inicio, silencio", ok,
+          "silencio sem inicio; zero em 200 ms e 300 ms");
+}
+
 int main(void) {
+    testes_zero_fim_ciclos();
     testes_turbo_eixo_modos();
     testes_fin_com_fonte();
     testes_sinal();

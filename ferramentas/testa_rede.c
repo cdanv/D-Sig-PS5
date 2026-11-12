@@ -513,7 +513,28 @@ static void testes_orfao_sinal(void) {
           "fonte LX -80 -> orfao TURBO RY 100 na fase ligada");
 }
 
+/* ------------------------------------- gatilhos L2 e R2 como destino (manual 11.3) */
+static void testes_gatilho_destino(void) {
+    RedeCfg r; Entrada in; RedeSaida s; int ok = 1;
+    memset(&r, 0, sizeof r);
+    r.n = 1;
+    todos_d1(&r);
+    mod_eixo(&r.mod[0], EIX_LX, 1);                     /* destino 1 = L2 */
+    if (rede_validar(&r) != 0) ok = 0;
+    memset(&in, 0, sizeof in); in.eixo[EIX_LX] = -60;
+    um_quadro(&r, &in, &s);
+    if (s.gatilho[0] != 60) ok = 0;                     /* valor absoluto: -60 vira 60 */
+    if (!(s.botoes & DS_BTN_L2)) ok = 0;                /* o bit digital segue o valor */
+    memset(&in, 0, sizeof in); in.eixo[EIX_LX] = 0; in.gatilho[0] = 25;
+    um_quadro(&r, &in, &s);
+    if (s.gatilho[0] != 25) ok = 0;                     /* sem escrita: passa o cru, 25 */
+    if (s.botoes & DS_BTN_L2) ok = 0;                   /* o cru nao liga o bit: o bit vem do botao do jogador */
+    passo("gatilho como destino: L2 recebe o valor absoluto; sem escrita, passa o cru", ok,
+          "-60 -> 60 com bit; sem escrita, cru 25");
+}
+
 int main(void) {
+    testes_gatilho_destino();
     testes_orfao_sinal();
     testes_eixos_sinal();
     testes_toque_rede();

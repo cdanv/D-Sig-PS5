@@ -1837,3 +1837,39 @@ o −100 no silêncio, NEG com o sinal trocado, e silêncio que não escreve.
    −100. O achado 2 do simulador do Cronus mediu só o ABSF. Os outros modos com órfão não foram medidos.
 3. **COMBO com destinos mistos.** A regra de eixo vale pelo destino do passo corrente. Não verificado.
 4. **Destino digital com valor** (manual, 6.1 e 11.1): não feito. Ver a seção 31, pendência 3.
+
+---
+
+## 35. Decisões: zero após os ciclos, órfão em TURBO com eixo, COMBO misto, gatilho com valor
+
+**1. Zero depois dos ciclos (manual do EIXOS, 9.2): decidido enquanto o MOD estiver desligado.**
+Quando os ciclos de um TURBO ou COMBO terminam, os destinos de eixo passam a escrever zero, e
+continuam escrevendo enquanto o MOD estiver desligado. Motivo: sem isso, o eixo voltaria ao valor
+cru do jogador logo após o fim, e o manual diz que o zero é "de verdade". Um MOD que nunca iniciou
+continua em silêncio. Sabotagem X1 reprovou pelo motivo certo.
+
+**2. Órfão em TURBO com eixo: mantém o modo configurado.**
+Decisão minha. O órfão não muda o modo que o autor escolheu. Com ABSF, o sinal é +, porque a fonte
+do órfão é zero e o sinal dela é +1: isso confere com o achado 2, que mediu exatamente esse caso.
+Com ABS, o órfão alterna +100 e −100, e com POS ou NEG segue o modo. Os modos não medidos no
+simulador do Cronus ficam como estão. Não há base para mudar.
+
+**3. COMBO com destinos mistos: cada passo decide pelo próprio destino.**
+- um passo de eixo escreve no eixo, e um passo digital escreve só no digital;
+- a latência entre passos pertence ao passo que acabou de terminar (o `passo` não muda durante a
+  latência), então ela escreve no eixo desse passo, se for de eixo;
+- o modo é um só para o COMBO inteiro (`DeltaCfg.modo`); não há modo por passo;
+- ao terminar os ciclos, todos os eixos do COMBO passam a escrever zero (decisão 1).
+Não foi verificado com destinos mistos. A regra de cada passo é a mesma do TURBO, que foi verificada.
+
+**4. Destinos de gatilho com valor (L2 e R2): sim, só para gatilhos e eixos.**
+- L2 (destino 1) e R2 (destino 4) recebem o valor absoluto da intensidade (manual, 11.3).
+- Sem escrita, o gatilho passa cru; a supressão de um gatilho o zera.
+- O bit digital de L2 ou R2 segue o valor: pressionado se o valor for maior que zero. Isso é porque
+  o ScePadData tem o bit e o campo analógico, e os dois precisam concordar.
+- Botões (L1, CROSS e os outros) continuam booleanos. Não recebem valor.
+- O valor fica em 0..100 internamente. A conversão para os 0..255 do ScePadData é da ponte no console.
+  Não verificado no console.
+
+**Verificado:** zero após o fim dos ciclos (DELTA, com sabotagem X1); gatilho como destino com valor e
+passa-cru (rede, com sabotagens X2 e X3).

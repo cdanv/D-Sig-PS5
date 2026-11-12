@@ -43,6 +43,7 @@ typedef struct {
     uint8_t intens;                /* STATIC e TURBO/COMBO: a intensidade travada (0..100) */
     int8_t lado_trava;             /* STATIC e TURBO/COMBO: o sinal travado junto com a intensidade */
     uint8_t finalizado;            /* DIRECT: FINALIZA desligou; so a proxima subida da fonte religa */
+    uint8_t terminado;             /* TURBO/COMBO: os ciclos acabaram; os eixos ficam em zero enquanto desligado */
 } DeltaEstado;
 
 /* entrada do quadro: o que as abas da ALFA produziram */

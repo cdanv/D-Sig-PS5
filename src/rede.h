@@ -45,6 +45,7 @@ typedef struct {
     uint32_t botoes;        /* a saida do controle: a entrada, sem os suprimidos, mais os destinos */
     uint8_t ocultar_toque;  /* 1 = o toque do touchpad sai suprimido do jogo (manual, secao 26) */
     int32_t eixo[4];        /* LX, LY, RX, RY: 0..100 onde um MOD escreveu; senao, o valor cru (manual, 26.1) */
+    int32_t gatilho[2];     /* L2, R2: 0..100 onde um MOD escreveu (destinos 1 e 4); senao, o valor cru */
 } RedeSaida;
 
 /* 0 se valido, -1 se nao. Recusa so o que e MALFORMADO: MOD invalido, relacao com indice fora de

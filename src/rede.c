@@ -10,7 +10,7 @@
 /* Botao de cada destino digital (manual, secao 14.2). Os destinos 10 a 13 sao eixos e ainda
  * nao viram botao: esta fatia nao tem intensidade de eixo. Valor 0 = sem botao. */
 static const uint32_t g_botao_do_destino[DELTA_DESTINOS] = {
-    DS_BTN_L1, DS_BTN_L2, DS_BTN_L3, DS_BTN_R1, DS_BTN_R2, DS_BTN_R3,
+    DS_BTN_L1, 0, DS_BTN_L3, DS_BTN_R1, 0, DS_BTN_R3,      /* L2 e R2 sao gatilhos: escrevem valor */
     DS_BTN_CROSS, DS_BTN_CIRCLE, DS_BTN_SQUARE, DS_BTN_TRIANGLE,
     0, 0, 0, 0,
     DS_BTN_UP, DS_BTN_DOWN, DS_BTN_LEFT, DS_BTN_RIGHT
@@ -101,6 +101,7 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
     uint32_t resp = e->resp, sobe = e->sobe, cai = e->cai;
     uint8_t vale_n[REDE_MAX], prof_n[REDE_MAX];
     int8_t lado_n[REDE_MAX];
+    int gat_tem[2] = { 0, 0 };
 
     memset(out, 0, sizeof *out);
     memset(vale_n, 0, sizeof vale_n);
@@ -215,5 +216,35 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
             acumulado |= botoes_dos_destinos(out->mod[i].destinos);
         }
         out->botoes = (in->botoes & ~suprimido) | acumulado;
+    }
+
+    /* gatilhos (manual, 11.3 e 8.3): L2 (destino 1) e R2 (destino 4) recebem o valor absoluto da
+     * intensidade. Com escrita, o bit digital segue o valor (pressionado se > 0). Sem escrita, passa
+     * o cru; a supressao de um gatilho (bits 14 e 15 de ocultar_analog) o zera. */
+    {
+        unsigned g;
+        const unsigned dest_g[2] = { 1, 4 };
+        uint32_t supp = 0;
+        for (i = 0; i < r->n; i++) supp |= out->mod[i].ocultar_analog;
+        for (g = 0; g < 2; g++) {
+            int tem = 0;
+            int melhor = 0;
+            for (i = 0; i < r->n; i++) {
+                int v;
+                if (!((out->mod[i].destinos >> dest_g[g]) & 1u)) continue;
+                v = (int)out->mod[i].intensidade;   /* valor absoluto: o sinal se perde (manual, 11.1) */
+                if (!tem || v > melhor) melhor = v;
+                tem = 1;
+            }
+            gat_tem[g] = tem;
+            if (tem) out->gatilho[g] = melhor;
+            else out->gatilho[g] = ((supp >> (14 + g)) & 1u) ? 0 : in->gatilho[g];
+        }
+        if (gat_tem[0]) {
+            if (out->gatilho[0] > 0) out->botoes |= DS_BTN_L2; else out->botoes &= ~DS_BTN_L2;
+        }
+        if (gat_tem[1]) {
+            if (out->gatilho[1] > 0) out->botoes |= DS_BTN_R2; else out->botoes &= ~DS_BTN_R2;
+        }
     }
 }

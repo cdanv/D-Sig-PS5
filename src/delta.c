@@ -157,6 +157,7 @@ void delta_avaliar(const DeltaCfg *c, DeltaEstado *e, const DeltaEntrada *in, De
                 e->t_fase = in->t_us;
                 e->intens = in->intensidade;   /* TURBO/COMBO: a intensidade e a do inicio */
                 e->lado_trava = in->lado;
+                e->terminado = 0;
             } else if (alterna_borda) {                /* ALTERNA tambem liga */
                 e->ligado = 1;
                 e->passo = 0;
@@ -165,6 +166,7 @@ void delta_avaliar(const DeltaCfg *c, DeltaEstado *e, const DeltaEntrada *in, De
                 e->t_fase = in->t_us;
                 e->intens = in->intensidade;   /* TURBO/COMBO: a intensidade e a do inicio */
                 e->lado_trava = in->lado;
+                e->terminado = 0;
             }
         } else {
             if (finaliza_borda || alterna_borda) {     /* FINALIZA, ou ALTERNA desligando */
@@ -218,6 +220,17 @@ void delta_avaliar(const DeltaCfg *c, DeltaEstado *e, const DeltaEntrada *in, De
             }
         }
         break;
+    }
+
+    /* Manual do EIXOS, 9.2 ("exceção obrigatória"): quando os ciclos terminam, os destinos de eixo
+     * repousam em zero de verdade. Decisão do autor: o zero continua escrito enquanto o MOD estiver
+     * desligado, para o eixo nao voltar ao cru. Um MOD que nunca iniciou fica em silencio. */
+    if (out->terminou) e->terminado = 1;
+    if (!e->ligado && e->terminado) {
+        for (i = 0; i < c->n_dest; i++) {
+            uint8_t d = c->dest[i];
+            if (d >= 10 && d <= 13) out->destinos |= 1u << d;   /* intensidade 0, sinal 0 */
+        }
     }
 
     e->liga_ant = in->liga;
