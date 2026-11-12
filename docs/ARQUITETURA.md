@@ -652,3 +652,26 @@ do OLED.
 2. **Confirmar os nomes SUBIDA e FIM** para as opções do EXCL, ou escolher outros.
 3. **Confirmar o rearme:** um novo acionamento de subida em qualquer MOD ligado por ASSOC
    rearma o EXCL (fonte, gatilho ou resposta). Confirmar se "resposta" conta.
+
+### 15.6 Decisões do autor: TURBO com um passo, nomes INIC e FIM, rearme
+
+**TURBO = 1 passo.** Um destino e um tempo, intercalados com a latência (LAT). É o turbo
+clássico de um botão: liga pelo tempo do passo, fica em silêncio pela latência, e repete.
+O COMBO é o que tem sequência de até 10 passos.
+
+**Nomes do EXCL: INIC e FIM.** INIC quando a resposta começa, FIM quando ela termina.
+Substituem SUBIDA e FIM da seção 15.4.
+
+**Rearme, em linguagem simples.** O EXCL tem dois MODs ligados: o MOD que se encerra
+(chamado aqui de X) e o MOD que dá o sinal de volta, ligado por ASSOC (chamado Y).
+
+1. X tem EXCL apontando para um alvo. Quando esse alvo começa (INIC), X se encerra.
+2. X fica encerrado. Ele não volta sozinho quando o alvo termina.
+3. X só volta quando **Y sobe de novo**, ou seja, quando a **resposta de Y** começa outra
+   vez (borda de subida do DELTA de Y).
+
+Ou seja, rearme = Y sobe de novo. Não basta apertar o botão de Y, nem o gatilho de Y.
+Só a resposta de Y, que é o destino acionado, conta.
+
+**Pendência de confirmação:** confirme se o rearme é só pela resposta de Y (DELTA
+subindo), como acima. A seção 15.3 listava também fonte e gatilho, e isso ficou de fora.
