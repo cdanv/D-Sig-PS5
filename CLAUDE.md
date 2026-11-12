@@ -182,6 +182,14 @@ firmware, ele fica de fora ou se resolve por outro caminho.
 Ainda não há prova em 13.40. O que se afirma é que nada no desenho deveria quebrar, o que
 é diferente de garantir que não quebra.
 
+**Ordem de validação (decisão do autor):** toda a validação acontece no **PS5 FAT, firmware 11.20**.
+O PS5 Pro (13.40) só entra depois que o payload estiver consolidado e testado no FAT.
+
+**SDK do payload:** a distribuição binária do SDK (`ps5-payload-sdk.zip`) é a que o `make payload`
+usa, com `PS5_PAYLOAD_SDK` apontando para ela. O SDK não define `ScePadData`; o struct continua em
+`src/pad.h`. O código-fonte do SDK (`sdk-0.45.zip`, GPL-3) serve de referência para resolução de NID
+e rtld; nada dele foi copiado para o repositório.
+
 ## 6. Estabilidade — a prioridade declarada
 
 "Estável depois de iniciado" é a exigência número um do projeto. Ela tem dois endereços
