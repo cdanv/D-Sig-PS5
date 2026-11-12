@@ -536,3 +536,57 @@ LIVRE e CONJUNTO saem do vocabulário.
 uma pessoa, na estimativa de quem desenhou o modo. Essa estimativa **não foi medida**. Fica
 marcada como provisória até a medição no console ou com dados de pessoas reais. Enquanto
 isso, a bancada do Alvo 2 continua testando o caso de mesmo quadro, que é o limite inferior.
+
+---
+
+## 14. Decisões do autor: tempo como catálogo, TURBO e a sequência de DELTA
+
+Fecha as pendências 6 e 2-4 da seção 11 e a seção 13.4.
+
+### 14.1 Tempo: catálogo com seleção por índice
+
+**Decidido:** o padrão de tempo é o do HOLD. Existe uma lista de valores selecionáveis (a
+tabela única da seção 11, com 67 entradas). Cada item que tem ajuste de tempo guarda
+apenas um índice, e o usuário escolhe o valor na lista. Nenhum item guarda um número livre.
+
+- Os itens ajustáveis são os que estão na tabela: HOLD_AT, HOLD_AP, AFTER, DELAY, passo e
+  latência do TURBO, passo da sequência de DELTA (seção 14.3), e a janela de
+  simultaneidade do modo SIMULTÂNEO (50 ms, provisório, seção 13.6).
+- Os tempos fixos de comando e de tela (janela do 2CLK, `TIME_*`) ficam fora, porque não
+  são ajustáveis.
+
+### 14.2 TURBO desligado antes do fim dos ciclos
+
+**Decidido, pela distinção que o autor deu:**
+
+| o que desliga a resposta | efeito no TURBO |
+|---|---|
+| **BLOQ** (relação de bloqueio) | **pausa.** A máquina congela e retoma de onde parou. Segue o BLOQ do manual (seção 15.2) |
+| **Finalizador** (gatilho em FINALIZA, ou relação EXCL) | **encerra.** A máquina é zerada, e a próxima vez é um começo novo. Segue o EXCL (seção 15.3) |
+
+### 14.3 DELTA: quatro tipos de resposta
+
+| tipo | origem |
+|---|---|
+| DIRECT | manual, seção 14 |
+| STATIC | manual, seção 14 |
+| TURBO | manual, seção 14. **Mantido**, é um tipo próprio |
+| **SEQUÊNCIA** | **novo.** Construção de uma sequência de respostas dentro do DELTA |
+
+**SEQUÊNCIA de DELTA.** Cada passo tem destino e tempo, do mesmo jeito que o TURBO. O
+autor sugeriu **até 8**. Há duas leituras, e o autor precisa escolher (pendência A abaixo).
+
+### 14.4 TURBO e SEQUÊNCIA podem coexistir no mesmo destino
+
+**Decidido:** sim. Um destino pode receber saída de mais de um MOD, inclusive de um TURBO e
+de uma sequência de DELTA. A regra de acumulação da seção 26 do manual vale: digital usa
+OU, e eixo usa intensidade máxima (ver `REFERENCIA_CRONUS.md`, seção 3.3).
+
+### 14.5 Pendências que restam
+
+- **A.** Os "até 8" da sequência de DELTA são 8 **passos** (como o TURBO tem 4), ou 8
+  **sequências** configuráveis por DELTA?
+- **B.** Confirmar que "finalizadores" são gatilhos em FINALIZA e a relação EXCL, e que BLOQ
+  só pausa (seção 14.2).
+
+Com A e B respondidas, a fase 3a fica sem bloqueio de modelo.
