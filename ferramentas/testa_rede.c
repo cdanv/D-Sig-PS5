@@ -235,7 +235,51 @@ static void testes_rearme(void) {
           "encerrado em 130 e 240; rearmado em 270 (um quadro depois de W subir); travado em 280");
 }
 
+/* ----------------------------------------------------------------- ORFAO */
+/* MOD 0: CROSS -> DIRECT no CIRCLE (o alvo). MOD 1: sem fonte, ASSOC ao MOD 0, em TRIANGLE.
+ * CROSS de 100 a 200. A defasagem de um quadro: o orfao liga no quadro seguinte a subida do
+ * alvo (110), e desliga no quadro seguinte a queda (210). */
+static uint32_t cr_orfao(uint64_t t) {
+    return (t >= 100 && t < 200) ? BIT(B_CROSS) : 0;
+}
+static void mod_orfao(ModCfg *m, uint8_t tipo) {
+    mod_base(m);
+    m->alfa.abas[ABA_LIVRE].n = 0;                       /* sem fonte */
+    m->delta.tipo = tipo;
+    m->delta.n_dest = 1;
+    m->delta.dest[0] = D_TRIANGLE;
+}
+static void testes_orfao(void) {
+    RedeCfg r; int ok = 1;
+    memset(&r, 0, sizeof r);
+    r.n = 2;
+    todos_d1(&r);
+    mod_resposta(&r.mod[0], B_CROSS, DELTA_DIRECT, D_CIRCLE);
+    mod_orfao(&r.mod[1], DELTA_DIRECT);
+    r.z[1].assoc = BIT(0);
+    if (rede_validar(&r) != 0) ok = 0;                                     /* orfao adotado: valido */
+    { RedeCfg x = r; x.z[1].assoc = 0; if (rede_validar(&x) != -1) ok = 0; }  /* sem alvo: sem resposta */
+    passo("orfao: valido so com ASSOC; sem alvo, recusado", ok, "");
+
+    ok = 1;
+    if (saida_em(&r, cr_orfao, 300, 100, 1) != 0) ok = 0;                 /* alvo ainda nao subiu */
+    if (saida_em(&r, cr_orfao, 300, 150, 1) != BIT(D_TRIANGLE)) ok = 0;   /* sobe com o alvo */
+    if (saida_em(&r, cr_orfao, 300, 210, 1) != 0) ok = 0;                 /* desce com o alvo */
+    passo("orfao DIRECT: sobe junto com o alvo e desce junto", ok,
+          "desligado em 100; ligado em 150; desligado em 210");
+
+    /* STATIC: a subida comeca a resposta, e so a queda do alvo (FINALIZA) a encerra */
+    ok = 1;
+    r.mod[1].delta.tipo = DELTA_STATIC;
+    if (rede_validar(&r) != 0) ok = 0;
+    if (saida_em(&r, cr_orfao, 300, 150, 1) != BIT(D_TRIANGLE)) ok = 0;
+    if (saida_em(&r, cr_orfao, 300, 250, 1) != 0) ok = 0;
+    passo("orfao STATIC: liga na subida do alvo e encerra na queda", ok,
+          "ligado em 150; desligado em 250");
+}
+
 int main(void) {
+    testes_orfao();
     testes_validacao();
     testes_bloq();
     testes_assoc();

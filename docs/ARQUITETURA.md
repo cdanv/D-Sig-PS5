@@ -1524,3 +1524,41 @@ conferido, versão não conferida, validação ignorada e constante de bloco err
 **Limites:** o formato guarda a configuração, não o estado de execução. A rede carregada começa
 parada, como ao ligar. A versão 1 é fixa; quando o formato mudar, a versão sobe e a leitura antiga
 é recusada, em vez de ser interpretada errado.
+
+---
+
+## 28. Órfão adotado pela ZETA (fase 3a)
+
+**O que é (manual, secao 15.5):** um MOD sem nenhuma fonte, que nunca liga sozinho. Quem o liga é
+o alvo da sua ASSOC: ele sobe junto com o alvo e desce junto com ele.
+
+**Como ficou:**
+- `modelo_orfao`: 1 se nenhuma aba tem fonte. Um MOD comum continua exigindo ao menos uma aba que
+  alimente o DELTA.
+- `modelo_validar_orfao`: valida só o DELTA, com origem de pulso zero. **Não chama `alfa_validar`**,
+  porque a ALFA de um órfão é vazia por definição e `alfa_validar` recusa ALFA sem fonte.
+- `rede_validar`: um órfão é válido só com ASSOC não vazia. Sem alvo, não tem o que o ligue.
+- `rede_avaliar`: a ASSOC não congela o órfão, porque ela é o que o liga. O nível do alvo
+  (`resp`, do quadro anterior) alimenta o DELTA em `liga`; a queda do alvo (`cai` sem nenhum alvo
+  respondendo) alimenta `finaliza`.
+
+**Por que o DELTA recebe nível e pulso:** DIRECT segue o nível; STATIC, TURBO e COMBO começam na
+subida de `liga` e são encerrados pelo pulso de `finaliza`. Assim o órfão se comporta como o MOD
+normal, sem uma lógica nova para cada tipo de DELTA.
+
+**Defasagem:** de um quadro, como o resto da ZETA. O órfão liga um quadro depois da subida do
+alvo, e desliga um quadro depois da queda.
+
+**Verificado:** 3 verificações novas na bancada da ZETA (validação; DIRECT sobe e desce com o alvo;
+STATIC liga na subida e encerra na queda). Sabotagens O1 a O5. O1 a O4 reprovaram pelo motivo certo:
+- O1, sem recusa de órfão sem alvo: reprova na validação.
+- O2, nível sempre zero: reprova na subida do DIRECT e do STATIC.
+- O3, sem pulso de queda: reprova só no STATIC, no instante em que deveria encerrar.
+- O4, sem a adoção (o órfão cai no caminho do MOD comum): reprova no DIRECT e no STATIC.
+
+**Não coberto:** o órfão **não herda a intensidade** do alvo. Isso depende de eixos com intensidade
+(destinos 10 a 13), que ainda são booleanos. Por enquanto, o órfão liga e desliga, sem intensidade.
+- O5, o congelamento por ASSOC volta a valer para o órfão: **sobrevive, e é mutante equivalente.**
+  Para um órfão, `congela` sem a guarda vale `assoc && !(assoc & resp)`, que é exatamente `!nivel`.
+  O congelamento então só zera destinos que já estariam zerados, porque o órfão desliga no mesmo
+  quadro em que o nível cai. A guarda é redundante, não uma proteção necessária. Mantida por clareza.

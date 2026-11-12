@@ -103,6 +103,48 @@ void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,
     out->terminou = ds.terminou;
 }
 
+int modelo_orfao(const ModCfg *m) {
+    unsigned a;
+    for (a = 0; a < ALFA_ABAS; a++) if (m->alfa.abas[a].n != 0) return 0;
+    return 1;
+}
+
+int modelo_validar_orfao(const ModCfg *m) {
+    DeltaCfg d;
+    if (m == 0) return -1;
+    if (!modelo_orfao(m)) return -1;
+    /* sem alfa_validar: a ALFA de um orfao e vazia por definicao, e alfa_validar recusa ALFA sem fonte */
+    d = m->delta;
+    d.origem_pulso = 0;               /* segue o nivel do alvo; sem pulso de fonte */
+    return delta_validar(&d);
+}
+
+void modelo_avaliar_orfao(const ModCfg *m, ModEstado *e, const Entrada *in,
+                          uint8_t liga, uint8_t finaliza, uint8_t congela, uint8_t encerra, ModSaida *out) {
+    DeltaEntrada de;
+    DeltaSaida ds;
+
+    memset(out, 0, sizeof *out);
+    out->bloqueado = congela;
+
+    if (encerra) {
+        delta_iniciar(&e->delta);
+        out->destinos = 0;
+        out->terminou = 0;
+        return;
+    }
+
+    memset(&de, 0, sizeof de);
+    de.liga = liga;
+    de.finaliza = finaliza;
+    de.congelado = congela;
+    de.t_us = in->t_us;
+    delta_avaliar(&m->delta, &e->delta, &de, &ds);
+
+    out->destinos = out->bloqueado ? 0 : ds.destinos;
+    out->terminou = ds.terminou;
+}
+
 void modelo_avaliar(const ModCfg *m, ModEstado *e, const Entrada *in, ModSaida *out) {
     modelo_avaliar_ext(m, e, in, 0, 0, out);
 }

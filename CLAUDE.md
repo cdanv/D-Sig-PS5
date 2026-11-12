@@ -70,7 +70,7 @@ e seguir com o que está dentro — não inventar um jeito de atender.
 |---|---|
 | **Alvo 1 — passagem pura** | **feito.** `src/passagem.c`, 4 verificações, 4 sabotagens |
 | **Alvo 2 — o primeiro MOD de verdade** | **feito na bancada.** Troca de botão e acorde. `src/passagem.c`, `ferramentas/testa_mod.c`, 9 sabotagens |
-| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a em andamento:** tabela de tempo, buffer duplo e ALFA v4 (seis abas) feitos na bancada. ALFA com DELAY, DELTA (DIRECT, STATIC, TURBO, COMBO) e a integração ALFA→DELTA (`src/modelo.c`) feitos na bancada. ZETA, domínios D1 a D4 e acumulação de destinos entre MODs em `src/rede.c` e `src/dominio.c`. Falta eixos com intensidade (destinos 10 a 13), órfão adotado e o formato binário do perfil. Fases 3b a 3d precisam de console |
+| Alvo 3 — o vigia residente + a ponte | arquitetura decidida em `docs/ARQUITETURA.md`. **Fase 3a em andamento:** tabela de tempo, buffer duplo e ALFA v4 (seis abas) feitos na bancada. ALFA com DELAY, DELTA (DIRECT, STATIC, TURBO, COMBO) e a integração ALFA→DELTA (`src/modelo.c`) feitos na bancada. ZETA, domínios D1 a D4 e acumulação de destinos entre MODs em `src/rede.c` e `src/dominio.c`. Órfão adotado pela ZETA feito na bancada. Formato binário do perfil feito. Falta eixos com intensidade (destinos 10 a 13), e o órfão herdar a intensidade do alvo. Fases 3b a 3d precisam de console |
 | Alvo 4 — ícone na tela inicial | caminho conhecido e barato (ver `docs/ESTUDO.md`) |
 
 ```
