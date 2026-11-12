@@ -84,7 +84,7 @@ src/perfil.c, src/perfil.h    o buffer duplo com versão, com escritor e leitor 
 src/alfa.c, src/alfa.h        a ALFA v4: seis abas (LIVRE, SEQUÊNCIA, 2CLK, HOLD_AT, HOLD_AP, BLOCK) (fase 3a)
 ferramentas/testa_alfa.c      a bancada da ALFA v4, com 26 verificações
 src/delta.c, src/delta.h      o DELTA: DIRECT, STATIC, TURBO e COMBO (fase 3a)
-ferramentas/testa_delta.c     a bancada do DELTA, com 11 verificações
+ferramentas/testa_delta.c     a bancada do DELTA, com 10 verificações
 ferramentas/testa_tempo.c     a bancada da tabela de tempo
 ferramentas/testa_perfil.c    a bancada do buffer duplo, com duas threads
 docs/ESTUDO.md                o que aprendemos lendo PoorDS4, etaHEN, ProsperoMgr, pldmgr

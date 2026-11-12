@@ -1202,7 +1202,7 @@ que vai ao DELTA. O DELTA decide, por tipo, o que fazer com ele.
 
 | peça | arquivo | bancada | verificações | sabotagens |
 |---|---|---|---|---|
-| DELTA: DIRECT, STATIC, TURBO, COMBO | `src/delta.c`, `src/delta.h` | `ferramentas/testa_delta.c` | 11 | 6, todas pelo motivo certo |
+| DELTA: DIRECT, STATIC, TURBO, COMBO | `src/delta.c`, `src/delta.h` | `ferramentas/testa_delta.c` | 10 | 6, todas pelo motivo certo |
 
 **Sem deriva.** Cada fase começa no instante planejado (início anterior mais a duração), e
 não no quadro em que a anterior foi detectada. Assim o erro não se acumula. Só ressincroniza
