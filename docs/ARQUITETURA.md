@@ -1083,3 +1083,28 @@ B'. **Quais tipos de DELTA aceitam cada aba de origem?** Proposta:
 - TURBO e COMBO: qualquer origem. São sequências que tocam sozinhas.
 
 C'. **Cancelamento do DELAY (19.5, B e C)** continua valendo, porque ocorre antes do DELTA.
+
+### 19.7 Decisões do autor sobre FINALIZA, STATIC, DIRECT, TURBO e COMBO
+
+**Decidido:**
+
+- **A'. FINALIZA encerra a resposta do DELTA da própria aba** (opção a).
+- **DIRECT aceita só fonte de nível (LIVRE ou BLOCK).** Um pulso não acompanha a fonte.
+- **TURBO e COMBO aceitam qualquer origem.**
+- **COMBO ganha CICLOS**, com as mesmas regras de finalização do TURBO: ATIVO, ou de 1 a 7.
+
+**Correção de minha proposta B':** eu tinha escrito que STATIC aceita "com ALTERNA ou com nível".
+A regra é mais ampla. Pelo manual (seção 14.4), STATIC é uma **chave**:
+
+| origem | comportamento do STATIC |
+|---|---|
+| pulso (2CLK, HOLD, SEQUÊNCIA) | o pulso **trava** o destino no alto. A soltura não destrava. Só FINALIZA destrava |
+| nível (LIVRE, BLOCK) | a fonte trava o destino enquanto está na zona. Ao sair, o destino cai, a menos que a trava esteja presa |
+| com ALTERNA | cada pulso alterna a trava: trava, destrava, trava |
+
+Então STATIC aceita **qualquer origem**. Não precisa de ALTERNA.
+
+**Pendência nova, que a decisão de COMBO com CICLOS levanta:** a seção 17.8 proibia ATIVO em
+TURBO quando a origem é sequência, porque o pulso não mantém o MOD respondendo. Mas, com
+FINALIZA, um TURBO em ATIVO iniciado por pulso continua oscilando até FINALIZA encerrar. A
+proibição pode não ser necessária. Você quer manter a proibição, ou liberar ATIVO com pulso?
