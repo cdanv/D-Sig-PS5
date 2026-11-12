@@ -1121,3 +1121,18 @@ TURBO iniciado por pulso oscila até FINALIZA encerrar. Fica revogada a proibiç
   nível (LIVRE e BLOCK). Nas abas de pulso, soltar a fonte não cancela o atraso.
 - **C. DELAY em aba de nível.** Proposta: conta da subida. A descida antes do fim do atraso
   cancela.
+
+### 19.9 Decisão do autor: DELAY conta a partir da descida do pulso
+
+**Decidido:** o DELAY é escolhido pelo usuário, e sempre conta a partir da descida do pulso.
+
+**Consequências:**
+
+- **B (cancelamento por soltura) fica resolvido.** O atraso só começa quando o pulso desce,
+  então não há soltura durante o atraso para cancelar.
+- **C (subida ou descida em aba de nível) fica resolvido.** Conta da descida.
+- **Consequência a confirmar:** em LIVRE e BLOCK, a descida é a soltura. Com DELAY configurado,
+  um botão mantido apertado não dispara a resposta. Ela só começa depois da soltura e do atraso.
+
+**Pendência nova:** se um novo pulso chegar enquanto o atraso corre, o atraso atual continua,
+ou é reiniciado? Proposta: continua, e o novo pulso é ignorado.
