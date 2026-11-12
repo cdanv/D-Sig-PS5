@@ -788,3 +788,15 @@ Estas foram escolhas minhas para fechar a implementação. Estão marcadas no c�
 2. DELTA: DIRECT, STATIC, TURBO (um passo) e COMBO (até dez passos).
 3. ZETA: BLOQ, EXCL (INIC ou FIM, com rearme pela resposta de ASSOC) e ASSOC.
 4. Formato binário do perfil que carrega tudo isso.
+
+### 17.7 Pergunta aberta: DELAY quando a fonte é uma sequência
+
+O autor propôs que o DELAY seja obrigatório quando a fonte é uma sequência. Duas leituras:
+
+- **A. DELAY é o atraso até a resposta começar** (seção 12: conta do fim da sequência).
+  Então falta uma **duração da resposta**, obrigatória para a sequência, com valor da tabela
+  única de tempo. Recomendada.
+- **B. DELAY é a duração da resposta.** Sem DELAY, a resposta teria duração zero. Isso muda
+  a regra da seção 12 para o DELAY.
+
+Pendente de decisão do autor.
