@@ -1219,3 +1219,20 @@ detecção reprova.
 **Limites desta fatia:** destinos booleanos; sem intensidade de eixo nem MULT; sem os sinais
 extras do DualSense; a integração com as abas da ALFA (quem produz LIGA, ALTERNA e FINALIZA)
 fica para a próxima fatia.
+
+---
+
+## 21. Integração ALFA → DELTA: o MOD completo
+
+### 21.1 Decisões de integração (as três primeiras são do autor; as outras, minhas)
+
+- **Cada aba com LIGA, ALTERNA ou FINALIZA** alimenta o DELTA do MOD. O padrão é LIGA.
+- **FINALIZA** encerra a resposta do próprio MOD.
+- **BLOCK suspende o MOD** (decisão de 20.1 e manual, seção 15.2). Enquanto o BLOCK estiver
+  ativo, o DELTA congela: não responde, não corre os tempos, e não processa eventos. Ao soltar,
+  retoma de onde parou.
+- *Minha:* **DIRECT não aceita DELAY** nas abas de origem. Ele acompanha o nível, e um atraso
+  quebraria essa leitura. Recusar na validação é melhor que ignorar em silêncio.
+- *Minha:* **DIRECT só aceita origem de nível** (LIVRE ou BLOCK). Já estava em 19.7.
+- *Minha:* o MOD precisa de pelo menos uma aba que alimente o DELTA.
+- *Minha:* a ação ALTERNA/FINALIZA/LIGA é configurada por aba, fora da ALFA, no `ModCfg`.
