@@ -18,6 +18,7 @@ int delta_validar(const DeltaCfg *c) {
     if (c == 0) return -1;
     if (c->tipo > DELTA_COMBO) return -1;
     if (c->origem_pulso > 1) return -1;
+    if (c->modo > DELTA_MODO_ABSF) return -1;
 
     /* DIRECT acompanha a fonte: pulso nao sustenta isso */
     if (c->tipo == DELTA_DIRECT && c->origem_pulso) return -1;
@@ -192,10 +193,28 @@ void delta_avaliar(const DeltaCfg *c, DeltaEstado *e, const DeltaEntrada *in, De
                     }
                 }
             }
-            if (e->ligado && !e->em_latencia) {
-                out->destinos |= 1u << c->dest[e->passo];
-                out->intensidade = e->intens;
-                out->sinal = e->lado_trava;
+            if (e->ligado) {
+                uint8_t d = c->dest[e->passo];
+                if (d >= 10 && d <= 13) {
+                    /* destino de eixo: escreve tambem no silencio (manual do EIXOS, 9.1). A fase
+                     * ligada escreve 100 com o sinal do modo; o silencio escreve 0, e so o ABS
+                     * escreve -100. Os modos estao na tabela da secao 9.2. */
+                    int8_t s_lig = (c->modo == DELTA_MODO_NEG) ? -1
+                                 : (c->modo == DELTA_MODO_ABSF) ? in->lado : 1;
+                    out->destinos |= 1u << d;
+                    if (!e->em_latencia) {
+                        out->intensidade = 100;
+                        out->sinal = s_lig;
+                    } else if (c->modo == DELTA_MODO_ABS) {
+                        out->intensidade = 100;             /* ABS silencio: -100 */
+                        out->sinal = -1;
+                    }
+                    /* POS, NEG e ABSF no silencio: 0 (intensidade 0) */
+                } else if (!e->em_latencia) {
+                    out->destinos |= 1u << c->dest[e->passo];
+                    out->intensidade = e->intens;
+                    out->sinal = e->lado_trava;
+                }
             }
         }
         break;

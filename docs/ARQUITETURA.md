@@ -1802,3 +1802,38 @@ O órfão segue a mesma regra: só a subida de um alvo da ASSOC o liga (ZETA, 7.
 
 **Consequência:** nenhuma configuração que hoje liga passa a ficar ligada sem ordem. A única mudança de
 comportamento é o DIRECT com FINALIZA, que antes era inerte e agora desliga como o manual manda.
+
+---
+
+## 34. TURBO em eixo: modos e escrita no silêncio (manual do EIXOS, 9.1 e 9.2)
+
+**O que mudou.** O TURBO com destino de eixo (10 a 13) agora escreve também no silêncio, e tem um
+modo que define o sinal de cada fase. Os destinos digitais não mudam.
+
+| modo | fase ligada | fase de silêncio |
+|---|---|---|
+| ABS | +100 | −100 |
+| POS | +100 | 0 |
+| NEG | −100 | 0 |
+| ABSF | +100 ou −100, conforme o sinal atual da fonte | 0 |
+
+Por que escreve no silêncio: o zero da latência faz parte da resposta. Se o TURBO ficasse calado ali,
+o analógico cru do jogador vazaria entre os pulsos (manual, 9.1).
+
+**Formato.** O DELTA ganhou o campo `modo`. Isso muda o formato binário: `FORMATO_VERSAO` passou de 1
+para 2, e o bloco por MOD de 302 para 303 bytes. A bancada do formato foi ajustada: a verificação de
+"versão diferente" passou a usar `FORMATO_VERSAO + 1`, porque a constante antiga (2) virou a versão
+atual. Ela não é uma mudança de comportamento do formato, só da constante do teste.
+
+**Verificado:** TURBO em eixo com os quatro modos, medidos na fase ligada (t = 50 ms) e no silêncio
+(t = 120 ms), com fonte em +1 e −1 para o ABSF. Três sabotagens reprovaram pelo motivo certo: ABS sem
+o −100 no silêncio, NEG com o sinal trocado, e silêncio que não escreve.
+
+**Limites e decisões em aberto:**
+1. **Fim dos ciclos.** O manual diz que, quando os ciclos terminam, todos os modos repousam em zero "de
+   verdade", inclusive o ABS (9.2). Não implementado: não sei se o zero deve ser escrito no quadro do
+   término ou continuar enquanto o MOD estiver desligado. Precisa de decisão sua.
+2. **Órfão em TURBO com eixo.** O órfão usa o mesmo modo. Com o ABS (o padrão), ele alterna +100 e
+   −100. O achado 2 do simulador do Cronus mediu só o ABSF. Os outros modos com órfão não foram medidos.
+3. **COMBO com destinos mistos.** A regra de eixo vale pelo destino do passo corrente. Não verificado.
+4. **Destino digital com valor** (manual, 6.1 e 11.1): não feito. Ver a seção 31, pendência 3.

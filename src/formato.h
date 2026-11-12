@@ -12,12 +12,12 @@
 #include <stdint.h>
 #include "rede.h"
 
-#define FORMATO_VERSAO 1
+#define FORMATO_VERSAO 2                 /* 2: DELTA ganhou o modo (TURBO em eixo) */
 #define FORMATO_CABECALHO 8
 #define FORMATO_RODAPE 4
 /* bytes por MOD: ALFA com janela (1 + 6 abas x 45 = 271) + acoes (6) + DELTA (25) = 302.
  * A bancada confere contra a escrita real, e a escrita medida deu 644 bytes para 2 MODs. */
-#define FORMATO_BLOCO_ALFA_DELTA 302
+#define FORMATO_BLOCO_ALFA_DELTA 303
 #define FORMATO_ZETA_DOM 14       /* por MOD, depois do bloco de ALFA/acoes/DELTA: ZETA (4+4+4+1) e dominio (1) */
 
 /* CRC32 padrao (polinomio 0xEDB88320). Exposto para a bancada conferir com o vetor conhecido. */

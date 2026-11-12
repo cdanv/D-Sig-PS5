@@ -17,6 +17,8 @@
 #define DELTA_SEM_LAT 255          /* sem latencia entre passos */
 
 enum { DELTA_DIRECT = 0, DELTA_STATIC = 1, DELTA_TURBO = 2, DELTA_COMBO = 3 };
+/* modo do TURBO/COMBO com destino de eixo (manual do EIXOS, 9.2). So vale para destino 10..13. */
+enum { DELTA_MODO_ABS = 0, DELTA_MODO_POS = 1, DELTA_MODO_NEG = 2, DELTA_MODO_ABSF = 3 };
 
 typedef struct {
     uint8_t tipo;                  /* DELTA_* */
@@ -26,6 +28,7 @@ typedef struct {
     uint8_t lat;                   /* indice do catalogo, ou DELTA_SEM_LAT */
     uint8_t ciclos;                /* 1..7, ou DELTA_CICLOS_ATIVO (TURBO/COMBO) */
     uint8_t origem_pulso;          /* 1 se alguma aba que alimenta este DELTA e pulso */
+    uint8_t modo;                  /* DELTA_MODO_*: so para TURBO/COMBO com destino de eixo */
 } DeltaCfg;
 
 typedef struct {

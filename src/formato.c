@@ -61,6 +61,7 @@ static void po_mod(uint8_t **p, const ModCfg *m) {
     for (j = 0; j < DELTA_MAX_PASSOS; j++) po8(p, m->delta.dest[j]);
     for (j = 0; j < DELTA_MAX_PASSOS; j++) po8(p, m->delta.tempo[j]);
     po8(p, m->delta.lat); po8(p, m->delta.ciclos); po8(p, m->delta.origem_pulso);
+    po8(p, m->delta.modo);
 }
 
 static void go_mod(const uint8_t **p, ModCfg *m) {
@@ -81,6 +82,7 @@ static void go_mod(const uint8_t **p, ModCfg *m) {
     for (j = 0; j < DELTA_MAX_PASSOS; j++) m->delta.dest[j] = gi8(p);
     for (j = 0; j < DELTA_MAX_PASSOS; j++) m->delta.tempo[j] = gi8(p);
     m->delta.lat = gi8(p); m->delta.ciclos = gi8(p); m->delta.origem_pulso = gi8(p);
+    m->delta.modo = gi8(p);
 }
 
 int formato_gravar(const RedeCfg *r, uint8_t *buf, size_t cap, size_t *len) {

@@ -380,7 +380,51 @@ static void testes_fin_com_fonte(void) {
     passo("FINALIZA com fonte (STATIC): desliga; a fonte mantida nao religa", ok, "fonte segura: off");
 }
 
+/* ------------------------------------- TURBO em eixo: modos e silencio (9.1, 9.2) */
+/* Tabela do manual do EIXOS, 9.2: ABS +100 ligada e -100 no silencio; POS +100 e 0; NEG -100 e 0;
+ * ABSF +100 ou -100 conforme o sinal atual da fonte, e 0. Escreve tambem no silencio (9.1). */
+static void run_turbo_eixo(uint8_t modo, int8_t lado, DeltaSaida *lig, DeltaSaida *sil) {
+    DeltaCfg c; DeltaEstado e; DeltaEntrada in; DeltaSaida out; uint64_t t;
+    cfg_base(&c, DELTA_TURBO); c.n_dest = 1; c.dest[0] = 12; /* RX */
+    c.tempo[0] = idx_ms(100); c.lat = idx_ms(50); c.ciclos = DELTA_CICLOS_ATIVO;
+    c.origem_pulso = 1; c.modo = modo;
+    delta_iniciar(&e);
+    for (t = 0; t <= 120000; t += 10000) {
+        memset(&in, 0, sizeof in);
+        in.liga = (t == 0); in.lado = lado; in.t_us = t;
+        delta_avaliar(&c, &e, &in, &out);
+        if (t == 50000) *lig = out;
+        if (t == 120000) *sil = out;
+    }
+}
+static void testes_turbo_eixo_modos(void) {
+    DeltaSaida lig, sil; int ok = 1;
+    run_turbo_eixo(DELTA_MODO_ABS, 1, &lig, &sil);
+    if (!(lig.destinos & BIT(12)) || lig.intensidade != 100 || lig.sinal != 1) ok = 0;
+    if (!(sil.destinos & BIT(12)) || sil.intensidade != 100 || sil.sinal != -1) ok = 0;
+    passo("TURBO eixo ABS: +100 ligada e -100 no silencio (escreve nos dois)", ok, "+100 / -100");
+
+    ok = 1;
+    run_turbo_eixo(DELTA_MODO_POS, 1, &lig, &sil);
+    if (lig.intensidade != 100 || lig.sinal != 1) ok = 0;
+    if (!(sil.destinos & BIT(12)) || sil.intensidade != 0) ok = 0;   /* escreve zero no silencio */
+    passo("TURBO eixo POS: +100 ligada e 0 no silencio (escreve zero, nao cala)", ok, "+100 / 0");
+
+    ok = 1;
+    run_turbo_eixo(DELTA_MODO_NEG, 1, &lig, &sil);
+    if (lig.intensidade != 100 || lig.sinal != -1) ok = 0;
+    if (!(sil.destinos & BIT(12)) || sil.intensidade != 0) ok = 0;
+    passo("TURBO eixo NEG: -100 ligada e 0 no silencio", ok, "-100 / 0");
+
+    ok = 1;
+    run_turbo_eixo(DELTA_MODO_ABSF, -1, &lig, &sil);     /* a fonte esta empurrada para -1 */
+    if (lig.intensidade != 100 || lig.sinal != -1) ok = 0;
+    if (!(sil.destinos & BIT(12)) || sil.intensidade != 0) ok = 0;
+    passo("TURBO eixo ABSF: segue o lado atual da fonte na fase ligada; 0 no silencio", ok, "-100 (fonte -1) / 0");
+}
+
 int main(void) {
+    testes_turbo_eixo_modos();
     testes_fin_com_fonte();
     testes_sinal();
     testes_intensidade();

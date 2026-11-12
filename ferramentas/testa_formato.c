@@ -124,7 +124,7 @@ static void testes(void) {
 
     /* versao diferente, com CRC recalculado: rejeitada pela versao */
     ok = 1;
-    { uint8_t c[2048]; memcpy(c, buf, len); c[4] = 2; recalcula_crc(c, len);
+    { uint8_t c[2048]; memcpy(c, buf, len); c[4] = FORMATO_VERSAO + 1; recalcula_crc(c, len);
       if (formato_ler(c, len, &lido) != -1) ok = 0; }
     passo("versao diferente e rejeitada mesmo com CRC valido", ok, "");
 
