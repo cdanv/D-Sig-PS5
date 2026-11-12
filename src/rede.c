@@ -33,10 +33,10 @@ int rede_validar(const RedeCfg *r) {
     todos = (r->n >= 32) ? 0xFFFFFFFFu : ((1u << r->n) - 1u);
     for (i = 0; i < r->n; i++) {
         const Zeta *z = &r->z[i];
-        if (modelo_orfao(&r->mod[i])) {
-            /* orfao: precisa de um alvo de ASSOC que o adote, e um DELTA valido sem fonte */
+        if (modelo_sem_ligar(&r->mod[i])) {
+            /* sem gatilho que ligue: so a adocao liga o MOD, e ela precisa de um alvo na ASSOC */
             if (z->assoc == 0) return -1;
-            if (modelo_validar_orfao(&r->mod[i]) != 0) return -1;
+            if (modelo_validar_adotado(&r->mod[i]) != 0) return -1;
         } else if (modelo_validar(&r->mod[i]) != 0) {
             return -1;
         }
@@ -95,9 +95,8 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
 
         /* BLOQ: suspende enquanto um alvo responde */
         if (z->bloq & resp) congela = 1;
-        /* ASSOC: so responde enquanto um alvo responde; fora disso, congelado.
-         * O orfao nao e congelado por ASSOC: ele segue o alvo (abaixo). */
-        if (z->assoc && !modelo_orfao(&r->mod[i]) && !(z->assoc & resp)) congela = 1;
+        /* ASSOC: so responde enquanto um alvo responde; fora disso, congelado (preserva o estado) */
+        if (z->assoc && !(z->assoc & resp)) congela = 1;
 
         /* EXCL: encerra na subida (INIC) ou na finalizacao (FIM) de um alvo.
          * Disparo unico: fica encerrado ate um MOD ligado por ASSOC subir de novo. */
@@ -108,12 +107,11 @@ void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida 
         }
         encerra = e->encerrado[i];
 
-        if (modelo_orfao(&r->mod[i])) {
-            /* ORFAO (manual, secao 15.5): sobe quando um alvo de ASSOC responde, e desce quando
-             * todos caem. O nivel alimenta DIRECT; a subida e a queda alimentam os demais. */
-            uint8_t nivel = (z->assoc & resp) ? 1 : 0;
-            uint8_t fim = ((z->assoc & cai) && !nivel) ? 1 : 0;
-            modelo_avaliar_orfao(&r->mod[i], &e->mod[i], in, nivel, fim, congela, encerra, &out->mod[i]);
+        if (modelo_sem_ligar(&r->mod[i])) {
+            /* ORFAO (manual, secao 7.2): a borda de subida de um alvo da ASSOC liga o MOD. A queda
+             * do alvo nao o desliga: ele so fica silenciado pela ASSOC, com o estado preservado. */
+            uint8_t adota = (z->assoc & sobe) ? 1 : 0;
+            modelo_avaliar_adotado(&r->mod[i], &e->mod[i], in, adota, congela, encerra, &out->mod[i]);
         } else {
             modelo_avaliar_ext(&r->mod[i], &e->mod[i], in, congela, encerra, &out->mod[i]);
         }

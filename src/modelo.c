@@ -55,8 +55,36 @@ void modelo_iniciar(ModEstado *e) {
     delta_iniciar(&e->delta);
 }
 
-void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,
-                        uint8_t congela, uint8_t encerra, ModSaida *out) {
+int modelo_sem_ligar(const ModCfg *m) {
+    unsigned a;
+    for (a = 0; a < ALFA_ABAS; a++) {
+        if (!aba_alimenta(a)) continue;                         /* BLOCK nao liga */
+        if (m->alfa.abas[a].n == 0) continue;
+        if (m->acao[a] == ACAO_LIGA || m->acao[a] == ACAO_ALTERNA) return 0;
+    }
+    return 1;
+}
+
+int modelo_validar_adotado(const ModCfg *m) {
+    unsigned a, com_abas = 0;
+    DeltaCfg d;
+
+    if (m == 0) return -1;
+    if (!modelo_sem_ligar(m)) return -1;
+    for (a = 0; a < ALFA_ABAS; a++) if (m->alfa.abas[a].n != 0) com_abas = 1;
+    /* com abas (so FINALIZA, que e gatilho legitimo do orfao), vale a validacao normal */
+    if (com_abas) return modelo_validar(m);
+    /* sem nenhuma aba: a ALFA e vazia por definicao (alfa_validar recusa isso). So o DELTA conta.
+     * O orfao recebe pulso da adocao, exceto DIRECT, que vira trinco (ver avaliar_nucleo). */
+    d = m->delta;
+    d.origem_pulso = (uint8_t)(d.tipo != DELTA_DIRECT);
+    return delta_validar(&d);
+}
+
+/* Nucleo comum de modelo_avaliar_ext e modelo_avaliar_adotado. `adota` e a borda que liga o
+ * orfao (manual, secao 7.2); para um MOD com fonte, e sempre 0. */
+static void avaliar_nucleo(const ModCfg *m, ModEstado *e, const Entrada *in, uint8_t adota,
+                           uint8_t congela, uint8_t encerra, ModSaida *out) {
     AlfaSaida as;
     DeltaEntrada de;
     DeltaSaida ds;
@@ -97,52 +125,29 @@ void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,
 
     de.congelado = (uint8_t)(bloqueio || congela);
     de.t_us = in->t_us;
-    delta_avaliar(&m->delta, &e->delta, &de, &ds);
+    if (adota) de.liga = 1;
 
-    out->destinos = out->bloqueado ? 0 : ds.destinos;
-    out->terminou = ds.terminou;
-}
-
-int modelo_orfao(const ModCfg *m) {
-    unsigned a;
-    for (a = 0; a < ALFA_ABAS; a++) if (m->alfa.abas[a].n != 0) return 0;
-    return 1;
-}
-
-int modelo_validar_orfao(const ModCfg *m) {
-    DeltaCfg d;
-    if (m == 0) return -1;
-    if (!modelo_orfao(m)) return -1;
-    /* sem alfa_validar: a ALFA de um orfao e vazia por definicao, e alfa_validar recusa ALFA sem fonte */
-    d = m->delta;
-    d.origem_pulso = 0;               /* segue o nivel do alvo; sem pulso de fonte */
-    return delta_validar(&d);
-}
-
-void modelo_avaliar_orfao(const ModCfg *m, ModEstado *e, const Entrada *in,
-                          uint8_t liga, uint8_t finaliza, uint8_t congela, uint8_t encerra, ModSaida *out) {
-    DeltaEntrada de;
-    DeltaSaida ds;
-
-    memset(out, 0, sizeof *out);
-    out->bloqueado = congela;
-
-    if (encerra) {
-        delta_iniciar(&e->delta);
-        out->destinos = 0;
-        out->terminou = 0;
-        return;
+    if (modelo_sem_ligar(m) && m->delta.tipo == DELTA_DIRECT) {
+        /* DIRECT sem gatilho que ligue nao segue nivel nenhum: o estado e um trinco. Sobe com a
+         * adocao e cai com a borda de FINALIZA. Nao cai com o alvo (manual, secao 7.3 e 12.1). */
+        uint8_t fim = (uint8_t)(de.finaliza && !e->delta.finaliza_ant);
+        de.liga = (uint8_t)((adota || (e->delta.ligado && !fim)) ? 1 : 0);
     }
 
-    memset(&de, 0, sizeof de);
-    de.liga = liga;
-    de.finaliza = finaliza;
-    de.congelado = congela;
-    de.t_us = in->t_us;
     delta_avaliar(&m->delta, &e->delta, &de, &ds);
 
     out->destinos = out->bloqueado ? 0 : ds.destinos;
     out->terminou = ds.terminou;
+}
+
+void modelo_avaliar_ext(const ModCfg *m, ModEstado *e, const Entrada *in,
+                        uint8_t congela, uint8_t encerra, ModSaida *out) {
+    avaliar_nucleo(m, e, in, 0, congela, encerra, out);
+}
+
+void modelo_avaliar_adotado(const ModCfg *m, ModEstado *e, const Entrada *in, uint8_t adota,
+                            uint8_t congela, uint8_t encerra, ModSaida *out) {
+    avaliar_nucleo(m, e, in, adota, congela, encerra, out);
 }
 
 void modelo_avaliar(const ModCfg *m, ModEstado *e, const Entrada *in, ModSaida *out) {

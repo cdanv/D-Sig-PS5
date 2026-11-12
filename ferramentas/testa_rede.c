@@ -236,18 +236,30 @@ static void testes_rearme(void) {
 }
 
 /* ----------------------------------------------------------------- ORFAO */
-/* MOD 0: CROSS -> DIRECT no CIRCLE (o alvo). MOD 1: sem fonte, ASSOC ao MOD 0, em TRIANGLE.
- * CROSS de 100 a 200. A defasagem de um quadro: o orfao liga no quadro seguinte a subida do
- * alvo (110), e desliga no quadro seguinte a queda (210). */
+/* MOD 0: CROSS -> DIRECT no CIRCLE (o alvo). MOD 1: orfao, sem gatilho que ligue, ASSOC ao MOD 0,
+ * em TRIANGLE. CROSS de 100 a 200 e de 300 a 400. Defasagem de um quadro: a adocao liga o orfao
+ * no quadro seguinte a subida do alvo (110 e 310). Manual, secao 7. */
 static uint32_t cr_orfao(uint64_t t) {
-    return (t >= 100 && t < 200) ? BIT(B_CROSS) : 0;
+    return ((t >= 100 && t < 200) || (t >= 300 && t < 400)) ? BIT(B_CROSS) : 0;
 }
-static void mod_orfao(ModCfg *m, uint8_t tipo) {
+/* o mesmo, com SQUARE de 150 a 160: gatilho do orfao em FINALIZA (manual, secao 7.6) */
+static uint32_t cr_orfao_fin(uint64_t t) {
+    uint32_t b = cr_orfao(t);
+    if (t >= 150 && t < 160) b |= BIT(B_SQUARE);
+    return b;
+}
+static void mod_orfao(ModCfg *m, uint8_t tipo, int com_finaliza) {
     mod_base(m);
-    m->alfa.abas[ABA_LIVRE].n = 0;                       /* sem fonte */
     m->delta.tipo = tipo;
     m->delta.n_dest = 1;
     m->delta.dest[0] = D_TRIANGLE;
+    if (com_finaliza) {
+        m->alfa.abas[ABA_LIVRE].n = 1;
+        m->alfa.abas[ABA_LIVRE].fontes[0].tipo = FONTE_BOTAO;
+        m->alfa.abas[ABA_LIVRE].fontes[0].id = B_SQUARE;
+        m->alfa.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+        m->acao[ABA_LIVRE] = ACAO_FINALIZA;
+    }
 }
 static void testes_orfao(void) {
     RedeCfg r; int ok = 1;
@@ -255,27 +267,41 @@ static void testes_orfao(void) {
     r.n = 2;
     todos_d1(&r);
     mod_resposta(&r.mod[0], B_CROSS, DELTA_DIRECT, D_CIRCLE);
-    mod_orfao(&r.mod[1], DELTA_DIRECT);
+    mod_orfao(&r.mod[1], DELTA_DIRECT, 0);
     r.z[1].assoc = BIT(0);
-    if (rede_validar(&r) != 0) ok = 0;                                     /* orfao adotado: valido */
-    { RedeCfg x = r; x.z[1].assoc = 0; if (rede_validar(&x) != -1) ok = 0; }  /* sem alvo: sem resposta */
+    if (rede_validar(&r) != 0) ok = 0;                                        /* adotado: valido */
+    { RedeCfg x = r; x.z[1].assoc = 0; if (rede_validar(&x) != -1) ok = 0; }  /* sem alvo: inerte */
     passo("orfao: valido so com ASSOC; sem alvo, recusado", ok, "");
 
+    /* DIRECT: a adocao liga; a queda do alvo so silencia (ASSOC), nao desliga; a nova subida volta */
     ok = 1;
-    if (saida_em(&r, cr_orfao, 300, 100, 1) != 0) ok = 0;                 /* alvo ainda nao subiu */
-    if (saida_em(&r, cr_orfao, 300, 150, 1) != BIT(D_TRIANGLE)) ok = 0;   /* sobe com o alvo */
-    if (saida_em(&r, cr_orfao, 300, 210, 1) != 0) ok = 0;                 /* desce com o alvo */
-    passo("orfao DIRECT: sobe junto com o alvo e desce junto", ok,
-          "desligado em 100; ligado em 150; desligado em 210");
+    if (saida_em(&r, cr_orfao, 400, 100, 1) != 0) ok = 0;                 /* alvo ainda nao subiu */
+    if (saida_em(&r, cr_orfao, 400, 150, 1) != BIT(D_TRIANGLE)) ok = 0;   /* adotado na subida */
+    if (saida_em(&r, cr_orfao, 400, 250, 1) != 0) ok = 0;                 /* alvo caiu: silenciado */
+    if (saida_em(&r, cr_orfao, 400, 310, 1) != BIT(D_TRIANGLE)) ok = 0;   /* nova subida */
+    passo("orfao DIRECT: adotado na subida; silenciado na queda; volta na nova subida", ok,
+          "desligado em 100; ligado em 150; silenciado em 250; ligado em 310");
 
-    /* STATIC: a subida comeca a resposta, e so a queda do alvo (FINALIZA) a encerra */
+    /* DIRECT com FINALIZA: o gatilho desliga, e o alvo ainda responde. Nao volta sozinho. */
     ok = 1;
-    r.mod[1].delta.tipo = DELTA_STATIC;
+    mod_orfao(&r.mod[1], DELTA_DIRECT, 1);
     if (rede_validar(&r) != 0) ok = 0;
-    if (saida_em(&r, cr_orfao, 300, 150, 1) != BIT(D_TRIANGLE)) ok = 0;
-    if (saida_em(&r, cr_orfao, 300, 250, 1) != 0) ok = 0;
-    passo("orfao STATIC: liga na subida do alvo e encerra na queda", ok,
-          "ligado em 150; desligado em 250");
+    if (saida_em(&r, cr_orfao_fin, 400, 120, 1) != BIT(D_TRIANGLE)) ok = 0;  /* adotado */
+    if (saida_em(&r, cr_orfao_fin, 400, 160, 1) != 0) ok = 0;                /* FINALIZA desligou */
+    if (saida_em(&r, cr_orfao_fin, 400, 180, 1) != 0) ok = 0;                /* alvo ainda responde: nao volta */
+    if (saida_em(&r, cr_orfao_fin, 400, 310, 1) != BIT(D_TRIANGLE)) ok = 0;  /* so volta na nova subida */
+    passo("orfao com FINALIZA: desligado pelo gatilho; nao volta enquanto o alvo ainda responde", ok,
+          "ligado em 120; desligado em 160 e 180; ligado em 310");
+
+    /* STATIC: mesma regra; a trava e preservada na queda e so o FINALIZA a desliga */
+    ok = 1;
+    mod_orfao(&r.mod[1], DELTA_STATIC, 0);
+    if (rede_validar(&r) != 0) ok = 0;
+    if (saida_em(&r, cr_orfao, 400, 150, 1) != BIT(D_TRIANGLE)) ok = 0;
+    if (saida_em(&r, cr_orfao, 400, 250, 1) != 0) ok = 0;                 /* silenciado, trava preservada */
+    if (saida_em(&r, cr_orfao, 400, 310, 1) != BIT(D_TRIANGLE)) ok = 0;
+    passo("orfao STATIC: adotado na subida; silenciado na queda, trava preservada", ok,
+          "ligado em 150; silenciado em 250; ligado em 310");
 }
 
 int main(void) {

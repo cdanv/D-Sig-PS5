@@ -1529,36 +1529,58 @@ parada, como ao ligar. A versão 1 é fixa; quando o formato mudar, a versão so
 
 ## 28. Órfão adotado pela ZETA (fase 3a)
 
-**O que é (manual, secao 15.5):** um MOD sem nenhuma fonte, que nunca liga sozinho. Quem o liga é
-o alvo da sua ASSOC: ele sobe junto com o alvo e desce junto com ele.
+Fonte: manual detalhado da ZETA (`D-Sig_ZETA_Manual.pdf`), seções 3.2, 7, 8, 11.1, 12.1.
+
+**Correção de rumo.** A primeira versão (commit `6cba8c2`) seguia o alvo em nível e desligava na
+queda. **Isso contradizia o manual** e foi substituída. Eu tinha tirado "sobe junto e desce junto"
+de uma linha resumida da análise do Cronus, sem conferir o texto. Errado: o manual diz que a
+adoção é um **evento**, não um estado.
+
+**O que é (manual, seção 7):** um MOD sem gatilho que ligue (nenhum LIGA ou ALTERNA; só FINALIZA,
+ou nada). Sozinho, ele é inerte. Quem o liga é a **borda de subida** de um alvo da sua ASSOC.
 
 **Como ficou:**
-- `modelo_orfao`: 1 se nenhuma aba tem fonte. Um MOD comum continua exigindo ao menos uma aba que
-  alimente o DELTA.
-- `modelo_validar_orfao`: valida só o DELTA, com origem de pulso zero. **Não chama `alfa_validar`**,
-  porque a ALFA de um órfão é vazia por definição e `alfa_validar` recusa ALFA sem fonte.
-- `rede_validar`: um órfão é válido só com ASSOC não vazia. Sem alvo, não tem o que o ligue.
-- `rede_avaliar`: a ASSOC não congela o órfão, porque ela é o que o liga. O nível do alvo
-  (`resp`, do quadro anterior) alimenta o DELTA em `liga`; a queda do alvo (`cai` sem nenhum alvo
-  respondendo) alimenta `finaliza`.
+- `modelo_sem_ligar`: 1 se nenhuma aba com fonte tem acao LIGA ou ALTERNA. BLOCK não conta.
+- `modelo_validar_adotado`: valida o MOD. Sem nenhuma aba, valida só o DELTA. Com abas (só
+  FINALIZA), vale a validação normal.
+- `rede_validar`: um MOD sem gatilho que ligue é válido só com ASSOC não vazia.
+- `rede_avaliar`, passo 2 (adoção, manual seção 8): `adota = (assoc & sobe) != 0`. A adoção entra
+  no DELTA como borda de LIGA. Depois dela, o MOD obedece ao próprio estado.
+- A ASSOC congela o órfão **como qualquer MOD**: suspende e preserva o estado (manual, 12.1:
+  TURBO pausa, STATIC permanece, ASSOC preserva). Não há regra especial.
+- **DIRECT sem gatilho que ligue é um trinco.** Sobe com a adoção e cai só com a borda de
+  FINALIZA. Não segue o nível do alvo (manual, 3.2: "ligado, se a fonte for ---").
 
-**Por que o DELTA recebe nível e pulso:** DIRECT segue o nível; STATIC, TURBO e COMBO começam na
-subida de `liga` e são encerrados pelo pulso de `finaliza`. Assim o órfão se comporta como o MOD
-normal, sem uma lógica nova para cada tipo de DELTA.
+**Verificado:** bancada da ZETA, 4 verificações de órfão:
+- validação: sem ASSOC, recusado; com ASSOC, aceito;
+- DIRECT: ligado na subida (150), silenciado na queda (250), volta na nova subida (310);
+- DIRECT com FINALIZA: desligado pelo gatilho (160 e 180), não volta enquanto o alvo ainda
+  responde, volta na nova subida (310). É o caso que distingue o trinco do nível;
+- STATIC: ligado na subida, silenciado na queda com a trava preservada, ligado na nova subida.
 
-**Defasagem:** de um quadro, como o resto da ZETA. O órfão liga um quadro depois da subida do
-alvo, e desliga um quadro depois da queda.
-
-**Verificado:** 3 verificações novas na bancada da ZETA (validação; DIRECT sobe e desce com o alvo;
-STATIC liga na subida e encerra na queda). Sabotagens O1 a O5. O1 a O4 reprovaram pelo motivo certo:
+Sabotagens, todas reprovaram pelo motivo certo:
 - O1, sem recusa de órfão sem alvo: reprova na validação.
-- O2, nível sempre zero: reprova na subida do DIRECT e do STATIC.
-- O3, sem pulso de queda: reprova só no STATIC, no instante em que deveria encerrar.
-- O4, sem a adoção (o órfão cai no caminho do MOD comum): reprova no DIRECT e no STATIC.
+- O2, adoção por nível: reprova no caso de FINALIZA (volta a ligar em 180, com o alvo ainda de pé).
+- O3, FINALIZA ignorada no trinco: reprova no caso de FINALIZA (fica ligado em 160).
+- O4, sem silêncio pela ASSOC: reprova no DIRECT, no STATIC e na própria bancada da ASSOC.
+- O5, sem adoção: reprova em três verificações.
+- O6, sem trinco (o DIRECT segue só o pulso): reprova no DIRECT e no FINALIZA.
 
-**Não coberto:** o órfão **não herda a intensidade** do alvo. Isso depende de eixos com intensidade
-(destinos 10 a 13), que ainda são booleanos. Por enquanto, o órfão liga e desliga, sem intensidade.
-- O5, o congelamento por ASSOC volta a valer para o órfão: **sobrevive, e é mutante equivalente.**
-  Para um órfão, `congela` sem a guarda vale `assoc && !(assoc & resp)`, que é exatamente `!nivel`.
-  O congelamento então só zera destinos que já estariam zerados, porque o órfão desliga no mesmo
-  quadro em que o nível cai. A guarda é redundante, não uma proteção necessária. Mantida por clareza.
+**Pendências e dúvidas:**
+1. **Intensidade (seção 7.4 do manual).** O órfão deveria herdar a intensidade do alvo: DIRECT
+   recebe a intensidade do alvo, TURBO sai com ela, STATIC trava em 100%. Depende dos eixos com
+   intensidade (destinos 10 a 13), que ainda são booleanos. Não feito.
+2. **Cadeia de heranças (seção 7.5).** Até 4 níveis, procurando o primeiro MOD com fonte na zona
+   ativa, com proteção contra círculo. Não feito; depende da intensidade.
+3. **Órfão com gatilho em FINALIZA, DIRECT (seção 7.6).** O valor-base vem do botão físico do
+   gatilho, e a herança o sobrescreve. Sem herança, o valor zero aciona o autoencerramento.
+   Não feito.
+4. **FINALIZA durante o congelamento.** O DELTA ignora eventos enquanto congelado (regra já
+   existente, para BLOQ). O manual não diz o que acontece com FINALIZA durante a suspensão pela
+   ASSOC. Precisa de confirmação.
+5. **MOD inerte é alerta, não recusa.** O manual (seção 11.1) trata "sem ALFA, sem gatilho que
+   ligue e sem ASSOC" como alerta vermelho do app, não como configuração proibida. A rede recusa.
+   Escolha consciente, mas diferente do app. Vale decidir.
+6. **BLOCK-only sem ASSOC** é recusado, e não há caso no manual para ele.
+
+**Não feito neste passo:** intensidade e herança (1 a 3).

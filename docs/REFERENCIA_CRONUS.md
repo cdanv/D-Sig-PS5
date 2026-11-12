@@ -24,8 +24,8 @@ Esta é a parte do Cronus que descreve o comportamento do usuário. Não depende
 | TURBO | até quatro passos, cada um com destino e tempo; ciclos e autofinalização | 21-22 |
 | BLOQ | suspende, não desmonta; ao voltar, retoma de onde parou | 24 |
 | EXCL | encerra no instante em que o alvo sobe; disparo único | 24 |
-| ASSOC | responde só enquanto o alvo responder; órfão herda o desligamento e a intensidade | 24-25 |
-| Órfão adotado | MOD sem fonte e sem gatilho que liga, com ASSOC, sobe junto com o alvo | 25 |
+| ASSOC | responde só enquanto o alvo responder; órfão herda a intensidade do alvo (não o desligamento) | 24-25; ZETA 7.4 |
+| Órfão adotado | MOD sem gatilho que liga, com ASSOC. A **borda de subida** do alvo o liga; a queda não o desliga (manual ZETA, seção 7) | 25; ZETA 7.2-7.3 |
 | DELAY | atrasa o início da resposta, não da fonte; cadeia de MODs soma os atrasos | 26 |
 
 ### Regras derivadas que não aparecem na tela (seção 16)
