@@ -1108,3 +1108,16 @@ Então STATIC aceita **qualquer origem**. Não precisa de ALTERNA.
 TURBO quando a origem é sequência, porque o pulso não mantém o MOD respondendo. Mas, com
 FINALIZA, um TURBO em ATIVO iniciado por pulso continua oscilando até FINALIZA encerrar. A
 proibição pode não ser necessária. Você quer manter a proibição, ou liberar ATIVO com pulso?
+
+### 19.8 Decisão do autor: ATIVO liberado com origem de pulso
+
+**Decidido:** TURBO e COMBO aceitam CICLOS em ATIVO com qualquer origem, inclusive pulso. Um
+TURBO iniciado por pulso oscila até FINALIZA encerrar. Fica revogada a proibição da seção
+17.8, item 1.
+
+**Pendências que ainda travam a implementação da ALFA:**
+
+- **B. Cancelamento do DELAY em abas de pulso.** Proposta: o cancelamento vale só para abas de
+  nível (LIVRE e BLOCK). Nas abas de pulso, soltar a fonte não cancela o atraso.
+- **C. DELAY em aba de nível.** Proposta: conta da subida. A descida antes do fim do atraso
+  cancela.
