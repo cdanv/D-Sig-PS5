@@ -1566,21 +1566,33 @@ Sabotagens, todas reprovaram pelo motivo certo:
 - O5, sem adoção: reprova em três verificações.
 - O6, sem trinco (o DIRECT segue só o pulso): reprova no DIRECT e no FINALIZA.
 
-**Pendências e dúvidas:**
-1. **Intensidade (seção 7.4 do manual).** O órfão deveria herdar a intensidade do alvo: DIRECT
-   recebe a intensidade do alvo, TURBO sai com ela, STATIC trava em 100%. Depende dos eixos com
-   intensidade (destinos 10 a 13), que ainda são booleanos. Não feito.
-2. **Cadeia de heranças (seção 7.5).** Até 4 níveis, procurando o primeiro MOD com fonte na zona
-   ativa, com proteção contra círculo. Não feito; depende da intensidade.
-3. **Órfão com gatilho em FINALIZA, DIRECT (seção 7.6).** O valor-base vem do botão físico do
-   gatilho, e a herança o sobrescreve. Sem herança, o valor zero aciona o autoencerramento.
-   Não feito.
-4. **FINALIZA durante o congelamento.** O DELTA ignora eventos enquanto congelado (regra já
-   existente, para BLOQ). O manual não diz o que acontece com FINALIZA durante a suspensão pela
-   ASSOC. Precisa de confirmação.
-5. **MOD inerte é alerta, não recusa.** O manual (seção 11.1) trata "sem ALFA, sem gatilho que
-   ligue e sem ASSOC" como alerta vermelho do app, não como configuração proibida. A rede recusa.
-   Escolha consciente, mas diferente do app. Vale decidir.
-6. **BLOCK-only sem ASSOC** é recusado, e não há caso no manual para ele.
+**Decisões tomadas (3 dúvidas anteriores):**
 
-**Não feito neste passo:** intensidade e herança (1 a 3).
+1. **FINALIZA durante o silêncio da ASSOC: ignorado.** O manual (seção 8.4) põe a ALFA (gatilhos)
+   antes da ZETA e do BLOQ, e a ASSOC "sai" antes da máquina. A ALFA continua avançando; a máquina
+   do DELTA não é alcançada. Por isso o evento não é guardado. Guardar comando seria fila escondida,
+   o defeito que o manual do Cronus documenta (seção 3.1 da análise). **Observação:** para o órfão,
+   o resultado é o mesmo com ou sem a regra, porque a próxima subida do alvo liga de novo. A
+   diferença aparece só num MOD com fonte própria e ASSOC. **Não medi esse caso geral.**
+   Se for preciso, é um cronograma novo na bancada.
+2. **MOD inerte é alerta, não recusa.** A rede recusa só o malformado (índice fora da faixa, relação
+   consigo, DELTA inválido). O semântico vira alerta em `rede_alertas`: `ALERTA_INERTE`,
+   `ALERTA_ALVO_OUTRO_DOMINIO` e `ALERTA_EXCL_BLOQ_MESMO` (manual, seção 11). Um MOD com alerta roda e
+   avisa. Verificado: 2 verificações novas, e 4 sabotagens reprovam pelo motivo certo.
+   Não implementei "alvo sem saída": `delta_validar` já recusa destino zero, então o alerta nunca
+   dispararia numa configuração válida.
+3. **Trinco do DIRECT sem fonte.** A leitura que sustento: o manual diz que o MOD "de pé" é o que
+   está **ligado** (seção 3.2), e que o órfão, depois de ligado, "obedece ao próprio estado" e só
+   volta quando o alvo sobe de novo (seção 7.3). Logo, o estado é um trinco: sobe com a adoção, cai
+   com FINALIZA. A regra da análise do Cronus, "DIRECT sem fonte encerra ao soltar o botão", vale para
+   um gatilho que é botão. Na ALFA v4 o gatilho é fonte, então esse caso não se aplica ao órfão.
+   **Ponto em aberto:** a seção 7.4 diz que o DIRECT órfão recebe a **intensidade** do alvo. Com
+   booleanos, isso não aparece. Minha leitura: o trinco decide liga/desliga, e a intensidade, quando
+   existir, vem do alvo. Ainda não é confirmado pelo manual.
+
+**Pendências:**
+- **Intensidade (seção 7.4).** Depende dos eixos com intensidade (destinos 10 a 13), que ainda são
+  booleanos.
+- **Cadeia de heranças (seção 7.5).** Até 4 níveis. Depende da intensidade.
+- **Órfão com gatilho em FINALIZA, DIRECT (seção 7.6).** O valor-base vem do botão físico do gatilho.
+  Depende da intensidade.

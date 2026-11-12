@@ -42,8 +42,15 @@ typedef struct {
     uint32_t botoes;        /* a saida do controle: a entrada, sem os suprimidos, mais os destinos */
 } RedeSaida;
 
-/* 0 se valido, -1 se nao. Recusa: MOD invalido, relacao com indice fora de 0..n-1,
- * relacao de um MOD consigo mesmo, e mais de REDE_MAX. */
+/* 0 se valido, -1 se nao. Recusa so o que e MALFORMADO: MOD invalido, relacao com indice fora de
+ * 0..n-1, relacao de um MOD consigo mesmo, e mais de REDE_MAX. O que e semantico (inerte, alvo de
+ * outro dominio) nao e recusado: vira alerta, em rede_alertas (manual do ZETA, secao 11). */
 int rede_validar(const RedeCfg *r);
+
+/* Alertas de um MOD. Um MOD com alerta roda normalmente; o alerta so avisa. Mascara de bits. */
+#define ALERTA_INERTE              1u   /* sem gatilho que ligue e sem ASSOC: nunca liga (vermelho) */
+#define ALERTA_ALVO_OUTRO_DOMINIO  2u   /* uma relacao aponta para um MOD sem dominio em comum (vermelho) */
+#define ALERTA_EXCL_BLOQ_MESMO     4u   /* o mesmo alvo em BLOQ e EXCL: o EXCL sempre vence (observacao) */
+uint32_t rede_alertas(const RedeCfg *r, unsigned i);
 void rede_iniciar(RedeEstado *e);
 void rede_avaliar(const RedeCfg *r, RedeEstado *e, const Entrada *in, RedeSaida *out);

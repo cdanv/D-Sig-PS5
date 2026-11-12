@@ -34,8 +34,7 @@ int rede_validar(const RedeCfg *r) {
     for (i = 0; i < r->n; i++) {
         const Zeta *z = &r->z[i];
         if (modelo_sem_ligar(&r->mod[i])) {
-            /* sem gatilho que ligue: so a adocao liga o MOD, e ela precisa de um alvo na ASSOC */
-            if (z->assoc == 0) return -1;
+            /* sem gatilho que ligue: valido se o DELTA e valido. Sem ASSOC, e inerte: o alerta avisa */
             if (modelo_validar_adotado(&r->mod[i]) != 0) return -1;
         } else if (modelo_validar(&r->mod[i]) != 0) {
             return -1;
@@ -46,6 +45,19 @@ int rede_validar(const RedeCfg *r) {
         if (r->dom[i] > 0x0Fu) return -1;                                 /* so D1..D4 */
     }
     return 0;
+}
+
+uint32_t rede_alertas(const RedeCfg *r, unsigned i) {
+    const Zeta *z = &r->z[i];
+    uint32_t rel = z->bloq | z->assoc | z->excl, a = 0;
+    unsigned j;
+    if (modelo_sem_ligar(&r->mod[i]) && z->assoc == 0) a |= ALERTA_INERTE;
+    for (j = 0; j < r->n; j++) {
+        if (!((rel >> j) & 1u)) continue;
+        if (!(r->dom[i] & r->dom[j])) a |= ALERTA_ALVO_OUTRO_DOMINIO;
+    }
+    if (z->bloq & z->excl) a |= ALERTA_EXCL_BLOQ_MESMO;
+    return a;
 }
 
 void rede_iniciar(RedeEstado *e) {

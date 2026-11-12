@@ -270,8 +270,13 @@ static void testes_orfao(void) {
     mod_orfao(&r.mod[1], DELTA_DIRECT, 0);
     r.z[1].assoc = BIT(0);
     if (rede_validar(&r) != 0) ok = 0;                                        /* adotado: valido */
-    { RedeCfg x = r; x.z[1].assoc = 0; if (rede_validar(&x) != -1) ok = 0; }  /* sem alvo: inerte */
-    passo("orfao: valido so com ASSOC; sem alvo, recusado", ok, "");
+    /* sem alvo: aceito, mas inerte. Nunca liga, e o alerta avisa (manual do ZETA, secao 11.1) */
+    { RedeCfg x = r; uint32_t al; x.z[1].assoc = 0;
+      if (rede_validar(&x) != 0) ok = 0;
+      al = rede_alertas(&x, 1);
+      if (!(al & ALERTA_INERTE)) ok = 0;
+      if (saida_em(&x, cr_orfao, 400, 150, 1) != 0) ok = 0; }
+    passo("orfao: adotado pela ASSOC liga; sem alvo, e aceito, inerte, com alerta, e nunca liga", ok, "");
 
     /* DIRECT: a adocao liga; a queda do alvo so silencia (ASSOC), nao desliga; a nova subida volta */
     ok = 1;
@@ -304,7 +309,26 @@ static void testes_orfao(void) {
           "ligado em 150; silenciado em 250; ligado em 310");
 }
 
+/* ---------------------------------------------------------------- ALERTAS */
+static void testes_alertas(void) {
+    RedeCfg r; int ok = 1;
+    memset(&r, 0, sizeof r);
+    r.n = 2;
+    todos_d1(&r);
+    mod_resposta(&r.mod[0], B_CROSS, DELTA_DIRECT, D_CIRCLE);
+    mod_resposta(&r.mod[1], B_SQUARE, DELTA_DIRECT, D_TRIANGLE);
+    if (rede_alertas(&r, 0) != 0 || rede_alertas(&r, 1) != 0) ok = 0;     /* rede normal: sem alerta */
+    { RedeCfg x = r; x.z[1].assoc = BIT(0); x.dom[1] = 0x2;                /* alvo de outro dominio */
+      if (!(rede_alertas(&x, 1) & ALERTA_ALVO_OUTRO_DOMINIO)) ok = 0;
+      if (rede_alertas(&x, 0) & ALERTA_ALVO_OUTRO_DOMINIO) ok = 0; }
+    { RedeCfg x = r; x.z[1].bloq = BIT(0); x.z[1].excl = BIT(0);          /* BLOQ e EXCL no mesmo alvo */
+      if (!(rede_alertas(&x, 1) & ALERTA_EXCL_BLOQ_MESMO)) ok = 0; }
+    passo("alertas: sem alerta na rede normal; alvo de outro dominio; EXCL e BLOQ no mesmo alvo", ok,
+          "rede de exemplo limpa; cada alerta acende so no caso dele");
+}
+
 int main(void) {
+    testes_alertas();
     testes_orfao();
     testes_validacao();
     testes_bloq();
