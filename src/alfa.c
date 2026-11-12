@@ -73,7 +73,7 @@ static int beta_valida(const Beta *b) {
 
 static int fonte_valida(const Fonte *f) {
     if (f->tipo == FONTE_BOTAO) return f->id < 32;
-    if (f->tipo == FONTE_EIXO) return f->id <= EIXO_RY && beta_valida(&f->beta);
+    if (f->tipo == FONTE_EIXO) return f->id < EIXO_N && beta_valida(&f->beta);
     if (f->tipo == FONTE_GATILHO) return f->id <= GATILHO_R2 && beta_valida(&f->beta);
     return 0;
 }
@@ -193,8 +193,8 @@ void alfa_avaliar(const AlfaCfg *c, AlfaEstado *e, const Entrada *in, AlfaSaida 
             if (solta[g]) solta_m[a] |= 1u << k;
             if (ab->oculto) {
                 if (f->tipo == FONTE_BOTAO) out->ocultar_botoes |= 1u << f->id;
-                else if (f->tipo == FONTE_EIXO) out->ocultar_analog |= (uint8_t)(1u << f->id);
-                else out->ocultar_analog |= (uint8_t)(1u << (4 + f->id));
+                else if (f->tipo == FONTE_EIXO) out->ocultar_analog |= (uint16_t)(1u << f->id);
+                else out->ocultar_analog |= (uint16_t)(1u << (EIXO_N + f->id));  /* L2, R2 */
             }
         }
     }

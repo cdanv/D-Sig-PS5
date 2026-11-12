@@ -1455,3 +1455,27 @@ então o modelo não muda.
 **Lista final de fontes que o monitor mostra para o PS5** (além das já conferidas): acelerômetro
 ACCX, ACCY, ACCZ e giroscópio GYROX, GYROY, GYROZ. Eles não estão na sua lista. Decidir se entram
 no modelo é sua escolha.
+
+---
+
+## 25. Sensores de movimento como fonte (ACCX, ACCY, ACCZ, GYROX, GYROY, GYROZ)
+
+**Decidido pelo autor:** entram no modelo como eixos. Com isso, é possível configurar um MOD com
+movimentos do controle.
+
+**Implementado:** `EIXO_ACCX..EIXO_GYROZ` (ids 4 a 9) em `src/alfa.h`. Eles usam a mesma BETA que os
+eixos analógicos (MULT, zona, DIR, INV). A ocultação passou a usar 12 bits: eixos nos bits 0 a 9,
+L2 no 10 e R2 no 11. Antes, L2 e R2 ficavam nos bits 4 e 5, e colidiriam com os novos eixos.
+
+**Verificado:** bancada da ALFA com 3 novas verificações; 3 sabotagens, todas reprovaram pelo motivo
+certo (colisão de bits, validação limitada, leitura do eixo errado).
+
+**NÃO medido ainda (pendente):** a conversão do sensor para -100..+100. No `ScePadData`, a
+aceleração e a velocidade angular são floats, em unidades que ainda não conferi. O monitor do Zen
+Studio mostra valores pequenos em repouso (ACCX +1, GYRO +0), mas não diz a escala. Sem essa
+conversão, a faixa de BETA para movimento não tem significado. Ela precisa ser medida: com o
+controle parado, em movimento, e nas faixas usadas em jogo. A conversão ainda não está no código;
+hoje a entrada recebe o valor já normalizado.
+
+**Também pendente:** zona morta para o sensor. Movimento parado tem ruído, e sem zona morta um MOD
+de movimento dispara por tremor.

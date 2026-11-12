@@ -486,7 +486,72 @@ static void testes_delay(void) {
     passo("DELAY na SEQUENCIA: obrigatorio escolher; OFF dispara na conclusao", ok, "");
 }
 
+/* ---------------------------------------------- sensores de movimento (PS5) */
+static Beta beta_padrao(void) {
+    Beta b;
+    b.mult = 9; b.thr_in = 0; b.thr_out = 0; b.dir = DIR_ABS; b.inv = 0;
+    return b;
+}
+
+static void testes_sensores(void) {
+    AlfaCfg c;
+    AlfaEstado e;
+    AlfaSaida s;
+    Entrada in;
+    int ok = 1;
+
+    /* giroscopio X como fonte: zona [20,60], DIR ABS, x1.0 */
+    memset(&c, 0, sizeof c);
+    c.janela = (uint8_t)idx_ms(50);
+    c.abas[ABA_LIVRE].n = 1;
+    c.abas[ABA_LIVRE].delay = ALFA_DELAY_NAO_ESCOLHIDO;
+    c.abas[ABA_LIVRE].fontes[0].tipo = FONTE_EIXO;
+    c.abas[ABA_LIVRE].fontes[0].id = EIXO_GYROX;
+    c.abas[ABA_LIVRE].fontes[0].beta = beta_padrao();
+    c.abas[ABA_LIVRE].fontes[0].beta.thr_in = 20;
+    c.abas[ABA_LIVRE].fontes[0].beta.thr_out = 60;
+    if (alfa_validar(&c) != 0) ok = 0;
+    memset(&in, 0, sizeof in); in.eixo[EIXO_GYROX] = -30;
+    alfa_iniciar(&e); alfa_avaliar(&c, &e, &in, &s);
+    if (s.ativa[ABA_LIVRE] != 1) ok = 0;
+    memset(&in, 0, sizeof in); in.eixo[EIXO_GYROX] = 0;
+    alfa_iniciar(&e); alfa_avaliar(&c, &e, &in, &s);
+    if (s.ativa[ABA_LIVRE] != 0) ok = 0;
+    passo("sensor de giroscopio como fonte de eixo, com BETA", ok, "GYROX -30 ativa; 0 nao");
+
+    /* validacao: dez eixos; o id 10 nao existe */
+    ok = 1;
+    { AlfaCfg x = c; x.abas[ABA_LIVRE].fontes[0].id = EIXO_GYROZ;
+      if (alfa_validar(&x) != 0) ok = 0; }
+    { AlfaCfg x = c; x.abas[ABA_LIVRE].fontes[0].id = EIXO_N;
+      if (alfa_validar(&x) != -1) ok = 0; }
+    passo("validacao: aceita os dez eixos e recusa o id 10", ok, "");
+
+    /* ocultacao: ACCX (bit 4) e L2 (bit 10) nao colidem */
+    ok = 1;
+    {
+        AlfaCfg o; AlfaSaida so;
+        memset(&o, 0, sizeof o);
+        o.janela = (uint8_t)idx_ms(50);
+        o.abas[ABA_LIVRE].n = 1;
+        o.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+        o.abas[ABA_LIVRE].oculto = 1;
+        o.abas[ABA_LIVRE].fontes[0].tipo = FONTE_EIXO;
+        o.abas[ABA_LIVRE].fontes[0].id = EIXO_ACCX;
+        o.abas[ABA_LIVRE].fontes[0].beta = beta_padrao();
+        if (alfa_validar(&o) != 0) ok = 0;
+        alfa_iniciar(&e); memset(&in, 0, sizeof in); alfa_avaliar(&o, &e, &in, &so);
+        if (so.ocultar_analog != (uint16_t)(1u << EIXO_ACCX)) ok = 0;
+        o.abas[ABA_LIVRE].fontes[0].tipo = FONTE_GATILHO;
+        o.abas[ABA_LIVRE].fontes[0].id = GATILHO_L2;
+        alfa_iniciar(&e); alfa_avaliar(&o, &e, &in, &so);
+        if (so.ocultar_analog != (uint16_t)(1u << (EIXO_N + GATILHO_L2))) ok = 0;
+    }
+    passo("ocultacao de sensores e gatilhos: bits separados (ACCX no 4, L2 no 10)", ok, "");
+}
+
 int main(void) {
+    testes_sensores();
     testes_delay();
     testes_validacao();
     testes_beta();

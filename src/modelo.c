@@ -116,8 +116,8 @@ void modelo_so_ocultar(const ModCfg *m, ModSaida *out) {
         for (k = 0; k < ab->n; k++) {
             const Fonte *f = &ab->fontes[k];
             if (f->tipo == FONTE_BOTAO) out->ocultar_botoes |= 1u << f->id;
-            else if (f->tipo == FONTE_EIXO) out->ocultar_analog |= (uint8_t)(1u << f->id);
-            else out->ocultar_analog |= (uint8_t)(1u << (4 + f->id));
+            else if (f->tipo == FONTE_EIXO) out->ocultar_analog |= (uint16_t)(1u << f->id);
+            else out->ocultar_analog |= (uint16_t)(1u << (EIXO_N + f->id));  /* L2, R2 */
         }
     }
 }

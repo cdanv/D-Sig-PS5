@@ -27,7 +27,7 @@ typedef struct {
     uint8_t terminou;              /* TURBO/COMBO terminaram sozinhos */
     uint8_t bloqueado;             /* BLOCK ativo: o MOD nao responde */
     uint32_t ocultar_botoes;       /* da ALFA: botoes suprimidos do jogo */
-    uint8_t ocultar_analog;
+    uint16_t ocultar_analog;
 } ModSaida;
 
 /* 0 se o MOD e valido, -1 se nao */
