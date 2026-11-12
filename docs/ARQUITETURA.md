@@ -675,3 +675,51 @@ Só a resposta de Y, que é o destino acionado, conta.
 
 **Pendência de confirmação:** confirme se o rearme é só pela resposta de Y (DELTA
 subindo), como acima. A seção 15.3 listava também fonte e gatilho, e isso ficou de fora.
+
+### 15.7 Rearme confirmado
+
+Confirmado pelo autor: o rearme do EXCL vem **só da resposta** do MOD ligado por ASSOC
+(a borda de subida do DELTA dele). Fonte e gatilho não rearmam.
+
+---
+
+## 16. Fase 3a: o que está feito, e o que falta
+
+### 16.1 Feito
+
+| peça | arquivo | bancada | sabotagens |
+|---|---|---|---|
+| tabela única de tempo (67 valores) | `src/tempo.c`, `src/tempo.h` | `ferramentas/testa_tempo.c` | 4, todas pelo motivo certo |
+| buffer duplo com versão | `src/perfil.c`, `src/perfil.h` | `ferramentas/testa_perfil.c` | 2, reproduzidas 3 de 3 |
+
+**Tabela de tempo.** Os valores vêm da união das tabelas do manual, verificada por script.
+A bancada escreve as listas do manual a mão, sem usar o gerador, e confere a tabela contra
+elas. O item guarda um índice, e `tempo_ms` recusa índice fora da lista.
+
+**Buffer duplo.** O escritor grava no buffer inativo, troca o ativo, e incrementa a versão.
+O leitor lê a versão, lê o ativo, copia, e lê a versão de novo. Se mudou, descarta a cópia.
+A bancada roda duas threads: 200 mil publicações e leituras concorrentes. Em três execuções,
+a bancada aceitou centenas de milhares de cópias e descartou outras tantas, e nenhuma
+cópia aceita saiu pela metade.
+
+**Limite honesto.** A bancada prova o comportamento no x86-64 do Linux. O PS5 é x86-64 também,
+mas o caminho de risco é o do gancho, e a leitura dentro do jogo só será confirmada no console.
+
+### 16.2 Mudança de padrão C: de C99 para C11
+
+- **O que mudou:** o Makefile passa a compilar as bancadas com `-std=c11`.
+- **Por quê:** o buffer duplo usa `stdatomic.h`, que é C11. Em C99, a leitura e a escrita
+  compartilhadas entre threads não teriam garantia de ordem.
+- **Comparado ao que substituiu:** o C99 valia para `passagem.c` e para os bancos do
+  Alvo 1 e 2. Esses arquivos não usam nada do C11, e continuam compilando sem alteração,
+  como o `make bancada` confirma.
+
+### 16.3 Falta na fase 3a
+
+1. **Modelo de MOD v3** em C: ALFA com os três modos (QUALQUER, SIMULTÂNEO, SEQUÊNCIA),
+   GAMA como lista, DELTA com quatro tipos (DIRECT, STATIC, TURBO, COMBO), e ZETA com
+   BLOQ, EXCL (INIC ou FIM) e ASSOC.
+2. **Formato binário do perfil** que vai dentro do buffer duplo.
+3. **Teto de itens por lista:** a medir, por contagem de operações por quadro na bancada.
+
+Depois da 3a, as fases 3b a 3d precisam de console.

@@ -11,8 +11,10 @@
 # o que custa menos para rodar.
 
 BANCADA_CC     ?= gcc
-BANCADA_CFLAGS := -std=c99 -Wall -Wextra -Werror -O2 \
+# C11 por causa de stdatomic.h, usado pelo buffer duplo do perfil (src/perfil.c).
+BANCADA_CFLAGS := -std=c11 -Wall -Wextra -Werror -O2 \
                   -Werror=implicit-function-declaration
+BANCADA_LIBS   := -pthread
 FONTES         := src/passagem.c
 SAIDA          := build
 
@@ -20,15 +22,23 @@ SAIDA          := build
 all: bancada
 
 # Cada bancada e um binario proprio. Uma reprovacao para o make na hora.
-bancada: $(SAIDA)/testa_passagem $(SAIDA)/testa_mod
+bancada: $(SAIDA)/testa_passagem $(SAIDA)/testa_mod $(SAIDA)/testa_tempo $(SAIDA)/testa_perfil
 	@$(SAIDA)/testa_passagem
 	@$(SAIDA)/testa_mod
+	@$(SAIDA)/testa_tempo
+	@$(SAIDA)/testa_perfil
 
 $(SAIDA)/testa_passagem: ferramentas/testa_passagem.c $(FONTES) src/dsig.h src/pad.h | $(SAIDA)
 	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_passagem.c $(FONTES)
 
 $(SAIDA)/testa_mod: ferramentas/testa_mod.c $(FONTES) src/dsig.h src/pad.h | $(SAIDA)
 	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_mod.c $(FONTES)
+
+$(SAIDA)/testa_tempo: ferramentas/testa_tempo.c src/tempo.c src/tempo.h | $(SAIDA)
+	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_tempo.c src/tempo.c
+
+$(SAIDA)/testa_perfil: ferramentas/testa_perfil.c src/perfil.c src/perfil.h | $(SAIDA)
+	$(BANCADA_CC) $(BANCADA_CFLAGS) -o $@ ferramentas/testa_perfil.c src/perfil.c $(BANCADA_LIBS)
 
 $(SAIDA):
 	@mkdir -p $(SAIDA)
