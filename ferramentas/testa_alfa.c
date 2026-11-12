@@ -46,8 +46,11 @@ static Fonte botao(uint8_t bit) {
 }
 
 static void cfg_vazia(AlfaCfg *c) {
+    unsigned a;
     memset(c, 0, sizeof *c);
     c->janela = (uint8_t)idx_ms(50);
+    /* DELAY nao escolhido por padrao: as abas tratam como OFF; a SEQUENCIA exige escolha */
+    for (a = 0; a < ALFA_ABAS; a++) c->abas[a].delay = ALFA_DELAY_NAO_ESCOLHIDO;
 }
 
 /* ---------------------------------------------------------- validacao */
@@ -87,12 +90,20 @@ static void testes_validacao(void) {
     { AlfaCfg x; unsigned a, k; cfg_vazia(&x);
       for (a = 0; a < ALFA_ABAS; a++) {
           x.abas[a].n = 5;
-          if (a == ABA_SEQUENCIA) x.abas[a].eou = EOU_OU;
+          if (a == ABA_SEQUENCIA) { x.abas[a].eou = EOU_OU; x.abas[a].delay = ALFA_DELAY_OFF; }
           for (k = 0; k < 5; k++) x.abas[a].fontes[k] = botao((uint8_t)k);
       }
       if (alfa_validar(&x) != 0) ok = 0; }
+    { AlfaCfg x; cfg_vazia(&x); x.abas[ABA_SEQUENCIA].n = 2; x.abas[ABA_SEQUENCIA].fontes[0] = botao(B_L1);
+      x.abas[ABA_SEQUENCIA].fontes[1] = botao(B_CROSS);
+      if (alfa_validar(&x) != -1) ok = 0;                                         /* DELAY nao escolhido */
+      x.abas[ABA_SEQUENCIA].delay = ALFA_DELAY_OFF;
+      if (alfa_validar(&x) != 0) ok = 0; }                                        /* OFF e escolha valida */
+    { AlfaCfg x; cfg_vazia(&x); x.abas[ABA_LIVRE].n = 1; x.abas[ABA_LIVRE].fontes[0] = botao(B_CROSS);
+      x.abas[ABA_LIVRE].delay = (uint8_t)tempo_quantos();
+      if (alfa_validar(&x) != -1) ok = 0; }                                       /* DELAY fora do catalogo */
     if (alfa_validar(0) != -1) ok = 0;
-    passo("validacao: regras de cada aba, teto de 5 por aba, teto de 30 no total", ok, "");
+    passo("validacao: regras de cada aba, teto de 5 por aba, teto de 30 no total, DELAY", ok, "");
 }
 
 /* ----------------------------------------------------------- BETA */
@@ -217,6 +228,7 @@ static void testes_sequencia(void) {
     c.abas[ABA_SEQUENCIA].fontes[2] = botao(B_SQUARE);
     c.abas[ABA_SEQUENCIA].espera[0] = (uint8_t)idx_ms(200);
     c.abas[ABA_SEQUENCIA].espera[1] = (uint8_t)idx_ms(200);
+    c.abas[ABA_SEQUENCIA].delay = ALFA_DELAY_OFF;
     if (alfa_validar(&c) != 0) { passo("SEQUENCIA: configuracao valida", 0, ""); return; }
 
     {
@@ -358,7 +370,124 @@ static void testes_oculto(void) {
           (s.ocultar_botoes & BIT(B_CROSS)) != 0, "");
 }
 
+/* ------------------------------------------------------------ DELAY */
+static void testes_delay(void) {
+    AlfaCfg c;
+    AlfaEstado e;
+    AlfaSaida s;
+    int ok;
+    uint64_t t;
+
+    /* LIVRE com OFF: o disparo e o proprio nivel */
+    cfg_vazia(&c);
+    c.abas[ABA_LIVRE].n = 1; c.abas[ABA_LIVRE].fontes[0] = botao(B_CROSS);
+    c.abas[ABA_LIVRE].delay = ALFA_DELAY_OFF;
+    ok = 1; alfa_iniciar(&e);
+    for (t = 0; t <= 200; t += 100) {
+        uint32_t b = (t < 200) ? BIT(B_CROSS) : 0;
+        alfa_avaliar(&c, &e, &(Entrada){.botoes = b, .t_us = t * 1000u}, &s);
+        if (s.disparo[ABA_LIVRE] != s.ativa[ABA_LIVRE]) ok = 0;
+    }
+    passo("DELAY OFF: o disparo e o proprio nivel, no mesmo quadro", ok, "");
+
+    /* LIVRE com 300 ms: conta do acionamento; segurando, dispara uma vez em 300 ms */
+    c.abas[ABA_LIVRE].delay = (uint8_t)idx_ms(300);
+    ok = 1; alfa_iniciar(&e);
+    {
+        int n = 0; uint64_t quando = 0;
+        for (t = 0; t <= 400; t += 100) {
+            alfa_avaliar(&c, &e, &(Entrada){.botoes = BIT(B_CROSS), .t_us = t * 1000u}, &s);
+            if (s.disparo[ABA_LIVRE]) { n++; quando = t; }
+        }
+        if (n != 1 || quando != 300) ok = 0;
+    }
+    passo("DELAY em LIVRE: segurando, dispara uma vez, em 300 ms", ok, "");
+
+    /* LIVRE com 300 ms: soltar antes do fim zera; nada dispara */
+    ok = 1; alfa_iniciar(&e);
+    alfa_avaliar(&c, &e, &(Entrada){.botoes = BIT(B_CROSS), .t_us = 0}, &s);
+    alfa_avaliar(&c, &e, &(Entrada){.botoes = BIT(B_CROSS), .t_us = 100000}, &s);
+    alfa_avaliar(&c, &e, &(Entrada){.botoes = 0, .t_us = 150000}, &s);
+    alfa_avaliar(&c, &e, &(Entrada){.botoes = 0, .t_us = 400000}, &s);
+    if (s.disparo[ABA_LIVRE]) ok = 0;
+    passo("DELAY em LIVRE: soltar antes do fim zera a contagem", ok, "");
+
+    /* 2CLK com 200 ms: conta depois que o pulso desce. Pulso em 50 ms, descida em 80 ms,
+     * disparo em 280 ms */
+    cfg_vazia(&c);
+    c.abas[ABA_2CLK].n = 1; c.abas[ABA_2CLK].fontes[0] = botao(B_CROSS);
+    c.abas[ABA_2CLK].delay = (uint8_t)idx_ms(200);
+    ok = 1; alfa_iniciar(&e);
+    {
+        Quadro q[] = {{BIT(B_CROSS),0},{0,20},{BIT(B_CROSS),50},{0,80},{0,200},{0,280},{0,300}};
+        size_t i; int n = 0; uint64_t quando = 0;
+        for (i = 0; i < 7; i++) {
+            alfa_avaliar(&c, &e, &(Entrada){.botoes = q[i].b, .t_us = q[i].t * 1000u}, &s);
+            if (s.disparo[ABA_2CLK]) { n++; quando = q[i].t; }
+        }
+        if (n != 1 || quando != 280) ok = 0;
+    }
+    passo("DELAY em 2CLK: conta depois que o pulso desce; dispara em 280 ms", ok, "");
+
+    /* 2CLK: um novo pulso durante o atraso zera a contagem */
+    ok = 1; alfa_iniciar(&e);
+    {
+        Quadro q[] = {{BIT(B_CROSS),0},{0,20},{BIT(B_CROSS),50},{0,80},
+                      {BIT(B_CROSS),150},{0,160},{BIT(B_CROSS),180},{0,210},{0,300},{0,410},{0,420}};
+        size_t i; int n = 0; uint64_t quando = 0;
+        for (i = 0; i < 11; i++) {
+            alfa_avaliar(&c, &e, &(Entrada){.botoes = q[i].b, .t_us = q[i].t * 1000u}, &s);
+            if (s.disparo[ABA_2CLK]) { n++; quando = q[i].t; }
+        }
+        if (n != 1 || quando != 410) ok = 0;
+    }
+    passo("DELAY em 2CLK: novo pulso durante o atraso zera; so dispara 200 ms depois do novo pulso",
+          ok, "disparo esperado em 410 ms, nao em 280 ms");
+
+    /* 2CLK: o atraso antigo expira ANTES do novo pulso descer. So o zeramento impede o
+     * disparo no instante 280 ms; o correto e so disparar 200 ms depois do novo pulso. */
+    cfg_vazia(&c);
+    c.abas[ABA_2CLK].n = 1; c.abas[ABA_2CLK].fontes[0] = botao(B_CROSS);
+    c.abas[ABA_2CLK].delay = (uint8_t)idx_ms(200);
+    ok = 1; alfa_iniciar(&e);
+    {
+        /* o novo pulso sobe em 280 ms, exatamente quando o atraso antigo venceria */
+        Quadro q[] = {{BIT(B_CROSS),0},{0,20},{BIT(B_CROSS),50},{0,80},
+                      {BIT(B_CROSS),260},{0,270},{BIT(B_CROSS),280},{0,300},{0,480},{0,500}};
+        size_t i; int n = 0; uint64_t quando = 0;
+        for (i = 0; i < 10; i++) {
+            alfa_avaliar(&c, &e, &(Entrada){.botoes = q[i].b, .t_us = q[i].t * 1000u}, &s);
+            if (s.disparo[ABA_2CLK]) { n++; quando = q[i].t; }
+        }
+        if (n != 1 || quando != 500) ok = 0;
+    }
+    passo("DELAY em 2CLK: novo pulso no instante do vencimento zera; dispara em 500 ms",
+          ok, "o zeramento e o que impede o disparo em 280 ms");
+
+    /* SEQUENCIA sem DELAY escolhido e recusada; com OFF, a resposta sai na conclusao */
+    cfg_vazia(&c);
+    c.abas[ABA_SEQUENCIA].n = 2;
+    c.abas[ABA_SEQUENCIA].fontes[0] = botao(B_CROSS);
+    c.abas[ABA_SEQUENCIA].fontes[1] = botao(B_CIRCLE);
+    c.abas[ABA_SEQUENCIA].espera[0] = (uint8_t)idx_ms(200);
+    ok = (alfa_validar(&c) == -1);
+    c.abas[ABA_SEQUENCIA].delay = ALFA_DELAY_OFF;
+    ok = ok && (alfa_validar(&c) == 0);
+    alfa_iniciar(&e);
+    {
+        Quadro q[] = {{BIT(B_CROSS),100},{0,150},{BIT(B_CIRCLE),200},{0,250}};
+        size_t i; int n = 0;
+        for (i = 0; i < 4; i++) {
+            alfa_avaliar(&c, &e, &(Entrada){.botoes = q[i].b, .t_us = q[i].t * 1000u}, &s);
+            if (s.disparo[ABA_SEQUENCIA]) n++;
+        }
+        if (n != 1) ok = 0;
+    }
+    passo("DELAY na SEQUENCIA: obrigatorio escolher; OFF dispara na conclusao", ok, "");
+}
+
 int main(void) {
+    testes_delay();
     testes_validacao();
     testes_beta();
     testes_livre();

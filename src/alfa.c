@@ -81,6 +81,14 @@ static int aba_valida(const Aba *ab, unsigned a) {
 
     if ((a == ABA_HOLD_AT || a == ABA_HOLD_AP) && ab->tempo >= tempo_quantos()) return 0;
 
+    /* DELAY: OFF ou um indice do catalogo. Na SEQUENCIA, o DELAY e obrigatorio (escolha
+     * explicita; OFF e uma escolha valida, mas precisa ser dita). */
+    if (ab->delay == ALFA_DELAY_NAO_ESCOLHIDO) {
+        if (a == ABA_SEQUENCIA) return 0;                   /* obrigatorio: precisa ser escolhido */
+    } else if (ab->delay != ALFA_DELAY_OFF && ab->delay >= tempo_quantos()) {
+        return 0;
+    }
+
     for (i = 0; i < ab->n; i++) {
         if (!fonte_valida(&ab->fontes[i])) return 0;
         if (a == ABA_SEQUENCIA && i + 1 < ab->n && ab->espera[i] >= tempo_quantos()) return 0;
@@ -298,6 +306,46 @@ void alfa_avaliar(const AlfaCfg *c, AlfaEstado *e, const Entrada *in, AlfaSaida 
 
         default:
             break;
+        }
+
+        /* 3. DELAY: a resposta da aba sai depois do atraso escolhido.
+         *    - regra geral (pulso): conta depois que o pulso desce; novo pulso zera.
+         *    - excecao (LIVRE e BLOCK, nivel): conta do acionamento; zera se cair antes.
+         *    - OFF: a resposta e a propria ativa, sem atraso. */
+        {
+            uint8_t ativa = out->ativa[a];
+            if (ab->delay == ALFA_DELAY_OFF || ab->delay == ALFA_DELAY_NAO_ESCOLHIDO) {
+                out->disparo[a] = ativa;
+            } else {
+                uint16_t ms = 0;
+                uint64_t dl_us;
+                tempo_ms(ab->delay, &ms);
+                dl_us = ms_us(ms);
+                if (a == ABA_LIVRE || a == ABA_BLOCK) {
+                    if (!ativa) {
+                        e->dl_estado[a] = 0;                       /* soltou: zera */
+                    } else if (e->dl_estado[a] == 0) {
+                        e->dl_estado[a] = 1;                       /* subida: conta */
+                        e->dl_t[a] = in->t_us;
+                    }
+                    if (e->dl_estado[a] == 1 && in->t_us - e->dl_t[a] >= dl_us) {
+                        out->disparo[a] = 1;
+                        e->dl_estado[a] = 2;                       /* um disparo por acionamento */
+                    }
+                } else {
+                    if (ativa) {
+                        e->dl_estado[a] = 0;                       /* pulso novo zera a contagem */
+                    } else if (e->ant_ativa[a]) {
+                        e->dl_estado[a] = 1;                       /* o pulso desceu: conta */
+                        e->dl_t[a] = in->t_us;
+                    }
+                    if (e->dl_estado[a] == 1 && in->t_us - e->dl_t[a] >= dl_us) {
+                        out->disparo[a] = 1;
+                        e->dl_estado[a] = 0;
+                    }
+                }
+            }
+            e->ant_ativa[a] = ativa;
         }
     }
 }

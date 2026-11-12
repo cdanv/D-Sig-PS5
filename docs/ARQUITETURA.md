@@ -1154,3 +1154,21 @@ estava errada. Ela vale só para a regra geral, e LIVRE e BLOCK são a exceção
 
 **Para implementação:** SEQUÊNCIA exige DELAY diferente de OFF. As demais abas aceitam OFF.
 Com OFF, a resposta sai no mesmo quadro do acionamento.
+
+### 19.11 DELAY implementado na ALFA
+
+**Feito:** o estágio do DELAY na ALFA, com a regra geral e a exceção de LIVRE e BLOCK, OFF,
+zeramento por novo pulso ou por soltura antes do fim, e obrigatoriedade na SEQUÊNCIA.
+A bancada da ALFA tem agora as verificações de DELAY, e a SEQUÊNCIA recusa o DELAY não
+escolhido.
+
+**Como o DELAY é escolhido:** o valor `ALFA_DELAY_NAO_ESCOLHIDO` (254) é o padrão explícito.
+Zero não serve como padrão, porque seria o índice 0 do catálogo, ou seja, 10 ms. As abas
+que não são SEQUÊNCIA tratam o não escolhido como OFF. A SEQUÊNCIA o recusa.
+
+**Sabotagens do DELAY:** quatro. Três reprovaram pelo motivo certo. A primeira versão de uma
+delas sobreviveu: o caso de novo pulso não tocava o instante em que o atraso antigo venceria,
+então o zeramento não fazia diferença. O caso foi ajustado, e a sabotagem agora reprova.
+
+**Fica para o estágio do DELTA:** ALTERNA e FINALIZA. A ALFA entrega `disparo[aba]`, o pulso
+que vai ao DELTA. O DELTA decide, por tipo, o que fazer com ele.

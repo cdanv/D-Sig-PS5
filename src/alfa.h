@@ -34,6 +34,13 @@ enum { EOU_OU = 0, EOU_E = 1 };
 /* janela fixa do segundo clique do 2CLK: 300 ms (manual, secao 13.5) */
 #define ALFA_JANELA_2CLK_MS 300
 
+/* DELAY OFF: fora da tabela de tempo. A resposta sai no mesmo quadro do acionamento. */
+#define ALFA_DELAY_OFF 255
+
+/* DELAY nao escolhido. A SEQUENCIA recusa; as demais abas tratam como OFF. Zero nao e
+ * um valor neutro: seria o indice 0 do catalogo (10 ms). Por isso o padrao explicito. */
+#define ALFA_DELAY_NAO_ESCOLHIDO 254
+
 typedef struct {
     uint8_t mult;     /* 0..18: x0.1 a x1.9; 9 = x1.0 */
     uint8_t thr_in;   /* 0..100, multiplo de 5 */
@@ -61,6 +68,7 @@ typedef struct {
     uint8_t eou;                        /* EOU_* */
     uint8_t oculto;                     /* 1 = as fontes da aba sao suprimidas do jogo */
     uint8_t tempo;                      /* indice do catalogo: HOLD_AT e HOLD_AP */
+    uint8_t delay;                      /* indice do catalogo, ou ALFA_DELAY_OFF */
     uint8_t espera[ALFA_POR_ABA];       /* indice do catalogo: SEQUENCIA, espera apos o passo k */
     Fonte fontes[ALFA_POR_ABA];
 } Aba;
@@ -81,10 +89,14 @@ typedef struct {
     uint8_t win_aberta[ALFA_ABAS];      /* janela do E, por aba */
     uint64_t win_t[ALFA_ABAS];
     uint32_t win_ja[ALFA_ABAS];
+    uint8_t ant_ativa[ALFA_ABAS];       /* ativa de cada aba no quadro anterior */
+    uint8_t dl_estado[ALFA_ABAS];       /* DELAY: 0 ocioso, 1 contando, 2 ja disparou */
+    uint64_t dl_t[ALFA_ABAS];           /* DELAY: instante de inicio da contagem */
 } AlfaEstado;
 
 typedef struct {
     uint8_t ativa[ALFA_ABAS];           /* por aba: nivel (LIVRE, BLOCK) ou pulso (demais) */
+    uint8_t disparo[ALFA_ABAS];         /* por aba, depois do DELAY: pulso que vai ao DELTA */
     uint8_t reiniciou[ALFA_ABAS];       /* SEQUENCIA: reiniciou neste quadro */
     uint32_t ocultar_botoes;
     uint8_t ocultar_analog;             /* bits 0..3 eixos, 4 L2, 5 R2 */
