@@ -122,6 +122,7 @@ src/formato.c, src/formato.h  o formato binário do perfil: magic, versão, CRC3
 ferramentas/testa_formato.c   a bancada do formato, com 11 verificações
 ferramentas/testa_tempo.c     a bancada da tabela de tempo
 ferramentas/testa_perfil.c    a bancada do buffer duplo, com duas threads
+payload/medicao/main.c         o payload de medição (só lê o controle, grava CSV); roteiro em ROTEIRO.md. Console, não bancada
 docs/ESTUDO.md                o que aprendemos lendo PoorDS4, etaHEN, ProsperoMgr, pldmgr
 docs/ARQUITETURA.md           decisões de desenho do Alvo 3: processos, perfil, privilégio, celular
 docs/REFERENCIA_CRONUS.md     análise do manual do Cronus 1.0.17: o que manter, o que não se aplica
