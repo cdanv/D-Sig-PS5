@@ -851,3 +851,40 @@ então isso exige mudança em `src/alfa.c` e na bancada.
 **Perguntas:**
 1. A leitura de ALTERNA e FINALIZA está certa? Como FINALIZA liga, se a sequência é a única fonte?
 2. DIRECT aceita sequência com ALTERNA?
+
+---
+
+## 18. Mudança estrutural do autor: GAMA se funde com a ALFA (proposta v4)
+
+**Decidido pelo autor:** a GAMA deixa de existir como seção. Os gatilhos passam para dentro da
+ALFA. Cada tipo de gatilho tem as mesmas duas partes:
+
+- **Fontes:** qualquer botão, gatilho ou eixo. O TOUCH é reconhecido como botão. O arrasto
+  de dedo no touchpad é reconhecido como eixo X e eixo Y, e tratado como eixo.
+- **Condições:** ATIVO/OCULTO, FINALIZA/ALTERNA, DELAY (escolhido na tabela única de tempo).
+  Para eixo e gatilho, entra a BETA.
+
+| tipo | fontes | condições |
+|---|---|---|
+| 2CLK | botão, gatilho, eixo | ATIVO/OCULTO, FINALIZA/ALTERNA, DELAY |
+| TOGGLE | botão, gatilho, eixo | ATIVO/OCULTO, FINALIZA/ALTERNA, DELAY |
+| HOLD_AT | botão, gatilho, eixo | ATIVO/OCULTO, FINALIZA/ALTERNA, DELAY |
+| HOLD_AP | botão, gatilho, eixo | ATIVO/OCULTO, FINALIZA/ALTERNA, DELAY |
+| BLOCK | botão, gatilho, eixo | ATIVO/OCULTO (sem FINALIZA/ALTERNA e sem DELAY) |
+
+**AFTER sai.** O DELAY já cobre o atraso depois de soltar.
+
+**Vocabulário de toque:** TOUCH é botão. O arrasto é eixo X e eixo Y.
+
+### 18.1 Perguntas que precisam de resposta antes de codar
+
+1. **Relação com os modos QUALQUER, SIMULTÂNEO e SEQUÊNCIA.** Esses modos continuam valendo
+   dentro de cada tipo de gatilho? Por exemplo, um 2CLK com SEQUÊNCIA de duas fontes? Ou o
+   tipo define o comportamento, e os modos desaparecem?
+2. **Quantas entradas por MOD.** Antes a GAMA tinha uma lista de gatilhos. Agora cada entrada
+   da ALFA tem tipo, fontes e condições. Qual é o teto de entradas? Continua provisório?
+3. **Arrasto: absoluto ou relativo.** O eixo do touchpad é a posição absoluta do dedo, mapeada
+   para -100 a +100? Ou é o deslocamento desde o toque? O manual do Cronus não cobre isso,
+   porque o Cronus tinha touch só como categoria de fonte.
+
+Enquanto essas três não forem respondidas, não altero `src/alfa.c`.
