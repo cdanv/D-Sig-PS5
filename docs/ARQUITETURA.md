@@ -800,3 +800,25 @@ O autor propôs que o DELAY seja obrigatório quando a fonte é uma sequência. 
   a regra da seção 12 para o DELAY.
 
 Pendente de decisão do autor.
+
+### 17.8 Decisão do autor: DELAY é o atraso, e a resposta é TURBO ou COMBO
+
+**Decidido pelo autor:** o DELAY é o atraso até a resposta começar (opção A da seção 17.7).
+A resposta de uma sequência passa pelo **TURBO** ou pelo **COMBO** do DELTA. Não há um
+parâmetro de duração separado.
+
+**Consequências propostas, pendentes de confirmação:**
+
+1. **TURBO com sequência como fonte:** o campo CICLOS aceita só 1 a 7. ATIVO fica proibido,
+   porque o pulso da sequência dura um quadro e o MOD não fica respondendo. A duração da
+   resposta é o número de ciclos.
+2. **COMBO com sequência como fonte:** encaixa bem, porque o COMBO toca uma vez por
+   acionamento e termina sozinho.
+3. **DIRECT e STATIC com sequência como fonte:** proposto **não permitir**. Os dois dependem
+   de a fonte continuar acionada, e um pulso não sustenta isso.
+4. **DELAY quando a fonte é sequência:** obrigatório. O valor OFF (índice 0) é uma escolha
+   válida, e significa começar logo após a conclusão.
+
+**Perguntas:**
+- Confirma as consequências 1 a 3?
+- A consequência 4 (DELAY obrigatório) vale mesmo com OFF como escolha?
