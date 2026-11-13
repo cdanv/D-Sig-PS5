@@ -1982,3 +1982,22 @@ que medir por um payload separado, neste console, não é o caminho.
 - O código de sondagem em `payload/medicao/main.c` fica como registro. Ele não é usado pelo D-Sig.
 - Antes de qualquer nova tentativa de inicialização, é preciso estudar como o PoorDS4 e o etaHEN lidam
   com a biblioteca (docs/ESTUDO.md). Nada foi copiado.
+
+**Addendum (sondagens 5 a 7, mesmo dia).** A `libSceMbus` carregada com `dlopen` antes das chamadas
+resolveu o travamento: `scePadInit` e `scePadSetProcessPrivilege(1)` passaram a retornar 0. Pela
+primeira vez, `scePadOpen` respondeu com um código que o próprio Ghostcontrol identifica (USER_NOT_LOGIN,
+`0x809B0081`), e não com "não inicializada". Medido:
+
+- `sceUserServiceGetInitialUser` falha (`-2137784316`), mas `sceUserServiceGetLoginUserIdList` e
+  `sceUserServiceGetForegroundUser` devolvem o mesmo usuário, `513995998`.
+- `scePadGetHandle(513995998, 0, 0)` devolve `0x80920008`, e `scePadOpen(513995998, 0, 0, NULL)` devolve
+  `0x809B0081`, nas seis tentativas, com cinco segundos entre elas.
+
+Conclusão: a lista de logados e o que a biblioteca de controle aceita não concordam para um processo de
+medição. Não é uma questão de tempo. A hipótese mais forte, ainda não confirmada, é que o controle fica
+vinculado ao usuário do processo que o abriu, e um payload independente não é esse processo. Obter esse
+vínculo por outro caminho esbarra em elevação de privilégio do processo, fora do escopo do CLAUDE.md.
+
+Decisão: a linha de sondagem com payload independente se encerra aqui. O caminho que sobra é o da fase 3b,
+dentro do processo do jogo, com o estudo do PoorDS4 (que lê o controle a partir de um gancho no jogo) antes
+de qualquer código.
