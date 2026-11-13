@@ -22,9 +22,10 @@ int scePadInit(void);
 int32_t scePadOpen(int32_t userId, int32_t type, int32_t index, const void *param);
 int scePadReadState(int32_t handle, ScePadData *data);
 
-/* Destino do CSV: primeiro um pendrive (montado pelo Payload Manager em /mnt/usbN), depois o
- * armazenamento interno. Assim o arquivo sai do console sem FTP. */
-#define SAIDA_USB   "/mnt/usb0/dsig/medicao.csv"
+/* Destino do CSV: o primeiro pendrive que aceitar a gravacao (o numero N de /mnt/usbN muda
+ * conforme a ordem de conexao; no PS5 do autor apareceu como usb1), depois o armazenamento
+ * interno. Assim o arquivo sai do console sem FTP. */
+#define USB_MAX     4                  /* testa /mnt/usb0 a /mnt/usb3 */
 #define SAIDA_INT   "/data/dsig/medicao.csv"
 #define DURACAO_S   90
 #define PERIODO_US  10000          /* 10 ms: a mesma cadencia do quadro do jogo */
@@ -49,13 +50,20 @@ int main(void) {
     double t0, t;
     ScePadData d;
 
-    const char *saida = SAIDA_USB;
-    mkdir("/mnt/usb0/dsig", 0777);        /* sem pendrive, falha em silencio */
-    f = fopen(saida, "w");
+    /* sem pendrive, mkdir e fopen falham em silencio e o laco passa adiante */
+    static char usb_arq[64];
+    const char *saida = SAIDA_INT;
+    f = NULL;
+    for (int i = 0; i < USB_MAX && !f; i++) {
+        snprintf(usb_arq, sizeof usb_arq, "/mnt/usb%d/dsig", i);
+        mkdir(usb_arq, 0777);
+        snprintf(usb_arq, sizeof usb_arq, "/mnt/usb%d/dsig/medicao.csv", i);
+        f = fopen(usb_arq, "w");
+        if (f) saida = usb_arq;
+    }
     if (!f) {
-        saida = SAIDA_INT;
         mkdir("/data/dsig", 0777);
-        f = fopen(saida, "w");
+        f = fopen(SAIDA_INT, "w");
     }
     if (!f) return 1;
     fprintf(f, "# destino: %s\n", saida);
