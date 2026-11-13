@@ -2001,3 +2001,30 @@ vínculo por outro caminho esbarra em elevação de privilégio do processo, for
 Decisão: a linha de sondagem com payload independente se encerra aqui. O caminho que sobra é o da fase 3b,
 dentro do processo do jogo, com o estudo do PoorDS4 (que lê o controle a partir de um gancho no jogo) antes
 de qualquer código.
+
+---
+
+## 39. Exceção do gancho de entrada: o que é permitido na memória do jogo
+
+**Problema.** A seção 2 do CLAUDE.md dizia "leitura ou escrita na memória do jogo" como fora do projeto,
+e o desenho do Alvo 3 (seções 2 e 7 deste documento, e o CLAUDE.md, seção 7) prevê justamente o
+redirecionamento da entrada PLT do jogo. Os dois textos não batiam. Ao estudar o PoorDS4 (docs/ESTUDO.md,
+seção 11), ficou claro que o método dele escreve na memória de outro processo a partir do kernel, o que
+vai além do que o desenho precisava.
+
+**Decisão do autor.** A proibição da seção 2 tem como alvo a alteração de estado do jogo para dar vantagem.
+Um gancho que troca somente a entrada de controle (turbo, macro, sequência, acorde) muda o sinal que chega
+ao jogo, e não o cálculo do jogo. Esse é o núcleo de acessibilidade do projeto. Então a exceção é:
+
+- **permitido:** redirecionar somente as funções de leitura do controle, dentro do próprio processo do jogo,
+  com encadeamento para o original;
+- **proibido:** ler ou escrever o resto da memória do jogo, alterar estado do jogo, escrever em outro
+  processo a partir do kernel, elevar privilégio além do próprio processo, e qualquer vantagem sobre outra
+  pessoa.
+
+**O que não está decidido.** O método de instalação do gancho. O PoorDS4 instala de fora do processo, e isso
+fica fora da exceção. A alternativa a estudar é o caminho que o autoloader já usa para carregar código no
+processo do jogo, sem escrita externa. Esse estudo ainda não foi feito.
+
+**Consequência para o código.** Nada de escrita externa entra no D-Sig. A bancada e o payload de medição
+não mudam com esta decisão.

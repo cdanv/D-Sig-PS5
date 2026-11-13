@@ -30,8 +30,17 @@ Isto não é uma ressalva decorativa. É a definição do escopo, e ela é respe
 
 - assistência de mira, correção de recuo, ou qualquer ajuda que dê vantagem sobre outra
   pessoa em jogo online
-- leitura ou escrita na memória do jogo
+- leitura ou escrita na memória do jogo, **exceto** o gancho de entrada descrito abaixo
 - qualquer interação com servidor ou com a rede do jogo
+
+**A exceção do gancho de entrada (decidida pelo autor; ver ARQUITETURA.md, seção 39).** O D-Sig
+pode redirecionar, dentro do próprio processo do jogo, somente as funções de leitura do controle
+(`scePadReadState` e variantes), com encadeamento para o original. Isso muda o sinal de controle que
+chega ao jogo, e não o estado do jogo. Continua proibido:
+
+- ler ou escrever qualquer outra parte da memória do jogo, ou alterar o estado do jogo;
+- escrita em outro processo, a partir do kernel, e elevação de privilégio além do próprio processo;
+- qualquer ação que dê vantagem sobre outra pessoa.
 
 Um PS5 com jailbreak não acessa a PSN, então não existe jogo online para afetar. O
 roteamento acontece entre o controle e o jogo, no mesmo lugar onde um controle adaptado
