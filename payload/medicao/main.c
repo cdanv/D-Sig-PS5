@@ -5,39 +5,47 @@
  * afirmar (ver docs/ARQUITETURA.md e CLAUDE.md, secao 3): convencao vertical, faixa do
  * touch, escala dos sensores, gatilhos e os bits de PS e SHARE.
  *
- * AVISO: as assinaturas de libScePad abaixo NAO foram conferidas num cabecalho oficial
- * (o SDK nao traz um). O payload grava os codigos de retorno logo no inicio do CSV: se
- * uma assinatura estiver errada, isso aparece na primeira execucao, e nao depois.
+ * SONDAGEM 5 (ver docs/ARQUITETURA.md, secao 38). A ordem segue o que o projeto
+ * Ghostcontrol (GPL-3.0-or-later) faz antes de usar libScePad, lido em
+ * core/src/bt/ps5_vpad.c; nenhum trecho foi copiado, so a ordem e o papel de cada chamada:
+ *   1. dlopen da libSceMbus (a libScePad importa dela; sem isso scePadInit pode falhar);
+ *   2. sceUserServiceInitialize e sceUserServiceGetInitialUser (o userId precisa ser de um
+ *      usuario logado: scePadOpen devolve 0x809b0081 para quem nao esta logado);
+ *   3. scePadInit, depois scePadSetProcessPrivilege(1);
+ *   4. scePadOpen com o usuario inicial e param NULL.
+ * Tudo e gravado no CSV antes e depois de cada chamada.
+ *
+ * AVISO: as assinaturas abaixo sao as mesmas que o Ghostcontrol declara, mas nao foram
+ * conferidas num cabecalho oficial. O payload grava os codigos de retorno logo no inicio do CSV.
  */
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <dlfcn.h>
 #include <sys/stat.h>
 #include "../../src/pad.h"
 
-/* Declaracoes de libScePad. Ver o aviso acima: a confirmar no console. */
+/* Declaracoes. Ver o aviso acima: a confirmar no console. */
 int scePadInit(void);
+int32_t scePadSetProcessPrivilege(int32_t privilege);
 int32_t scePadOpen(int32_t userId, int32_t type, int32_t index, const void *param);
 int scePadReadState(int32_t handle, ScePadData *data);
-/* Sondagem 4: mesma forma de scePadOpen, assumida; NAO confirmada (o SDK so tem o nome). */
-int32_t scePadOpenExt(int32_t userId, int32_t type, int32_t index, const void *param);
+int32_t sceUserServiceInitialize(void *params);
+int32_t sceUserServiceGetInitialUser(int32_t *user);
 
-/* Destino do CSV: o primeiro pendrive que aceitar a gravacao (o numero N de /mnt/usbN muda
- * conforme a ordem de conexao; no PS5 do autor apareceu como usb1), depois o armazenamento
- * interno. Assim o arquivo sai do console sem FTP. */
-#define USB_MAX     4                  /* testa /mnt/usb0 a /mnt/usb3 */
+/* Destino do CSV: o primeiro pendrive ou HD que aceitar a gravacao (usb0 a usb3), depois o
+ * armazenamento interno. */
+#define USB_MAX     4
 #define SAIDA_INT   "/data/dsig/medicao.csv"
 #define DURACAO_S   90
 #define PERIODO_US  10000          /* 10 ms: a mesma cadencia do quadro do jogo */
-#define USER_ID     0              /* a confirmar: usuario que possui o controle */
-/* Sondagem: o teste de 14:03 travou DENTRO de scePadInit (o CSV parou em "antes de scePadInit",
- * sem a linha de retorno). Com esta macro em 0, scePadInit NAO e chamada e o payload tenta
- * scePadOpen direto. Para voltar ao comportamento anterior, defina USAR_SCEPADINIT como 1. */
-#ifndef USAR_SCEPADINIT
-#define USAR_SCEPADINIT 0      /* 0: sondagem 3, sem scePadInit (ela trava neste console) */
-#endif
+
+static const char *const libmbus[] = {
+    "/system/common/lib/libSceMbus.sprx",
+    "libSceMbus.sprx",
+};
 
 static double agora_s(void) {
     struct timespec ts;
@@ -53,7 +61,9 @@ static void passo(FILE *f, const char *msg) {
 
 int main(void) {
     FILE *f;
-    int32_t h;
+    int32_t h = -1;
+    int32_t init_user = -1;
+    void *lib = NULL;
     int rc_init, rc_open;
     double t0, t;
     ScePadData d;
@@ -78,46 +88,46 @@ int main(void) {
     fflush(f);
     passo(f, "arquivo aberto");
 
-#if USAR_SCEPADINIT
+    /* 1. libSceMbus antes de qualquer chamada a libScePad */
+    passo(f, "antes de dlopen libSceMbus");
+    for (size_t k = 0; k < sizeof libmbus / sizeof libmbus[0] && !lib; k++) {
+        lib = dlopen(libmbus[k], RTLD_NOW | RTLD_GLOBAL);
+        fprintf(f, "# dlopen %s -> %s\n", libmbus[k], lib ? "ok" : (dlerror() ? dlerror() : "falhou"));
+        fflush(f);
+    }
+
+    /* 2. usuario logado */
+    passo(f, "antes de sceUserServiceInitialize");
+    fprintf(f, "# sceUserServiceInitialize retornou %d\n", (int)sceUserServiceInitialize(NULL));
+    fflush(f);
+    {
+        int r = sceUserServiceGetInitialUser(&init_user);
+        fprintf(f, "# sceUserServiceGetInitialUser retornou %d, usuario inicial = %d (0x%x)\n",
+                r, (int)init_user, (unsigned)init_user);
+        fflush(f);
+    }
+
+    /* 3. scePadInit, depois o privilegio do processo */
     passo(f, "antes de scePadInit");
     rc_init = scePadInit();
     fprintf(f, "# scePadInit retornou %d\n", rc_init);
     fflush(f);
-#else
-    rc_init = -999;                       /* marca: scePadInit nao foi chamada nesta sondagem */
-    (void)rc_init;
-    fprintf(f, "# scePadInit NAO chamada (sondagem, USAR_SCEPADINIT=0)\n");
-    fflush(f);
-#endif
 
-    /* Sondagem 3: sem scePadInit. userId 0 ja falhou na sondagem 1, entao testa 1..3 em ordem;
-     * para no primeiro handle >= 0. Cada tentativa fica registrada no CSV. */
-    /* Sondagem 4: param aponta para um buffer zerado nosso (256 bytes, chute: o tamanho real
-     * da estrutura de parametros nao foi confirmado). Testa scePadOpen com userIds 0..3; se
-     * nenhum funcionar, testa scePadOpenExt com o mesmo buffer. */
-    static char param_zero[256];
-    static const int32_t ids_usuario[] = { 0, 1, 2, 3 };
-    h = -1;
-    for (size_t k = 0; k < sizeof ids_usuario / sizeof ids_usuario[0]; k++) {
-        int32_t hk;
-        fprintf(f, "# antes de scePadOpen(userId=%d)\n", (int)ids_usuario[k]);
-        fflush(f);
-        hk = scePadOpen(ids_usuario[k], 0, 0, param_zero);
-        fprintf(f, "# scePadOpen(userId=%d) retornou %d\n", (int)ids_usuario[k], (int)hk);
-        fflush(f);
-        if (hk >= 0) { h = hk; break; }
+    passo(f, "antes de scePadSetProcessPrivilege(1)");
+    fprintf(f, "# scePadSetProcessPrivilege(1) retornou %d\n", (int)scePadSetProcessPrivilege(1));
+    fflush(f);
+
+    /* 4. scePadOpen com o usuario inicial (nunca 0 por padrao) */
+    passo(f, "antes de scePadOpen");
+    if (init_user >= 0) {
+        h = scePadOpen(init_user, 0, 0, NULL);
+        fprintf(f, "# scePadOpen(userId=%d) retornou %d\n", (int)init_user, (int)h);
+    } else {
+        fprintf(f, "# scePadOpen nao chamada: sem usuario inicial\n");
     }
-    for (size_t k = 0; k < sizeof ids_usuario / sizeof ids_usuario[0] && h < 0; k++) {
-        int32_t hk;
-        fprintf(f, "# antes de scePadOpenExt(userId=%d)\n", (int)ids_usuario[k]);
-        fflush(f);
-        hk = scePadOpenExt(ids_usuario[k], 0, 0, param_zero);
-        fprintf(f, "# scePadOpenExt(userId=%d) retornou %d\n", (int)ids_usuario[k], (int)hk);
-        fflush(f);
-        if (hk >= 0) { h = hk; break; }
-    }
+    fflush(f);
     rc_open = (int)h;
-    fprintf(f, "# handle usado: %d (negativo = nenhum userId funcionou)\n", rc_open);
+    fprintf(f, "# handle usado: %d (negativo = nao abriu)\n", rc_open);
     fflush(f);
 
     fprintf(f, "# tempo_s,buttons,lx,ly,rx,ry,l2,r2,touch_fingers,touch1_x,touch1_y,touch1_finger,touch2_x,touch2_y,touch2_finger,quat_w,quat_x,quat_y,quat_z,acc_x,acc_y,acc_z,gyr_x,gyr_y,gyr_z,ts_us,connected\n");
