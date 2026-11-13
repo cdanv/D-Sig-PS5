@@ -22,7 +22,10 @@ int scePadInit(void);
 int32_t scePadOpen(int32_t userId, int32_t type, int32_t index, const void *param);
 int scePadReadState(int32_t handle, ScePadData *data);
 
-#define SAIDA       "/data/dsig/medicao.csv"
+/* Destino do CSV: primeiro um pendrive (montado pelo Payload Manager em /mnt/usbN), depois o
+ * armazenamento interno. Assim o arquivo sai do console sem FTP. */
+#define SAIDA_USB   "/mnt/usb0/dsig/medicao.csv"
+#define SAIDA_INT   "/data/dsig/medicao.csv"
 #define DURACAO_S   90
 #define PERIODO_US  10000          /* 10 ms: a mesma cadencia do quadro do jogo */
 #define USER_ID     0              /* a confirmar: usuario que possui o controle */
@@ -46,9 +49,17 @@ int main(void) {
     double t0, t;
     ScePadData d;
 
-    mkdir("/data/dsig", 0777);            /* ja existir nao e erro */
-    f = fopen(SAIDA, "w");
+    const char *saida = SAIDA_USB;
+    mkdir("/mnt/usb0/dsig", 0777);        /* sem pendrive, falha em silencio */
+    f = fopen(saida, "w");
+    if (!f) {
+        saida = SAIDA_INT;
+        mkdir("/data/dsig", 0777);
+        f = fopen(saida, "w");
+    }
     if (!f) return 1;
+    fprintf(f, "# destino: %s\n", saida);
+    fflush(f);
     passo(f, "arquivo aberto");
 
     passo(f, "antes de scePadInit");
