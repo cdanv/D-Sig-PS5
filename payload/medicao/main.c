@@ -21,6 +21,8 @@
 int scePadInit(void);
 int32_t scePadOpen(int32_t userId, int32_t type, int32_t index, const void *param);
 int scePadReadState(int32_t handle, ScePadData *data);
+/* Sondagem 4: mesma forma de scePadOpen, assumida; NAO confirmada (o SDK so tem o nome). */
+int32_t scePadOpenExt(int32_t userId, int32_t type, int32_t index, const void *param);
 
 /* Destino do CSV: o primeiro pendrive que aceitar a gravacao (o numero N de /mnt/usbN muda
  * conforme a ordem de conexao; no PS5 do autor apareceu como usb1), depois o armazenamento
@@ -90,14 +92,27 @@ int main(void) {
 
     /* Sondagem 3: sem scePadInit. userId 0 ja falhou na sondagem 1, entao testa 1..3 em ordem;
      * para no primeiro handle >= 0. Cada tentativa fica registrada no CSV. */
-    static const int32_t ids_usuario[] = { 1, 2, 3 };
+    /* Sondagem 4: param aponta para um buffer zerado nosso (256 bytes, chute: o tamanho real
+     * da estrutura de parametros nao foi confirmado). Testa scePadOpen com userIds 0..3; se
+     * nenhum funcionar, testa scePadOpenExt com o mesmo buffer. */
+    static char param_zero[256];
+    static const int32_t ids_usuario[] = { 0, 1, 2, 3 };
     h = -1;
     for (size_t k = 0; k < sizeof ids_usuario / sizeof ids_usuario[0]; k++) {
         int32_t hk;
         fprintf(f, "# antes de scePadOpen(userId=%d)\n", (int)ids_usuario[k]);
         fflush(f);
-        hk = scePadOpen(ids_usuario[k], 0, 0, 0);
+        hk = scePadOpen(ids_usuario[k], 0, 0, param_zero);
         fprintf(f, "# scePadOpen(userId=%d) retornou %d\n", (int)ids_usuario[k], (int)hk);
+        fflush(f);
+        if (hk >= 0) { h = hk; break; }
+    }
+    for (size_t k = 0; k < sizeof ids_usuario / sizeof ids_usuario[0] && h < 0; k++) {
+        int32_t hk;
+        fprintf(f, "# antes de scePadOpenExt(userId=%d)\n", (int)ids_usuario[k]);
+        fflush(f);
+        hk = scePadOpenExt(ids_usuario[k], 0, 0, param_zero);
+        fprintf(f, "# scePadOpenExt(userId=%d) retornou %d\n", (int)ids_usuario[k], (int)hk);
         fflush(f);
         if (hk >= 0) { h = hk; break; }
     }
