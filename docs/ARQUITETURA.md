@@ -1933,3 +1933,52 @@ desliga o órfão, então o valor-base só existiria enquanto o órfão já est�
 Decisão: o código atual já produz o resultado do manual (herança ou zero, com autoencerramento). O
 valor-base não é implementado porque não altera nenhuma saída. Se o manual vier a mostrar um caso em
 que o valor-base aparece, reabro esta decisão.
+
+---
+
+## 38. Medição no PS5 por payload independente: a abertura do controle não funciona (fase 3a, console)
+
+**Pergunta:** o payload de medição, rodando sozinho no PS5 FAT 11.20, consegue abrir o controle e
+ler os dados? Era o caminho para fechar as pendências de console (convenção vertical, toque, sensores,
+gatilhos, PS e SHARE).
+
+**Resultado medido** (CSV gravado no HD, `usb0/dsig/`, com o controle conectado por Bluetooth):
+
+| execução | chamadas | retorno |
+|---|---|---|
+| 1 | `scePadOpen(0, 0, 0, NULL)`, sem `scePadInit` | `-2137915387` (0x80920005) |
+| 2 | `scePadInit`, depois `scePadOpen(0..3, NULL)` | **travou em `scePadInit`** (três vezes; o CSV para em "antes de scePadInit") |
+| 3 | `scePadOpen(1..3, NULL)`, sem `scePadInit` | `-2137915387` em todos |
+| 4 | `scePadOpen(0..3, buffer zerado)` e `scePadOpenExt(0..3, buffer zerado)`, sem `scePadInit` | `-2137915387` em todos os oito |
+
+Em todas as execuções que completaram, todas as leituras de `scePadReadState` também devolveram
+`-2137915387`. Nenhuma linha de dados do controle foi gravada.
+
+**O que fica estabelecido:**
+- `scePadInit` trava quando chamada pelo payload neste console. Não é intermitente: aconteceu em todas
+  as tentativas.
+- Sem `scePadInit`, nenhuma forma de abertura testada funciona. O valor do userId e o `param` (NULL ou
+  buffer zerado) não mudam o resultado.
+- Os nomes `scePadOpen`, `scePadOpenExt`, `scePadInit` e `scePadReadState` existem no SDK (verificado
+  com `nm -D`). A assinatura não foi confirmada: o SDK não traz cabeçalho, e o `.so` é um stub de link
+  (todos os símbolos no mesmo endereço).
+
+**O que não está estabelecido:**
+- A causa do travamento de `scePadInit`. A hipótese mais provável é que a biblioteca já está inicializada
+  pelo sistema, e a segunda chamada espera uma trava que não libera. Não há como confirmar daqui.
+- Se a assinatura de `scePadOpen` é a usada. A única evidência é o retorno, que não diz se os argumentos
+  foram interpretados como se espera.
+
+**Decisão de desenho.** O D-Sig não deve abrir o controle por conta própria. O desenho do Alvo 3 já
+previa isso: o daemon lê o estado que o jogo recebe, interceptando `scePadReadState` dentro do processo
+do jogo, que já tem o controle aberto (seção 7 do CLAUDE.md e docs/ESTUDO.md). Um payload independente
+não mede o que o D-Sig precisa medir. Por isso o teste desta seção não reprova o desenho. Ele mostra
+que medir por um payload separado, neste console, não é o caminho.
+
+**Consequências:**
+- As pendências de console que dependem de leitura real (convenção vertical, faixa do touch, escala de
+  ACC e GYRO, zona morta, conversão dos gatilhos, bits de PS e SHARE) continuam abertas. O caminho para
+  fechá-las passa pela ponte dentro do processo do jogo, na fase 3b.
+- O código de sondagem em `payload/medicao/main.c` fica como registro. Ele não é usado pelo D-Sig.
+- Antes de qualquer nova tentativa de inicialização, é preciso estudar como o PoorDS4 e o etaHEN lidam
+  com a biblioteca (docs/ESTUDO.md). Nada foi copiado.
