@@ -30,6 +30,12 @@ int scePadReadState(int32_t handle, ScePadData *data);
 #define DURACAO_S   90
 #define PERIODO_US  10000          /* 10 ms: a mesma cadencia do quadro do jogo */
 #define USER_ID     0              /* a confirmar: usuario que possui o controle */
+/* Sondagem: o teste de 14:03 travou DENTRO de scePadInit (o CSV parou em "antes de scePadInit",
+ * sem a linha de retorno). Com esta macro em 0, scePadInit NAO e chamada e o payload tenta
+ * scePadOpen direto. Para voltar ao comportamento anterior, defina USAR_SCEPADINIT como 1. */
+#ifndef USAR_SCEPADINIT
+#define USAR_SCEPADINIT 0
+#endif
 
 static double agora_s(void) {
     struct timespec ts;
@@ -70,10 +76,17 @@ int main(void) {
     fflush(f);
     passo(f, "arquivo aberto");
 
+#if USAR_SCEPADINIT
     passo(f, "antes de scePadInit");
     rc_init = scePadInit();
     fprintf(f, "# scePadInit retornou %d\n", rc_init);
     fflush(f);
+#else
+    rc_init = -999;                       /* marca: scePadInit nao foi chamada nesta sondagem */
+    (void)rc_init;
+    fprintf(f, "# scePadInit NAO chamada (sondagem, USAR_SCEPADINIT=0)\n");
+    fflush(f);
+#endif
 
     passo(f, "antes de scePadOpen");
     h = scePadOpen(USER_ID, 0, 0, 0);
