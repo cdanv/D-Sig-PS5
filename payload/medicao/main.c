@@ -34,7 +34,7 @@ int scePadReadState(int32_t handle, ScePadData *data);
  * sem a linha de retorno). Com esta macro em 0, scePadInit NAO e chamada e o payload tenta
  * scePadOpen direto. Para voltar ao comportamento anterior, defina USAR_SCEPADINIT como 1. */
 #ifndef USAR_SCEPADINIT
-#define USAR_SCEPADINIT 1      /* 1: chama scePadInit antes de scePadOpen (sondagem 2) */
+#define USAR_SCEPADINIT 0      /* 0: sondagem 3, sem scePadInit (ela trava neste console) */
 #endif
 
 static double agora_s(void) {
@@ -88,9 +88,9 @@ int main(void) {
     fflush(f);
 #endif
 
-    /* Sondagem 2: tenta userIds 0..3 em ordem; para no primeiro handle >= 0. Cada tentativa
-     * fica registrada, e o CSV mostra qual userId funcionou (ou que nenhum funcionou). */
-    static const int32_t ids_usuario[] = { 0, 1, 2, 3 };
+    /* Sondagem 3: sem scePadInit. userId 0 ja falhou na sondagem 1, entao testa 1..3 em ordem;
+     * para no primeiro handle >= 0. Cada tentativa fica registrada no CSV. */
+    static const int32_t ids_usuario[] = { 1, 2, 3 };
     h = -1;
     for (size_t k = 0; k < sizeof ids_usuario / sizeof ids_usuario[0]; k++) {
         int32_t hk;
