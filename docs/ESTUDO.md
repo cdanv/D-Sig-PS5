@@ -272,3 +272,24 @@ Fonte: `ItsBlurf/poords4`, commit `aa568a5`, leitura de `docs/ARCHITECTURE.md`, 
 
 **O que não aproveitamos:** a escrita na memória do jogo a partir do kernel (mapeamento físico e módulo de
 sistema). Fica fora da exceção da ARQUITETURA.md, seção 39.
+
+## 12. O caminho do autoloader: ele não entrega código ao processo do jogo
+
+Fontes: `docs/ESTUDO.md`, seções 5 e 6 (PS5 Payload Manager e ProsperoMgr); buscas por `autoload` nos
+repositórios PoorDS4 e Ghostcontrol (nenhum deles usa autoload para entrar em jogo).
+
+**O que o autoloader faz:** a corrente (CLAUDE.md, seção 9) sobe o gerenciador, que lê uma lista e lança
+cada ELF como **processo próprio**, pelo mesmo protocolo de envio (TCP `127.0.0.1:9021`). A pausa `!NNNN`
+é só espera entre um ELF e o próximo. Não há nenhum passo que abra um jogo e carregue código nele.
+
+**O que isso resolve:** a residência do daemon (fase 3b). O daemon sobe sozinho a cada ligada, como processo
+separado, e fica disponível para o gancho. Persistência de processo, não de gancho.
+
+**O que não resolve:** a instalação do gancho dentro do processo do jogo. Nenhuma das duas referências
+usa autoload para isso; o PoorDS4 instala de fora, por escrita de memória a partir do kernel, que está
+fora da exceção da ARQUITETURA.md, seção 39.
+
+**Conflito que este estudo revelou:** a ARQUITETURA.md, linhas 20 e 161, prevê que o daemon escreve o perfil
+na memória do processo do jogo. Isso é escrita de fora do processo, com o mesmo mecanismo de instalação. Pela
+seção 39, não pode continuar assim. Precisa ser revisto: o perfil passaria a ser entregue por um canal que o
+gancho lê dentro do próprio processo, ou por outro meio ainda a definir.
