@@ -34,6 +34,8 @@ int32_t scePadOpen(int32_t userId, int32_t type, int32_t index, const void *para
 int scePadReadState(int32_t handle, ScePadData *data);
 int32_t sceUserServiceInitialize(void *params);
 int32_t sceUserServiceGetInitialUser(int32_t *user);
+int32_t sceUserServiceGetLoginUserIdList(int32_t list[4]);
+int32_t sceUserServiceGetForegroundUser(int32_t *user);
 
 /* Destino do CSV: o primeiro pendrive ou HD que aceitar a gravacao (usb0 a usb3), depois o
  * armazenamento interno. */
@@ -117,13 +119,32 @@ int main(void) {
     fprintf(f, "# scePadSetProcessPrivilege(1) retornou %d\n", (int)scePadSetProcessPrivilege(1));
     fflush(f);
 
-    /* 4. scePadOpen com o usuario inicial (nunca 0 por padrao) */
+    /* 4. escolhe um usuario logado: o inicial falhou (ver CSV), entao usa a lista de logados
+     * e o usuario em primeiro plano, como o Ghostcontrol faz. Ignora -1 (nenhum) e 0. */
+    {
+        int32_t login[4] = { -1, -1, -1, -1 };
+        int32_t fore = -1;
+        int rl = sceUserServiceGetLoginUserIdList(login);
+        int rf = sceUserServiceGetForegroundUser(&fore);
+        fprintf(f, "# sceUserServiceGetLoginUserIdList retornou %d: %d %d %d %d\n",
+                rl, (int)login[0], (int)login[1], (int)login[2], (int)login[3]);
+        fprintf(f, "# sceUserServiceGetForegroundUser retornou %d, usuario = %d\n", rf, (int)fore);
+        fflush(f);
+        if (init_user <= 0) init_user = -1;
+        if (fore <= 0) fore = -1;
+        if (init_user < 0 && fore > 0) init_user = fore;
+        for (int i = 0; i < 4 && init_user < 0; i++)
+            if (login[i] > 0) init_user = login[i];
+        fprintf(f, "# usuario escolhido para scePadOpen: %d\n", (int)init_user);
+        fflush(f);
+    }
+
     passo(f, "antes de scePadOpen");
-    if (init_user >= 0) {
+    if (init_user > 0) {
         h = scePadOpen(init_user, 0, 0, NULL);
         fprintf(f, "# scePadOpen(userId=%d) retornou %d\n", (int)init_user, (int)h);
     } else {
-        fprintf(f, "# scePadOpen nao chamada: sem usuario inicial\n");
+        fprintf(f, "# scePadOpen nao chamada: nenhum usuario logado encontrado\n");
     }
     fflush(f);
     rc_open = (int)h;
