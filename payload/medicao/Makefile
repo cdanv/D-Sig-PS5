@@ -13,5 +13,11 @@ all: $(ELF)
 $(ELF): main.c ../../src/pad.h
 	$(CC) $(CFLAGS) -o $@ main.c
 
+PS5_HOST ?= ps5
+PS5_PORT ?= 9021
+
+test: $(ELF)
+	$(PS5_DEPLOY) -h $(PS5_HOST) -p $(PS5_PORT) $^
+
 clean:
 	rm -f $(ELF)
