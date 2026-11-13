@@ -36,6 +36,7 @@ int32_t sceUserServiceInitialize(void *params);
 int32_t sceUserServiceGetInitialUser(int32_t *user);
 int32_t sceUserServiceGetLoginUserIdList(int32_t list[4]);
 int32_t sceUserServiceGetForegroundUser(int32_t *user);
+int32_t scePadGetHandle(int32_t user, int32_t type, int32_t index);
 
 /* Destino do CSV: o primeiro pendrive ou HD que aceitar a gravacao (usb0 a usb3), depois o
  * armazenamento interno. */
@@ -139,12 +140,31 @@ int main(void) {
         fflush(f);
     }
 
-    passo(f, "antes de scePadOpen");
-    if (init_user > 0) {
-        h = scePadOpen(init_user, 0, 0, NULL);
-        fprintf(f, "# scePadOpen(userId=%d) retornou %d\n", (int)init_user, (int)h);
-    } else {
-        fprintf(f, "# scePadOpen nao chamada: nenhum usuario logado encontrado\n");
+    /* Sondagem 7: o retorno 0x809b0081 (USER_NOT_LOGIN) pode ser transitorio. Repete ate 6
+     * vezes, a cada 5 s, relendo a lista de logados e tentando scePadGetHandle antes de
+     * scePadOpen, como o Ghostcontrol faz. Para no primeiro handle >= 0. */
+    passo(f, "antes de scePadOpen (com novas tentativas)");
+    for (int tentativa = 1; tentativa <= 6 && h < 0; tentativa++) {
+        int32_t login[4] = { -1, -1, -1, -1 };
+        int32_t alvo = -1;
+        int32_t hg;
+        int rl = sceUserServiceGetLoginUserIdList(login);
+        for (int i = 0; i < 4 && alvo < 0; i++)
+            if (login[i] > 0) alvo = login[i];
+        fprintf(f, "# tentativa %d: login rl=%d ids=%d %d %d %d, alvo=%d\n", tentativa, rl,
+                (int)login[0], (int)login[1], (int)login[2], (int)login[3], (int)alvo);
+        fflush(f);
+        if (alvo > 0) {
+            hg = scePadGetHandle(alvo, 0, 0);
+            fprintf(f, "# tentativa %d: scePadGetHandle(%d) retornou %d\n", tentativa, (int)alvo, (int)hg);
+            h = scePadOpen(alvo, 0, 0, NULL);
+            fprintf(f, "# tentativa %d: scePadOpen(%d) retornou %d\n", tentativa, (int)alvo, (int)h);
+            fflush(f);
+        }
+        if (h < 0 && tentativa < 6) {
+            passo(f, "espera 5 s antes da proxima tentativa");
+            sleep(5);
+        }
     }
     fflush(f);
     rc_open = (int)h;
