@@ -34,7 +34,7 @@ int scePadReadState(int32_t handle, ScePadData *data);
  * sem a linha de retorno). Com esta macro em 0, scePadInit NAO e chamada e o payload tenta
  * scePadOpen direto. Para voltar ao comportamento anterior, defina USAR_SCEPADINIT como 1. */
 #ifndef USAR_SCEPADINIT
-#define USAR_SCEPADINIT 0
+#define USAR_SCEPADINIT 1      /* 1: chama scePadInit antes de scePadOpen (sondagem 2) */
 #endif
 
 static double agora_s(void) {
@@ -88,10 +88,21 @@ int main(void) {
     fflush(f);
 #endif
 
-    passo(f, "antes de scePadOpen");
-    h = scePadOpen(USER_ID, 0, 0, 0);
+    /* Sondagem 2: tenta userIds 0..3 em ordem; para no primeiro handle >= 0. Cada tentativa
+     * fica registrada, e o CSV mostra qual userId funcionou (ou que nenhum funcionou). */
+    static const int32_t ids_usuario[] = { 0, 1, 2, 3 };
+    h = -1;
+    for (size_t k = 0; k < sizeof ids_usuario / sizeof ids_usuario[0]; k++) {
+        int32_t hk;
+        fprintf(f, "# antes de scePadOpen(userId=%d)\n", (int)ids_usuario[k]);
+        fflush(f);
+        hk = scePadOpen(ids_usuario[k], 0, 0, 0);
+        fprintf(f, "# scePadOpen(userId=%d) retornou %d\n", (int)ids_usuario[k], (int)hk);
+        fflush(f);
+        if (hk >= 0) { h = hk; break; }
+    }
     rc_open = (int)h;
-    fprintf(f, "# scePadOpen retornou %d (handle esperado >= 0)\n", rc_open);
+    fprintf(f, "# handle usado: %d (negativo = nenhum userId funcionou)\n", rc_open);
     fflush(f);
 
     fprintf(f, "# tempo_s,buttons,lx,ly,rx,ry,l2,r2,touch_fingers,touch1_x,touch1_y,touch1_finger,touch2_x,touch2_y,touch2_finger,quat_w,quat_x,quat_y,quat_z,acc_x,acc_y,acc_z,gyr_x,gyr_y,gyr_z,ts_us,connected\n");
