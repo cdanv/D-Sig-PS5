@@ -33,6 +33,12 @@ static double agora_s(void) {
     return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
 }
 
+static void passo(FILE *f, const char *msg) {
+    /* grava e descarrega ja: se o processo travar depois, esta linha continua no arquivo */
+    fprintf(f, "# passo %.3f: %s\n", agora_s(), msg);
+    fflush(f);
+}
+
 int main(void) {
     FILE *f;
     int32_t h;
@@ -43,17 +49,28 @@ int main(void) {
     mkdir("/data/dsig", 0777);            /* ja existir nao e erro */
     f = fopen(SAIDA, "w");
     if (!f) return 1;
+    passo(f, "arquivo aberto");
 
+    passo(f, "antes de scePadInit");
     rc_init = scePadInit();
+    fprintf(f, "# scePadInit retornou %d\n", rc_init);
+    fflush(f);
+
+    passo(f, "antes de scePadOpen");
     h = scePadOpen(USER_ID, 0, 0, 0);
     rc_open = (int)h;
-    fprintf(f, "# medicao D-Sig: scePadInit=%d scePadOpen=%d (handle esperado >= 0)\n", rc_init, rc_open);
+    fprintf(f, "# scePadOpen retornou %d (handle esperado >= 0)\n", rc_open);
+    fflush(f);
+
     fprintf(f, "# tempo_s,buttons,lx,ly,rx,ry,l2,r2,touch_fingers,touch1_x,touch1_y,touch1_finger,touch2_x,touch2_y,touch2_finger,quat_w,quat_x,quat_y,quat_z,acc_x,acc_y,acc_z,gyr_x,gyr_y,gyr_z,ts_us,connected\n");
     fflush(f);
 
+    passo(f, "entrando no laco de leitura");
     t0 = agora_s();
+    int primeira = 1;
     while ((t = agora_s() - t0) < DURACAO_S) {
         int rc = scePadReadState(h, &d);
+        if (primeira) { fprintf(f, "# primeira scePadReadState retornou %d\n", rc); fflush(f); primeira = 0; }
         if (rc == 0) {
             fprintf(f, "%.3f,%08x,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%llu,%u\n",
                     t, d.buttons,
@@ -71,6 +88,7 @@ int main(void) {
         }
         usleep(PERIODO_US);
     }
+    passo(f, "fim normal");
     fclose(f);
     return 0;
 }
