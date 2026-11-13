@@ -2028,3 +2028,38 @@ processo do jogo, sem escrita externa. Esse estudo ainda não foi feito.
 
 **Consequência para o código.** Nada de escrita externa entra no D-Sig. A bancada e o payload de medição
 não mudam com esta decisão.
+
+---
+
+## 40. Canal do perfil até o gancho, sem escrita na memória do jogo (proposta)
+
+**Problema.** As seções 2 e 7 deste documento e a tabela de decisões (linhas 20 e 161) previam que o daemon
+escreve o perfil na memória do processo do jogo. A seção 39 proíbe isso: escrita de fora do processo fica
+fora da exceção. O perfil precisa chegar ao gancho por outro meio.
+
+**Alternativas comparadas.**
+
+| | A. Região compartilhada criada pelo daemon | B. Instantâneo na instalação |
+|---|---|---|
+| Como funciona | O daemon cria uma região. O gancho a mapeia no próprio processo, na instalação. Mudanças são publicadas nela com buffer duplo e versão, como `src/perfil.c` já faz. | O perfil é copiado uma vez para uma área que o gancho aloca. Não há canal depois. |
+| Quem escreve no processo do jogo | Ninguém de fora. O daemon escreve só na sua região; o gancho lê a dele. | A cópia inicial. Se quem instala está fora do processo, é a escrita que a seção 39 proíbe. |
+| Perfil muda com o jogo aberto | Sim, sem reinstalar. | Não: mudar exige reinstalar o gancho. |
+| Custo no quadro | Uma leitura do buffer duplo. Sem chamada de sistema. | Nenhum. |
+| Risco | As permissões do mapeamento no processo do jogo só se confirmam no console. | O mais simples de auditar. |
+| Depende de decisão aberta | Sim: a instalação precisa ser dentro do processo, para o mapeamento acontecer lá. | Sim: a cópia inicial precisa vir de dentro do processo. |
+
+**Proposta: A**, porque é a única que permite trocar um turbo ou uma macro durante a partida, que é o uso
+real de acessibilidade. Ela também cumpre a seção 39: o daemon nunca escreve no processo do jogo.
+
+**Reserva: B**, com a cópia inicial lida de um arquivo pelo próprio gancho, na instalação. Assim B também
+fica dentro da exceção, sem escrita de fora.
+
+**Regras para as duas.** Na seção 6 do CLAUDE.md, o caminho do quadro não aloca, não bloqueia e não faz
+chamada de sistema. O mapeamento e a leitura do arquivo acontecem uma vez, na instalação, que é o único
+momento em que chamada de sistema é aceita.
+
+**O que fica pendente.** O método de instalação do gancho dentro do processo do jogo. A e B só podem ser
+testadas no console depois que ele for definido. Esta seção não decide esse método.
+
+**Consequência para o código.** Nada muda na bancada nem no payload de medição. A decisão afeta a fase 3c,
+que depende de console.
