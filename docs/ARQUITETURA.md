@@ -2106,3 +2106,26 @@ instalado no processo do jogo. Os caminhos estudados até aqui:
 seção 39 e no CLAUDE.md antes de qualquer desenho do instalador.
 
 **Estado.** Decisão pendente do autor. Nenhuma alteração de código depende dela agora.
+
+---
+
+## 42. Regra ampliada: instalador externo restrito (decisão do autor)
+
+**Decisão.** O autor aprovou a redação da seção 2 do CLAUDE.md que admite um instalador externo restrito
+para o gancho de entrada. A regra passa a permitir a redireção das cinco funções de leitura do controle
+de dentro ou de fora do processo do jogo, com restauração condicional. Continuam proibidos a leitura e a
+escrita do resto da memória do jogo, a escrita em outros processos além das entradas de importação, a
+elevação de privilégio além do necessário, e qualquer vantagem sobre outra pessoa.
+
+**O que a regra não decide.** A primitiva de escrita em outro processo. Essa escolha de engenharia é do
+autor, e não será implementada sem essa decisão tomada e registrada.
+
+**Consequências.**
+- Seção 39 (exceção de dentro do processo) e seção 41 (situação com a regra antiga) ficam superadas por esta
+  seção. A seção 41 continua como registro do que valia antes.
+- O desenho do Alvo 3 passa a ser viável no papel. A fase 3c continua dependendo de validação no console
+  (PS5 FAT 11.20), e o login do usuário precisa ser confirmado nessa validação.
+- Antes de qualquer código do instalador: decisão da primitiva de escrita, desenho do instalador com os
+  limites da seção 2, e revisão do código antes de rodar no console.
+
+**Próximo passo.** Desenhar o instalador em documento (sem código), com a primitiva escolhida pelo autor.
