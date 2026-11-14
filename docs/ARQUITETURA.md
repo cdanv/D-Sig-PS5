@@ -2129,3 +2129,22 @@ autor, e não será implementada sem essa decisão tomada e registrada.
   limites da seção 2, e revisão do código antes de rodar no console.
 
 **Próximo passo.** Desenhar o instalador em documento (sem código), com a primitiva escolhida pelo autor.
+
+**Primitiva escolhida (decisão do autor): opção 1, mapeamento direto da memória física via módulo do kernel,
+o caminho usado pelo PoorDS4.** O autor aceitou o risco que essa escolha traz: dependência de um módulo de
+kernel no console, e a possibilidade de um erro de escrita travar o sistema, e não só o jogo.
+
+**Controles que essa escolha exige antes de qualquer teste no console:**
+- Procedimento de recuperação escrito: o jailbreak não é persistente, então um reinício do console volta ao
+  estado normal. O procedimento precisa dizer como reiniciar e como confirmar que o sistema voltou.
+- Teste em jogo sem importância, no PS5 FAT 11.20, antes de qualquer jogo real.
+- Restauração testada: o instalador precisa provar que devolve os valores originais ao sair, e que não
+  restaura por engano um valor que não é mais o seu.
+- Revisão do código do instalador por alguém além do autor, antes de rodar no console.
+
+**Responsabilidade pela primitiva.** A escrita pelo mapeamento de memória física é o trecho mais sensível do
+instalador. O autor decide se ela é implementada por ele, ou se é trazida de uma referência com atribuição
+GPL. Até essa decisão, a primitiva não é escrita aqui.
+
+**Próximo passo.** Desenhar o instalador em documento, sem código, com os controles acima e com a primitiva
+marcada como responsabilidade do autor.
