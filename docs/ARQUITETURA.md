@@ -1933,3 +1933,234 @@ desliga o órfão, então o valor-base só existiria enquanto o órfão já est�
 Decisão: o código atual já produz o resultado do manual (herança ou zero, com autoencerramento). O
 valor-base não é implementado porque não altera nenhuma saída. Se o manual vier a mostrar um caso em
 que o valor-base aparece, reabro esta decisão.
+
+---
+
+## 38. Medição no PS5 por payload independente: a abertura do controle não funciona (fase 3a, console)
+
+**Pergunta:** o payload de medição, rodando sozinho no PS5 FAT 11.20, consegue abrir o controle e
+ler os dados? Era o caminho para fechar as pendências de console (convenção vertical, toque, sensores,
+gatilhos, PS e SHARE).
+
+**Resultado medido** (CSV gravado no HD, `usb0/dsig/`, com o controle conectado por Bluetooth):
+
+| execução | chamadas | retorno |
+|---|---|---|
+| 1 | `scePadOpen(0, 0, 0, NULL)`, sem `scePadInit` | `-2137915387` (0x80920005) |
+| 2 | `scePadInit`, depois `scePadOpen(0..3, NULL)` | **travou em `scePadInit`** (três vezes; o CSV para em "antes de scePadInit") |
+| 3 | `scePadOpen(1..3, NULL)`, sem `scePadInit` | `-2137915387` em todos |
+| 4 | `scePadOpen(0..3, buffer zerado)` e `scePadOpenExt(0..3, buffer zerado)`, sem `scePadInit` | `-2137915387` em todos os oito |
+
+Em todas as execuções que completaram, todas as leituras de `scePadReadState` também devolveram
+`-2137915387`. Nenhuma linha de dados do controle foi gravada.
+
+**O que fica estabelecido:**
+- `scePadInit` trava quando chamada pelo payload neste console. Não é intermitente: aconteceu em todas
+  as tentativas.
+- Sem `scePadInit`, nenhuma forma de abertura testada funciona. O valor do userId e o `param` (NULL ou
+  buffer zerado) não mudam o resultado.
+- Os nomes `scePadOpen`, `scePadOpenExt`, `scePadInit` e `scePadReadState` existem no SDK (verificado
+  com `nm -D`). A assinatura não foi confirmada: o SDK não traz cabeçalho, e o `.so` é um stub de link
+  (todos os símbolos no mesmo endereço).
+
+**O que não está estabelecido:**
+- A causa do travamento de `scePadInit`. A hipótese mais provável é que a biblioteca já está inicializada
+  pelo sistema, e a segunda chamada espera uma trava que não libera. Não há como confirmar daqui.
+- Se a assinatura de `scePadOpen` é a usada. A única evidência é o retorno, que não diz se os argumentos
+  foram interpretados como se espera.
+
+**Decisão de desenho.** O D-Sig não deve abrir o controle por conta própria. O desenho do Alvo 3 já
+previa isso: o daemon lê o estado que o jogo recebe, interceptando `scePadReadState` dentro do processo
+do jogo, que já tem o controle aberto (seção 7 do CLAUDE.md e docs/ESTUDO.md). Um payload independente
+não mede o que o D-Sig precisa medir. Por isso o teste desta seção não reprova o desenho. Ele mostra
+que medir por um payload separado, neste console, não é o caminho.
+
+**Consequências:**
+- As pendências de console que dependem de leitura real (convenção vertical, faixa do touch, escala de
+  ACC e GYRO, zona morta, conversão dos gatilhos, bits de PS e SHARE) continuam abertas. O caminho para
+  fechá-las passa pela ponte dentro do processo do jogo, na fase 3b.
+- O código de sondagem em `payload/medicao/main.c` fica como registro. Ele não é usado pelo D-Sig.
+- Antes de qualquer nova tentativa de inicialização, é preciso estudar como o PoorDS4 e o etaHEN lidam
+  com a biblioteca (docs/ESTUDO.md). Nada foi copiado.
+
+**Addendum (sondagens 5 a 7, mesmo dia).** A `libSceMbus` carregada com `dlopen` antes das chamadas
+resolveu o travamento: `scePadInit` e `scePadSetProcessPrivilege(1)` passaram a retornar 0. Pela
+primeira vez, `scePadOpen` respondeu com um código que o próprio Ghostcontrol identifica (USER_NOT_LOGIN,
+`0x809B0081`), e não com "não inicializada". Medido:
+
+- `sceUserServiceGetInitialUser` falha (`-2137784316`), mas `sceUserServiceGetLoginUserIdList` e
+  `sceUserServiceGetForegroundUser` devolvem o mesmo usuário, `513995998`.
+- `scePadGetHandle(513995998, 0, 0)` devolve `0x80920008`, e `scePadOpen(513995998, 0, 0, NULL)` devolve
+  `0x809B0081`, nas seis tentativas, com cinco segundos entre elas.
+
+Conclusão: a lista de logados e o que a biblioteca de controle aceita não concordam para um processo de
+medição. Não é uma questão de tempo. A hipótese mais forte, ainda não confirmada, é que o controle fica
+vinculado ao usuário do processo que o abriu, e um payload independente não é esse processo. Obter esse
+vínculo por outro caminho esbarra em elevação de privilégio do processo, fora do escopo do CLAUDE.md.
+
+Decisão: a linha de sondagem com payload independente se encerra aqui. O caminho que sobra é o da fase 3b,
+dentro do processo do jogo, com o estudo do PoorDS4 (que lê o controle a partir de um gancho no jogo) antes
+de qualquer código.
+
+---
+
+## 39. Exceção do gancho de entrada: o que é permitido na memória do jogo
+
+**Problema.** A seção 2 do CLAUDE.md dizia "leitura ou escrita na memória do jogo" como fora do projeto,
+e o desenho do Alvo 3 (seções 2 e 7 deste documento, e o CLAUDE.md, seção 7) prevê justamente o
+redirecionamento da entrada PLT do jogo. Os dois textos não batiam. Ao estudar o PoorDS4 (docs/ESTUDO.md,
+seção 11), ficou claro que o método dele escreve na memória de outro processo a partir do kernel, o que
+vai além do que o desenho precisava.
+
+**Decisão do autor.** A proibição da seção 2 tem como alvo a alteração de estado do jogo para dar vantagem.
+Um gancho que troca somente a entrada de controle (turbo, macro, sequência, acorde) muda o sinal que chega
+ao jogo, e não o cálculo do jogo. Esse é o núcleo de acessibilidade do projeto. Então a exceção é:
+
+- **permitido:** redirecionar somente as funções de leitura do controle, dentro do próprio processo do jogo,
+  com encadeamento para o original;
+- **proibido:** ler ou escrever o resto da memória do jogo, alterar estado do jogo, escrever em outro
+  processo a partir do kernel, elevar privilégio além do próprio processo, e qualquer vantagem sobre outra
+  pessoa.
+
+**O que não está decidido.** O método de instalação do gancho. O PoorDS4 instala de fora do processo, e isso
+fica fora da exceção. A alternativa a estudar é o caminho que o autoloader já usa para carregar código no
+processo do jogo, sem escrita externa. Esse estudo ainda não foi feito.
+
+**Consequência para o código.** Nada de escrita externa entra no D-Sig. A bancada e o payload de medição
+não mudam com esta decisão.
+
+---
+
+## 40. Canal do perfil até o gancho, sem escrita na memória do jogo (proposta)
+
+**Problema.** As seções 2 e 7 deste documento e a tabela de decisões (linhas 20 e 161) previam que o daemon
+escreve o perfil na memória do processo do jogo. A seção 39 proíbe isso: escrita de fora do processo fica
+fora da exceção. O perfil precisa chegar ao gancho por outro meio.
+
+**Alternativas comparadas.**
+
+| | A. Região compartilhada criada pelo daemon | B. Instantâneo na instalação |
+|---|---|---|
+| Como funciona | O daemon cria uma região. O gancho a mapeia no próprio processo, na instalação. Mudanças são publicadas nela com buffer duplo e versão, como `src/perfil.c` já faz. | O perfil é copiado uma vez para uma área que o gancho aloca. Não há canal depois. |
+| Quem escreve no processo do jogo | Ninguém de fora. O daemon escreve só na sua região; o gancho lê a dele. | A cópia inicial. Se quem instala está fora do processo, é a escrita que a seção 39 proíbe. |
+| Perfil muda com o jogo aberto | Sim, sem reinstalar. | Não: mudar exige reinstalar o gancho. |
+| Custo no quadro | Uma leitura do buffer duplo. Sem chamada de sistema. | Nenhum. |
+| Risco | As permissões do mapeamento no processo do jogo só se confirmam no console. | O mais simples de auditar. |
+| Depende de decisão aberta | Sim: a instalação precisa ser dentro do processo, para o mapeamento acontecer lá. | Sim: a cópia inicial precisa vir de dentro do processo. |
+
+**Proposta: A**, porque é a única que permite trocar um turbo ou uma macro durante a partida, que é o uso
+real de acessibilidade. Ela também cumpre a seção 39: o daemon nunca escreve no processo do jogo.
+
+**Reserva: B**, com a cópia inicial lida de um arquivo pelo próprio gancho, na instalação. Assim B também
+fica dentro da exceção, sem escrita de fora.
+
+**Regras para as duas.** Na seção 6 do CLAUDE.md, o caminho do quadro não aloca, não bloqueia e não faz
+chamada de sistema. O mapeamento e a leitura do arquivo acontecem uma vez, na instalação, que é o único
+momento em que chamada de sistema é aceita.
+
+**O que fica pendente.** O método de instalação do gancho dentro do processo do jogo. A e B só podem ser
+testadas no console depois que ele for definido. Esta seção não decide esse método.
+
+**Consequência para o código.** Nada muda na bancada nem no payload de medição. A decisão afeta a fase 3c,
+que depende de console.
+
+---
+
+## 41. Situação do desenho com a regra atual (registro de decisão)
+
+**Resumo.** Com a regra da seção 39 como está, o desenho do Alvo 3 não é possível: não há caminho de
+instalação do gancho dentro do processo do jogo que a regra permita. O projeto não está inviabilizado como
+um todo: a bancada, o roteador, o formato do perfil e o payload de medição continuam válidos.
+
+**Por que não há caminho dentro da regra.** Para ler o controle dentro do jogo, o gancho precisa estar
+instalado no processo do jogo. Os caminhos estudados até aqui:
+
+| caminho | situação |
+|---|---|
+| autoloader (seção 12 do ESTUDO) | sobe processos próprios; não entrega código ao jogo |
+| PoorDS4 (seção 11 do ESTUDO) | instala de fora, por escrita de memória a partir do kernel; fora da exceção |
+| Ghostcontrol | vincula o controle ao usuário com privilégio elevado; fora do escopo do CLAUDE.md |
+| payload independente (seção 38) | não consegue abrir o controle: `scePadOpen` devolve USER_NOT_LOGIN para o usuário logado |
+
+**O que foi medido, e não depende de opinião.**
+- `scePadInit` e `scePadSetProcessPrivilege(1)` retornam 0 quando a `libSceMbus` é carregada antes.
+- O usuário logado (lista e primeiro plano) não é aceito por `scePadGetHandle` nem `scePadOpen`, em seis
+  tentativas.
+- O payload independente, portanto, não lê o controle. Isso é um fato do console, não uma falha de código.
+
+**O que fica possível.**
+- Se a regra da seção 39 for ampliada para um instalador externo restrito (só os slots das cinco funções de
+  leitura do controle, restauração condicional, validação de ABI antes de instalar, sem escrita além disso),
+  o desenho volta a ser viável. Isso depende de decisão do autor, e não está decidido.
+- A fase 3c continua dependendo de console e só fecha depois de uma decisão desse tipo.
+
+**Opções apresentadas ao autor (seção 39 e conversa de registro):**
+1. Ampliar a exceção para um instalador externo restrito, com os limites acima, e revisar o código do
+   instalador antes de qualquer teste no console.
+2. Manter a exceção como está e aguardar um método de instalação que não caia em escrita externa. Nenhum foi
+   encontrado até agora.
+3. Desistir do gancho dentro do jogo. O D-Sig deixaria de ler o controle no jogo, o que não atende o objetivo
+   do projeto.
+
+**Recomendação registrada:** opção 1, com os limites escritos e a decisão tomada e registrada em texto na
+seção 39 e no CLAUDE.md antes de qualquer desenho do instalador.
+
+**Estado.** Decisão pendente do autor. Nenhuma alteração de código depende dela agora.
+
+---
+
+## 42. Regra ampliada: instalador externo restrito (decisão do autor)
+
+**Decisão.** O autor aprovou a redação da seção 2 do CLAUDE.md que admite um instalador externo restrito
+para o gancho de entrada. A regra passa a permitir a redireção das cinco funções de leitura do controle
+de dentro ou de fora do processo do jogo, com restauração condicional. Continuam proibidos a leitura e a
+escrita do resto da memória do jogo, a escrita em outros processos além das entradas de importação, a
+elevação de privilégio além do necessário, e qualquer vantagem sobre outra pessoa.
+
+**O que a regra não decide.** A primitiva de escrita em outro processo. Essa escolha de engenharia é do
+autor, e não será implementada sem essa decisão tomada e registrada.
+
+**Consequências.**
+- Seção 39 (exceção de dentro do processo) e seção 41 (situação com a regra antiga) ficam superadas por esta
+  seção. A seção 41 continua como registro do que valia antes.
+- O desenho do Alvo 3 passa a ser viável no papel. A fase 3c continua dependendo de validação no console
+  (PS5 FAT 11.20), e o login do usuário precisa ser confirmado nessa validação.
+- Antes de qualquer código do instalador: decisão da primitiva de escrita, desenho do instalador com os
+  limites da seção 2, e revisão do código antes de rodar no console.
+
+**Próximo passo.** Desenhar o instalador em documento (sem código), com a primitiva escolhida pelo autor.
+
+**Primitiva escolhida (decisão do autor): opção 1, mapeamento direto da memória física via módulo do kernel,
+o caminho usado pelo PoorDS4.** O autor aceitou o risco que essa escolha traz: dependência de um módulo de
+kernel no console, e a possibilidade de um erro de escrita travar o sistema, e não só o jogo.
+
+**Controles que essa escolha exige antes de qualquer teste no console:**
+- Procedimento de recuperação escrito: o jailbreak não é persistente, então um reinício do console volta ao
+  estado normal. O procedimento precisa dizer como reiniciar e como confirmar que o sistema voltou.
+- Teste em jogo sem importância, no PS5 FAT 11.20, antes de qualquer jogo real.
+- Restauração testada: o instalador precisa provar que devolve os valores originais ao sair, e que não
+  restaura por engano um valor que não é mais o seu.
+- Revisão do código do instalador por alguém além do autor, antes de rodar no console.
+
+**Responsabilidade pela primitiva.** A escrita pelo mapeamento de memória física é o trecho mais sensível do
+instalador. O autor decide se ela é implementada por ele, ou se é trazida de uma referência com atribuição
+GPL. Até essa decisão, a primitiva não é escrita aqui.
+
+**Próximo passo.** Desenhar o instalador em documento, sem código, com os controles acima e com a primitiva
+marcada como responsabilidade do autor.
+
+**Revisão da primitiva: opção 2 (depuração do processo) como primeiro caminho (decisão do autor).**
+A opção 1 foi reavaliada. Como a regra 4 (CLAUDE.md, seção 4) proíbe deslocamento dependente de firmware, e
+o mapeamento físico provavelmente exige endereços do kernel por firmware, a opção 1 fica como reserva. Só
+volta a ser considerada com exceção escrita e aprovada pelo autor para a regra 4.
+
+**Controles da opção 2 antes de qualquer uso no gancho:**
+- Teste de viabilidade no console com um processo de teste (não o jogo): confirmar que o anexo, a escrita em
+  uma área conhecida e o desanexo funcionam no PS5 FAT 11.20, e medir a duração da pausa.
+- Confirmar que a escrita de restauração funciona e que o processo volta ao estado normal após o desanexo.
+- Restauração testada, incluindo o caso em que o valor atual já não é o do gancho.
+- Procedimento de recuperação por reinício, como na opção 1.
+- Revisão do código do instalador antes de rodar com um jogo real.
+
+**Próximo passo.** Teste de viabilidade da opção 2 com processo de teste no console. A implementação
+da primitiva continua com o autor até essa validação.

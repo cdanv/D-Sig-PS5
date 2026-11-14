@@ -6,7 +6,7 @@ else
 endif
 
 ELF := medicao.elf
-CFLAGS := -Wall -Werror -O2 -lScePad
+CFLAGS := -Wall -Werror -O2 -lScePad -lSceUserService -ldl
 
 all: $(ELF)
 
