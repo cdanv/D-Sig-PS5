@@ -2063,3 +2063,46 @@ testadas no console depois que ele for definido. Esta seção não decide esse m
 
 **Consequência para o código.** Nada muda na bancada nem no payload de medição. A decisão afeta a fase 3c,
 que depende de console.
+
+---
+
+## 41. Situação do desenho com a regra atual (registro de decisão)
+
+**Resumo.** Com a regra da seção 39 como está, o desenho do Alvo 3 não é possível: não há caminho de
+instalação do gancho dentro do processo do jogo que a regra permita. O projeto não está inviabilizado como
+um todo: a bancada, o roteador, o formato do perfil e o payload de medição continuam válidos.
+
+**Por que não há caminho dentro da regra.** Para ler o controle dentro do jogo, o gancho precisa estar
+instalado no processo do jogo. Os caminhos estudados até aqui:
+
+| caminho | situação |
+|---|---|
+| autoloader (seção 12 do ESTUDO) | sobe processos próprios; não entrega código ao jogo |
+| PoorDS4 (seção 11 do ESTUDO) | instala de fora, por escrita de memória a partir do kernel; fora da exceção |
+| Ghostcontrol | vincula o controle ao usuário com privilégio elevado; fora do escopo do CLAUDE.md |
+| payload independente (seção 38) | não consegue abrir o controle: `scePadOpen` devolve USER_NOT_LOGIN para o usuário logado |
+
+**O que foi medido, e não depende de opinião.**
+- `scePadInit` e `scePadSetProcessPrivilege(1)` retornam 0 quando a `libSceMbus` é carregada antes.
+- O usuário logado (lista e primeiro plano) não é aceito por `scePadGetHandle` nem `scePadOpen`, em seis
+  tentativas.
+- O payload independente, portanto, não lê o controle. Isso é um fato do console, não uma falha de código.
+
+**O que fica possível.**
+- Se a regra da seção 39 for ampliada para um instalador externo restrito (só os slots das cinco funções de
+  leitura do controle, restauração condicional, validação de ABI antes de instalar, sem escrita além disso),
+  o desenho volta a ser viável. Isso depende de decisão do autor, e não está decidido.
+- A fase 3c continua dependendo de console e só fecha depois de uma decisão desse tipo.
+
+**Opções apresentadas ao autor (seção 39 e conversa de registro):**
+1. Ampliar a exceção para um instalador externo restrito, com os limites acima, e revisar o código do
+   instalador antes de qualquer teste no console.
+2. Manter a exceção como está e aguardar um método de instalação que não caia em escrita externa. Nenhum foi
+   encontrado até agora.
+3. Desistir do gancho dentro do jogo. O D-Sig deixaria de ler o controle no jogo, o que não atende o objetivo
+   do projeto.
+
+**Recomendação registrada:** opção 1, com os limites escritos e a decisão tomada e registrada em texto na
+seção 39 e no CLAUDE.md antes de qualquer desenho do instalador.
+
+**Estado.** Decisão pendente do autor. Nenhuma alteração de código depende dela agora.
