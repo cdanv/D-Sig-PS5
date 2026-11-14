@@ -2148,3 +2148,19 @@ GPL. Até essa decisão, a primitiva não é escrita aqui.
 
 **Próximo passo.** Desenhar o instalador em documento, sem código, com os controles acima e com a primitiva
 marcada como responsabilidade do autor.
+
+**Revisão da primitiva: opção 2 (depuração do processo) como primeiro caminho (decisão do autor).**
+A opção 1 foi reavaliada. Como a regra 4 (CLAUDE.md, seção 4) proíbe deslocamento dependente de firmware, e
+o mapeamento físico provavelmente exige endereços do kernel por firmware, a opção 1 fica como reserva. Só
+volta a ser considerada com exceção escrita e aprovada pelo autor para a regra 4.
+
+**Controles da opção 2 antes de qualquer uso no gancho:**
+- Teste de viabilidade no console com um processo de teste (não o jogo): confirmar que o anexo, a escrita em
+  uma área conhecida e o desanexo funcionam no PS5 FAT 11.20, e medir a duração da pausa.
+- Confirmar que a escrita de restauração funciona e que o processo volta ao estado normal após o desanexo.
+- Restauração testada, incluindo o caso em que o valor atual já não é o do gancho.
+- Procedimento de recuperação por reinício, como na opção 1.
+- Revisão do código do instalador antes de rodar com um jogo real.
+
+**Próximo passo.** Teste de viabilidade da opção 2 com processo de teste no console. A implementação
+da primitiva continua com o autor até essa validação.
